@@ -22,7 +22,7 @@ defmodule Exrethinkdb do
   end
 
   def execute_query(socket, q) do
-    token = :crypto.rand_bytes(8)
+    token = <<1 :: size(64)>>
     :ok = :gen_tcp.send(socket, token)
     bsize = :erlang.size(q)
     :ok = :gen_tcp.send(socket, << bsize :: little-size(32) >>)
