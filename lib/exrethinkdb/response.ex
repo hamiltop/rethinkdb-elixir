@@ -1,18 +1,39 @@
 defmodule Exrethinkdb.Response do
-  defstruct type: nil, token: nil, data: ""
+  defmodule Single do
+    defstruct data: ""
+  end
+
+  defmodule Collection do
+    defstruct data: []
+  end
+
+  defmodule Cursor do
+    defstruct token: nil, data: []
+  end
+
+  defmodule Changes do
+    defstruct token: nil, last: nil
+  end
+
+  defmodule Response do
+    defstruct token: nil, raw: ""
+  end
 
   def parse(raw_data, token) do
     d = Poison.decode!(raw_data)
-    type = case d["t"] do
-      1  -> :success_atom
-      2  -> :success_sequence
-      3  -> :success_partial
-      4  -> :wait_complete
-      5  -> :success_feed
-      16 -> :client_error
-      17 -> :compile_error
+    case d["t"] do
+      1  -> %Single{data: hd(d["r"])}
+      2  -> %Collection{data: d["r"]}
+      3  -> case d["n"] do
+          [1] -> %Changes{token: token, last: nil}
+          [2] -> %Changes{token: token, last: hd(d["r"])}
+          _ -> %Cursor{token: token, data: d["r"]}
+        end
+      4  -> %Response{token: token, raw: d}
+      5  -> %Changes{token: token, last: d["r"]}
+      16  -> %Response{token: token, raw: d}
+      17  -> %Response{token: token, raw: d}
     end
-    %__MODULE__{type: type, token: token, data: d["r"]}   
   end
 
   defimpl Inspect, for: __MODULE__ do
