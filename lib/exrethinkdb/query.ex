@@ -1,4 +1,5 @@
 defmodule Exrethinkdb.Query do
+  def make_array(array), do:  [2, array]
   def db(name), do:           [14, [name]]
   def table(name), do:        [15, [name]]
   def table(query, name), do: [15, [query, name]]

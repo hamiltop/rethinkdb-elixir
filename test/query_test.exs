@@ -2,6 +2,7 @@ defmodule QueryTest do
   use ExUnit.Case
   alias Exrethinkdb.Query
   alias Exrethinkdb.Record
+  alias Exrethinkdb.Collection
 
   setup_all do
     socket = Exrethinkdb.local_connection
@@ -80,4 +81,11 @@ defmodule QueryTest do
     %{"config_changes" => [%{"new_val" => %{"primary_key" => primary_key}}]} = result
     assert primary_key == "not_id"
   end
+
+  test "make_array", context do
+    array = [%{name: "hello"}, %{name: "world"}]
+    q = Query.make_array(array)
+    %Record{data: array} = Exrethinkdb.run(context.socket, q)
+  end
+
 end
