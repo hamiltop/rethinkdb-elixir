@@ -1,4 +1,5 @@
 defmodule Exrethinkdb.Query do
+  def make_array(array), do:  [2, array]
   def db(name), do:           [14, [name]]
   def table(name), do:        [15, [name]]
   def table(query, name), do: [15, [query, name]]
@@ -25,7 +26,10 @@ defmodule Exrethinkdb.Query do
 
   def between(lower, upper, options), do: raise "between is not yet implemented"
 
-  def insert(table, object, options \\ %{}), do: [56, [table, object], options]
+  def insert(table, object, options \\ %{})
+  def insert(table, object, options) when is_list(object), do: [56, [table, make_array(object)], options]
+  def insert(table, object, options), do: [56, [table, object], options]
+
   def update(selection, object, options \\ %{}), do: [53, [selection, object], options]
   def replace(selection, object, options \\ %{}), do: [55, [selection, object], options]
   def delete(selection, options \\ %{}), do: [54, [selection], options]
