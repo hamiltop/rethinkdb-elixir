@@ -1,11 +1,30 @@
-defmodule Exrethinkdb.ConnectionServer do
+defmodule Exrethinkdb.Connection do
   use GenServer
 
-  def init(_opts) do
-    socket = Exrethinkdb.local_connection
+  defstruct pid: nil
+
+  def init(opts) do
+    host = Dict.get(opts, :host, 'localhost')
+    port = Dict.get(opts, :port, 28015)
+    socket = connect(host, port)
     :ok = :inet.setopts(socket, [active: true])
     {:ok, %{pending: %{}, current: {:start, ""}, socket: socket, token: 0}}
   end
+
+  defp connect(host, port) do
+    {:ok, socket} = :gen_tcp.connect(host, port, [active: false, mode: :binary])
+    :ok = handshake(socket)
+    socket
+  end
+
+  defp handshake(socket) do
+    :ok = :gen_tcp.send(socket, << 0x400c2d20 :: little-size(32) >>)
+    :ok = :gen_tcp.send(socket, << 0 :: little-size(32) >>)
+    :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
+    {:ok, "SUCCESS" <> << 0 :: size(8)  >>} = :gen_tcp.recv(socket, 8)
+    :ok
+  end
+
 
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
