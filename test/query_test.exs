@@ -83,9 +83,33 @@ defmodule QueryTest do
   end
 
   test "make_array", context do
-    array = [%{name: "hello"}, %{name: "world"}]
+    array = [%{"name" => "hello"}, %{"name:" => "world"}]
     q = Query.make_array(array)
-    %Record{data: array} = Exrethinkdb.run(context.socket, q)
+    %Record{data: data} = Exrethinkdb.run(context.socket, q)
+    assert Enum.sort(data) == Enum.sort(array)
+  end
+
+  test "insert", context do
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    q = Query.insert(table_query, %{name: "Hello", attr: "World"})
+    %Record{data: %{"inserted" => 1, "generated_keys" => [key]}} = Exrethinkdb.run(context.socket, q)
+
+    %Collection{data: [%{"id" => ^key, "name" => "Hello", "attr" => "World"}]} = Exrethinkdb.run(context.socket, table_query)
+  end
+
+  test "insert multiple", context do
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    q = Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}])
+    %Record{data: %{"inserted" => 2}} = Exrethinkdb.run(context.socket, q)
+
+    %Collection{data: data} = Exrethinkdb.run(context.socket, table_query)
+    assert Enum.map(data, &(&1["name"])) |> Enum.sort == ["Hello", "World"]
   end
 
 end
