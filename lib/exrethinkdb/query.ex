@@ -29,4 +29,6 @@ defmodule Exrethinkdb.Query do
   def update(selection, object, options \\ %{}), do: [53, [selection, object], options]
   def replace(selection, object, options \\ %{}), do: [55, [selection, object], options]
   def delete(selection, options \\ %{}), do: [54, [selection], options]
+
+  def changes(selection), do: [152, [selection]]
 end
