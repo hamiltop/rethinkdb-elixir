@@ -10,11 +10,11 @@ defmodule Exrethinkdb do
 
   def run(conn = %Exrethinkdb.Connection{pid: pid}, query) do
     {response, token} = GenServer.call(pid, {:query, Poison.encode!([1, query])})
-    Exrethinkdb.Response.parse(response, token)
+    Exrethinkdb.Response.parse(response, token, pid)
   end
 
-  def next(conn = %Exrethinkdb.Connection{pid: pid}, %{token: token}) do
+  def next(%{token: token, pid: pid}) do
     {response, token} = GenServer.call(pid, {:continue, token}, :infinity)
-    Exrethinkdb.Response.parse(response, token)
+    Exrethinkdb.Response.parse(response, token, pid)
   end
 end
