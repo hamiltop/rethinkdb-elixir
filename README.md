@@ -3,6 +3,44 @@ Exrethinkdb
 
 Pipeline enabled Rethinkdb client in pure Elixir. Still a work in progress.
 
+###Connection
+```elixir
+alias Exrethinkdb.Query
+
+conn = Exrethinkdb.local_connection
+```
+###Query
+####Insert
+```elixir
+q = Query.table("people")
+  |> Query.insert(%{first_name: "John", last_name: "Smith"})
+Exrethinkdb.run conn, q
+```
+
+####Filter
+```elixir
+q = Query.table("people")
+  |> Query.filter(%{last_name: "Smith"})
+result = Exrethinkdb.run conn, q
+```
+
+See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
+
+###Changes
+
+Change feeds can be consumed either incrementally (by calling `Exrethinkdb.next/1`) or via the Enumerable Protocol.
+
+```elixir
+q = Query.table("people")
+  |> Query.filter(%{last_name: "Smith"})
+  |> Query.changes
+results = Exrethinkdb.run conn, q
+# get one result
+first_change = Exrethinkdb.next results
+# get stream, chunked in groups of 5, Inspect
+results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
+```
+
 ###Questions
 
 ####Why not use elixir-rethinkdb?
