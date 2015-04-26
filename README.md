@@ -48,4 +48,12 @@ The current state of elixir-rethinkdb (https://github.com/azukiapp/elixir-rethin
 
 A lot of the code from elixir-rethinkdb will probably be useful as we go forward.
 
+###Contributing
 Contributions are welcome. The easiest thing to do would be to start updating Exrethinkdb.Query to support the rest of the api. Right now it supports a small subset.
+
+####Testing
+I'm a little unorthodox when it comes to testing. Testing complex logic is good. Testing "Did I type that line correctly?" is less good.
+
+Right now there are some rough tests in place that use a local rethinkdb instance. If you are doing something complicated, then writing a test there is better than nothing. If you are merely adding another function to `Exrethinkdb.Query` and you are copying directly from the spec, then a test isn't going to be that useful.
+
+All that said, each new feature has characteristics that influence testing. Take everything on a case by case basis.

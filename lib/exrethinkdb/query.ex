@@ -35,4 +35,8 @@ defmodule Exrethinkdb.Query do
   def delete(selection, options \\ %{}), do: [54, [selection], options]
 
   def changes(selection), do: [152, [selection]]
+
+  def pluck(selection, fields), do: [33, [selection | fields]]
+  def distinct(sequence), do: [42, [sequence]]
+  def count(sequence), do: [43, [sequence]]
 end
