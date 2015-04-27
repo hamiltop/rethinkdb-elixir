@@ -37,6 +37,11 @@ defmodule Exrethinkdb.Query do
   def changes(selection), do: [152, [selection]]
 
   def pluck(selection, fields), do: [33, [selection | fields]]
+  def without(selection, fields), do: [34, [selection | fields]]
   def distinct(sequence), do: [42, [sequence]]
   def count(sequence), do: [43, [sequence]]
+
+  def keys(object), do: [94, [object]]
+
+  def merge(objects), do: [35, objects]
 end
