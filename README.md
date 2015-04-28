@@ -21,7 +21,7 @@ conn = Exrethinkdb.connect([host: "10.0.0.17", port: 28015])
 
 ####Named Connection
 ```elixir
-{:ok, pid} = Exrethinkdb.Connection.start_link([name: :foo]})
+conn = Exrethinkdb.connect([name: :foo]})
 ```
 
 ####Supervised Connection
@@ -40,9 +40,10 @@ worker(Exrethinkdb.Connection, [[name: :bar, host: 'localhost', port: 28015]])
 
 q = Query.table("people")
   |> Query.insert(%{first_name: "John", last_name: "Smith"})
+# Default connection
 Exrethinkdb.run q
 # Run on unnamed connection
-Exrethinkdb.run pid, q
+Exrethinkdb.run conn, q
 ```
 
 ####Filter
