@@ -4,24 +4,52 @@ Exrethinkdb
 Pipeline enabled Rethinkdb client in pure Elixir. Still a work in progress.
 
 ###Connection
+
+Connections are managed by a GenServer. The GenServer will register itself with a default name. If you want multiple connections on a node, be sure to give them explicit names or set the name to `nil` to make it skip registration.
+
+####Basic Local Connection
 ```elixir
 alias Exrethinkdb.Query
 
-conn = Exrethinkdb.local_connection
+conn = Exrethinkdb.connect
 ```
+
+####Basic Remote Connection
+```elixir
+conn = Exrethinkdb.connect([host: "10.0.0.17", port: 28015])
+```
+
+####Named Connection
+```elixir
+{:ok, pid} = Exrethinkdb.Connection.start_link([name: :foo]})
+```
+
+####Supervised Connection
+Start the supervisor with:
+```elixir
+worker(Exrethinkdb.Connection, [])
+worker(Exrethinkdb.Connection, [[name: :foo]])
+worker(Exrethinkdb.Connection, [[name: :bar, host: 'localhost', port: 28015]])
+```
+
 ###Query
+`Exrethinkdb.run/1` will use the default registered connection. `Exrethinkdb.run/2` accepts a process as the first argument.
+
 ####Insert
 ```elixir
+
 q = Query.table("people")
   |> Query.insert(%{first_name: "John", last_name: "Smith"})
-Exrethinkdb.run conn, q
+Exrethinkdb.run q
+# Run on unnamed connection
+Exrethinkdb.run pid, q
 ```
 
 ####Filter
 ```elixir
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
-result = Exrethinkdb.run conn, q
+result = Exrethinkdb.run q
 ```
 
 See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
@@ -34,7 +62,7 @@ Change feeds can be consumed either incrementally (by calling `Exrethinkdb.next/
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
   |> Query.changes
-results = Exrethinkdb.run conn, q
+results = Exrethinkdb.run q
 # get one result
 first_change = Exrethinkdb.next results
 # get stream, chunked in groups of 5, Inspect

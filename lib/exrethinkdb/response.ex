@@ -22,6 +22,8 @@ defmodule Exrethinkdb.Changes do
       end)
       stream.(acc, fun)
     end
+    def count(_changes), do: raise "count/1 not supported for changes"
+    def member?(_changes, _values), do: raise "member/2 not supported for changes"
   end
 end
 

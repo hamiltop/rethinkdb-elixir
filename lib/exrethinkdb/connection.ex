@@ -1,7 +1,11 @@
 defmodule Exrethinkdb.Connection do
   use GenServer
 
-  defstruct pid: nil
+  def start_link(opts \\ []) do
+    opts = Dict.put_new(opts, :name, __MODULE__)
+    args = Dict.take(opts, [:host, :port])
+    GenServer.start_link(__MODULE__, args, opts)
+  end
 
   def init(opts) do
     host = Dict.get(opts, :host, 'localhost')
@@ -49,7 +53,7 @@ defmodule Exrethinkdb.Connection do
     handle_recv(data, state)
   end
 
-  def handle_info(a, state) do
+  def handle_info(_, state) do
     {:noreply, state}
   end
 

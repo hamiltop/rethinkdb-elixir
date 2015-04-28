@@ -5,7 +5,7 @@ defmodule QueryTest do
   alias Exrethinkdb.Collection
 
   setup_all do
-    socket = Exrethinkdb.local_connection
+    socket = Exrethinkdb.connect
     {:ok, %{socket: socket}}
   end
 

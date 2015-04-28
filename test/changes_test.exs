@@ -4,7 +4,7 @@ defmodule ChangesTest do
   alias Exrethinkdb.Changes
 
   setup_all do
-    socket = Exrethinkdb.local_connection
+    socket = Exrethinkdb.connect
     {:ok, %{socket: socket}}
   end
 
