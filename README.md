@@ -53,6 +53,19 @@ q = Query.table("people")
 result = Exrethinkdb.run q
 ```
 
+####Map
+```elixir
+require Exrethinkdb.Lambda
+import Query
+import Exrethinkdb.Lambda
+
+table("people")
+  |> has_fields(["first_name", "last_name"])
+  |> map(lambda fn (person) ->
+    person.first_name + " " + person.last_name
+  end) |> Exrethinkdb.run
+```
+
 See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
 
 ###Changes

@@ -24,7 +24,7 @@ defmodule Exrethinkdb.Query do
   def get(query, id), do: [16, [query,  id]]
   def get_all(query, id, options \\ %{}), do: [78, [query,  id], options]
 
-  def between(lower, upper, options), do: raise "between is not yet implemented"
+  def between(_lower, _upper, _options), do: raise "between is not yet implemented"
 
   def insert(table, object, options \\ %{})
   def insert(table, object, options) when is_list(object), do: [56, [table, make_array(object)], options]
@@ -40,8 +40,11 @@ defmodule Exrethinkdb.Query do
   def without(selection, fields), do: [34, [selection | fields]]
   def distinct(sequence), do: [42, [sequence]]
   def count(sequence), do: [43, [sequence]]
+  def has_fields(sequence, fields), do:  [32, [sequence, make_array(fields)]]
 
   def keys(object), do: [94, [object]]
 
   def merge(objects), do: [35, objects]
+
+  def map(sequence, func), do: [38, [sequence, func]]
 end
