@@ -16,6 +16,10 @@ defmodule Exrethinkdb.Connection do
   end
 
   defp connect(host, port) do
+    host = case host do
+       x when is_binary(x) -> String.to_char_list x
+       x -> x
+    end
     {:ok, socket} = :gen_tcp.connect(host, port, [active: false, mode: :binary])
     :ok = handshake(socket)
     socket
