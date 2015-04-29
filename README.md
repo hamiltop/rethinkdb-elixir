@@ -56,20 +56,19 @@ result = Exrethinkdb.run q
 ####Functions
 Exrethinkdb supports RethinkDB functions in queries. There are two approaches you can take:
 
-1. Use RethinkDB operators
-
+Use RethinkDB operators
 ```elixir
 import Exrethinkdb.Query
 
 make_array([1,2,3]) |> map(fn (x) -> add(x, 1) end)
 ```
 
-2. Use Elixir operators via the lambda macro
+Use Elixir operators via the lambda macro
 ```elixir
 require Exrethinkdb.Lambda
 import Exrethinkdb.Lambda
 
-make_array([1,2,3]) |> map(fn (x) -> x + 1 end)
+make_array([1,2,3]) |> map(lambda fn (x) -> x + 1 end)
 ```
 
 ####Map
