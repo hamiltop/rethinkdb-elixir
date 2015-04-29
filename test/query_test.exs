@@ -123,7 +123,7 @@ defmodule QueryTest do
 
     %Collection{data: data} = Query.table(@table_name)
       |> Query.map( Exrethinkdb.Lambda.lambda fn (el) ->
-        el.name + " " + "with map"
+        Query.bracket(el, :name) + " " + "with map"
       end) |> Exrethinkdb.run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
   end

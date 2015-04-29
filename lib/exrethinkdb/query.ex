@@ -46,7 +46,7 @@ defmodule Exrethinkdb.Query do
 
   def merge(objects), do: [35, objects]
 
-  def map(sequence, func), do: [38, [sequence, func]]
+  def map(sequence, f), do: [38, [sequence, func(f)]]
 
   # standard multi arg arithmetic operations
   [
@@ -61,7 +61,6 @@ defmodule Exrethinkdb.Query do
     {:gt, 21},
     {:ge, 22}
   ] |> Enum.map fn ({op, opcode}) -> 
-    def unquote(op)(num, others) when is_list(others), do: [unquote(opcode), [num | others]]
     def unquote(op)(numA, numB), do: [unquote(opcode), [numA, numB]]
     def unquote(op)(nums) when is_list(nums), do: [unquote(opcode), nums]
   end
@@ -79,4 +78,17 @@ defmodule Exrethinkdb.Query do
 
   # arithmetic ops that don't fit into the above
   def mod(numA, numB), do: [28, [numA, numB]]
+
+  def func(f) when is_function(f) do
+    {_, arity} = :erlang.fun_info(f, :arity)
+    
+    args = Enum.map(1..arity, fn _ -> make_ref end)
+    params = Enum.map(args, &([10, [&1]]))
+    res = case apply(f, params) do
+      x -> x
+    end
+    [69, [[2, args], res]]
+  end
+
+  def bracket(obj, key), do: [170, [obj, key]]
 end
