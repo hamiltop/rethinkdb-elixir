@@ -80,7 +80,7 @@ import Exrethinkdb.Lambda
 table("people")
   |> has_fields(["first_name", "last_name"])
   |> map(lambda fn (person) ->
-    person.first_name + " " + person.last_name
+    person[:first_name] + " " + person[:last_name]
   end) |> Exrethinkdb.run
 ```
 
