@@ -53,6 +53,25 @@ q = Query.table("people")
 result = Exrethinkdb.run q
 ```
 
+####Functions
+Exrethinkdb supports RethinkDB functions in queries. There are two approaches you can take:
+
+1. Use RethinkDB operators
+
+```elixir
+import Exrethinkdb.Query
+
+make_array([1,2,3]) |> map(fn (x) -> add(x, 1) end)
+```
+
+2. Use Elixir operators via the lambda macro
+```elixir
+require Exrethinkdb.Lambda
+import Exrethinkdb.Lambda
+
+make_array([1,2,3]) |> map(fn (x) -> x + 1 end)
+```
+
 ####Map
 ```elixir
 require Exrethinkdb.Lambda
@@ -65,6 +84,8 @@ table("people")
     person.first_name + " " + person.last_name
   end) |> Exrethinkdb.run
 ```
+
+
 
 See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
 

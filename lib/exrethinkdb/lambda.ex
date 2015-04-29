@@ -7,17 +7,17 @@ defmodule Exrethinkdb.Lambda do
 
   defp build(block) do
     Macro.prewalk block, fn 
-      {:+, _, args} -> Query.add(args)
-      {:-, _, args} -> Query.sub(args)
-      {:*, _, args} -> Query.mul(args)
-      {:/, _, args} -> Query.div(args)
-      {:rem, _, [a, b]} -> Query.mod(a, b)
-      {:=, _, args} -> Query.eq(args)
-      {:!=, _, args} -> Query.ne(args)
-      {:<, _, args} -> Query.lt(args)
-      {:<=, _, args} -> Query.le(args)
-      {:>, _, args} -> Query.gt(args)
-      {:>=, _, args} -> Query.ge(args)
+      {:+, _, args} ->      quote do: Query.add(unquote(args))
+      {:-, _, args} ->      quote do: Query.sub(unquote(args))
+      {:*, _, args} ->      quote do: Query.mul(unquote(args))
+      {:/, _, args} ->      quote do: Query.div(unquote(args))
+      {:rem, _, [a, b]} ->  quote do: Query.mod(unquote(a), unquote(b))
+      {:==, _, args} ->     quote do: Query.eq(unquote(args))
+      {:!=, _, args} ->     quote do: Query.ne(unquote(args))
+      {:<, _, args} ->      quote do: Query.lt(unquote(args))
+      {:<=, _, args} ->     quote do: Query.le(unquote(args))
+      {:>, _, args} ->      quote do: Query.gt(unquote(args))
+      {:>=, _, args} ->     quote do: Query.ge(unquote(args))
       x -> x
     end
   end
