@@ -19,6 +19,7 @@ defmodule Exrethinkdb.Query do
   def table_list(db_query), do: [62, [db_query]]
   def table_list, do: [62]
 
+  def filter(query, f) when is_function(f), do: [39, [query, func(f)]]
   def filter(query, filter), do: [39, [query, filter]]
 
   def get(query, id), do: [16, [query,  id]]
@@ -60,7 +61,7 @@ defmodule Exrethinkdb.Query do
     {:le, 20},
     {:gt, 21},
     {:ge, 22}
-  ] |> Enum.map fn ({op, opcode}) -> 
+  ] |> Enum.map fn ({op, opcode}) ->
     def unquote(op)(numA, numB), do: [unquote(opcode), [numA, numB]]
     def unquote(op)(nums) when is_list(nums), do: [unquote(opcode), nums]
   end
@@ -81,7 +82,7 @@ defmodule Exrethinkdb.Query do
 
   def func(f) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
-    
+
     args = Enum.map(1..arity, fn _ -> make_ref end)
     params = Enum.map(args, &([10, [&1]]))
     res = case apply(f, params) do

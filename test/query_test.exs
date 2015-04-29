@@ -127,4 +127,36 @@ defmodule QueryTest do
       end) |> Exrethinkdb.run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
   end
+
+  test "filter by map", context do
+    require Exrethinkdb.Lambda
+
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> Exrethinkdb.run
+
+    %Collection{data: data} = Query.table(@table_name)
+    |> Query.filter(%{name: "Hello"})
+    |> Exrethinkdb.run
+    assert Enum.map(data, &(&1["name"])) == ["Hello"]
+  end
+
+  test "filter by lambda", context do
+    require Exrethinkdb.Lambda
+
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> Exrethinkdb.run
+
+    %Collection{data: data} = Query.table(@table_name)
+    |> Query.filter(Exrethinkdb.Lambda.lambda fn (el) ->
+      Query.bracket(el, :name) = "Hello"
+    end)
+    |> Exrethinkdb.run
+    assert Enum.map(data, &(&1["name"])) == ["Hello"]
+  end
 end
