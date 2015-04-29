@@ -47,4 +47,36 @@ defmodule Exrethinkdb.Query do
   def merge(objects), do: [35, objects]
 
   def map(sequence, func), do: [38, [sequence, func]]
+
+  # standard multi arg arithmetic operations
+  [
+    {:add, 24},
+    {:sub, 25},
+    {:mul, 26},
+    {:div, 27},
+    {:eq, 17},
+    {:ne, 18},
+    {:lt, 19},
+    {:le, 20},
+    {:gt, 21},
+    {:ge, 22}
+  ] |> Enum.map fn ({op, opcode}) -> 
+    def unquote(op)(num, others) when is_list(others), do: [unquote(opcode), [num | others]]
+    def unquote(op)(numA, numB), do: [unquote(opcode), [numA, numB]]
+    def unquote(op)(nums) when is_list(nums), do: [unquote(opcode), nums]
+  end
+
+  # arithmetic unary ops
+  [
+    {:not, 23},
+    # Not supported yet
+    # {:floor, 183},
+    # {:ceil, 184},
+    # {:round, 185}
+  ] |> Enum.map fn ({op, opcode}) ->
+    def unquote(op)(val), do: [unquote(opcode), [val]]
+  end
+
+  # arithmetic ops that don't fit into the above
+  def mod(numA, numB), do: [28, [numA, numB]]
 end
