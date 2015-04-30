@@ -1,7 +1,6 @@
 defmodule Exrethinkdb.Query do
-  defmodule Q do
-    defstruct query: nil
-  end
+  alias __MODULE__, as: Q
+  defstruct query: nil
 
   def make_array(array), do:  %Q{query: [2, array]}
   def db(name), do:           %Q{query: [14, [name]]}
@@ -29,7 +28,7 @@ defmodule Exrethinkdb.Query do
   def get(query, id), do: %Q{query: [16, [query,  id]]}
   def get_all(query, id, options \\ %{}), do: %Q{query: [78, [query,  id], options]}
 
-  def between(_lower, _upper, _options), do: raise "between is not yet implemented"
+  def between(lower, upper, options \\ %{}), do: [182, [lower, upper, options]]
 
   def insert(table, object, options \\ %{})
   def insert(table, object, options) when is_list(object), do: %Q{query: [56, [table, make_array(object)], options]}
@@ -44,7 +43,6 @@ defmodule Exrethinkdb.Query do
   def pluck(selection, fields), do: %Q{query: [33, [selection | fields]]}
   def without(selection, fields), do: %Q{query: [34, [selection | fields]]}
   def distinct(sequence), do: %Q{query: [42, [sequence]]}
-  def count(sequence), do: %Q{query: [43, [sequence]]}
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
   def keys(object), do: %Q{query: [94, [object]]}
@@ -52,6 +50,27 @@ defmodule Exrethinkdb.Query do
   def merge(objects), do: %Q{query: [35, objects]}
 
   def map(sequence, f), do: %Q{query: [38, [sequence, func(f)]]}
+  def reduce(sequence, f), do: %Q{query: [37, [sequence, func(f)]]}
+  def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
+  def concat_map(sequence, f), do: flat_map(sequence, f)
+
+  def order_by(sequence, order), do: order_by(sequence, order, %{})
+  def order_by(sequence, order, options) when is_list(order), do: %Q{query: [41, [sequence | order], options]}
+  def order_by(sequence, order, options), do: %Q{query: [41, [sequence, order], options]}
+
+  def count(sequence), do: %Q{query: [43, [sequence]]}
+  def count(sequence, f) when is_function(f), do: %Q{query: [43, [sequence, func(f)]]}
+  def count(sequence, d), do: %Q{query: [43, [sequence, d]]}
+
+  def append(array, datum), do: %Q{query: [29, [array, datum]]}
+  def prepend(array, datum), do: %Q{query: [30, [array, datum]]}
+  def difference(arrayA, arrayB), do: %Q{query: [95, [arrayA, arrayB]]}
+
+  def slice(sequence, start, end_el), do: %Q{query: [30, [sequence, start, end_el]]}
+  def skip(sequence, count), do: %Q{query: [70, [sequence, count]]}
+  def limit(sequence, count), do: %Q{query: [71, [sequence, count]]}
+  def asc(key), do: %Q{query: [73, [key]]}
+  def desc(key), do: %Q{query: [74, [key]]}
 
   # standard multi arg arithmetic operations
   [
@@ -64,8 +83,11 @@ defmodule Exrethinkdb.Query do
     {:lt, 19},
     {:le, 20},
     {:gt, 21},
-    {:ge, 22}
+    {:ge, 22},
+    {:and, 67},
+    {:or, 66}
   ] |> Enum.map fn ({op, opcode}) ->
+    def unquote(op)(numA, numB) when is_list(numB), do: %Q{query: [unquote(opcode), [numA|numB]]}
     def unquote(op)(numA, numB), do: %Q{query: [unquote(opcode), [numA, numB]]}
     def unquote(op)(nums) when is_list(nums), do: %Q{query: [unquote(opcode), nums]}
   end
@@ -103,7 +125,7 @@ defmodule Exrethinkdb.Query do
     %{query: prepared_query} = prepare(query, %{query: [], vars: {0, %{}}})
     prepared_query
   end
-  def prepare(%Exrethinkdb.Query.Q{query: query}, acc), do: prepare(query, acc)
+  def prepare(%Q{query: query}, acc), do: prepare(query, acc)
   def prepare([h | t], %{query: query, vars: vars}) do
     %{query: new_query, vars: new_vars} = prepare(h, %{query: [], vars: vars})
     prepare(t, %{query: query ++ [new_query], vars: new_vars})
@@ -129,15 +151,14 @@ defmodule Exrethinkdb.Query do
     %{query: query ++ el, vars: vars}
   end
 end
-defimpl Poison.Encoder, for: Exrethinkdb.Query.Q do
+defimpl Poison.Encoder, for: Exrethinkdb.Query do
   def encode(%{query: query}, options) do
     Poison.Encoder.encode(query, options)
   end
 end
-defimpl Access, for: Exrethinkdb.Query.Q do
+defimpl Access, for: Exrethinkdb.Query do
   def get(%{query: query}, term) do
     Exrethinkdb.Query.bracket(query, term)
   end
-
   def get_and_update(_,_,_), do: raise "get_and_update not supported"
 end

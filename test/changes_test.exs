@@ -1,7 +1,7 @@
 defmodule ChangesTest do
   use ExUnit.Case
   alias Exrethinkdb.Query
-  alias Exrethinkdb.Changes
+  alias Exrethinkdb.Feed
 
   setup_all do
     socket = Exrethinkdb.connect
@@ -26,7 +26,7 @@ defmodule ChangesTest do
     Exrethinkdb.run(context.socket, q)
 
     q = Query.table(@table_name) |> Query.changes
-    changes = %Changes{} = Exrethinkdb.run(context.socket, q)
+    changes = %Feed{} = Exrethinkdb.run(context.socket, q)
     t = Task.async fn ->
       Exrethinkdb.next(changes)
     end
