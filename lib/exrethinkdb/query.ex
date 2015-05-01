@@ -3,6 +3,7 @@ defmodule Exrethinkdb.Query do
   defstruct query: nil
 
   def make_array(array), do:  %Q{query: [2, array]}
+
   def db(name), do:           %Q{query: [14, [name]]}
   def table(name), do:        %Q{query: [15, [name]]}
   def table(query, name), do: %Q{query: [15, [query, name]]}
@@ -22,13 +23,14 @@ defmodule Exrethinkdb.Query do
   def table_list(db_query), do: %Q{query: [62, [db_query]]}
   def table_list, do: %Q{query: [62]}
 
+  def filter(query, f) when is_list(query), do: filter(make_array(query), f)
   def filter(query, f) when is_function(f), do: %Q{query: [39, [query, func(f)]]}
   def filter(query, filter), do: %Q{query: [39, [query, filter]]}
 
   def get(query, id), do: %Q{query: [16, [query,  id]]}
   def get_all(query, id, options \\ %{}), do: %Q{query: [78, [query,  id], options]}
 
-  def between(lower, upper, options \\ %{}), do: [182, [lower, upper, options]]
+  def between(query, lower, upper, options \\ %{}), do: [182, [query, lower, upper, options]]
 
   def insert(table, object, options \\ %{})
   def insert(table, object, options) when is_list(object), do: %Q{query: [56, [table, make_array(object)], options]}
@@ -40,12 +42,17 @@ defmodule Exrethinkdb.Query do
 
   def changes(selection), do: %Q{query: [152, [selection]]}
 
-  def pluck(selection, fields), do: %Q{query: [33, [selection | fields]]}
+  def get_field(seq, field) when is_list(seq), do: get_field(make_array(seq), field)
+  def get_field(seq, field), do: %Q{query: [31, [seq, field]]}
+  def keys(object), do: %Q{query: [94, [object]]}
+
+  def pluck(seq, f) when is_list(seq), do: pluck(make_array(seq), f)
+  def pluck(selection, fields) when is_list(fields), do: %Q{query: [33, [selection | fields]]}
+  def pluck(selection, field), do: %Q{query: [33, [selection, field]]}
   def without(selection, fields), do: %Q{query: [34, [selection | fields]]}
   def distinct(sequence), do: %Q{query: [42, [sequence]]}
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
-  def keys(object), do: %Q{query: [94, [object]]}
 
   def merge(objects), do: %Q{query: [35, objects]}
 
@@ -66,9 +73,26 @@ defmodule Exrethinkdb.Query do
   def prepend(array, datum), do: %Q{query: [30, [array, datum]]}
   def difference(arrayA, arrayB), do: %Q{query: [95, [arrayA, arrayB]]}
 
-  def slice(sequence, start, end_el), do: %Q{query: [30, [sequence, start, end_el]]}
-  def skip(sequence, count), do: %Q{query: [70, [sequence, count]]}
-  def limit(sequence, count), do: %Q{query: [71, [sequence, count]]}
+  def slice(seq, start, end_el) when is_list(seq), do: slice(make_array(seq), start, end_el)
+  def slice(seq, start, end_el), do: %Q{query: [30, [seq, start, end_el]]}
+  def skip(seq, count) when is_list(seq), do: skip(make_array(seq), count)
+  def skip(seq, count), do: %Q{query: [70, [seq, count]]}
+  def limit(seq, count) when is_list(seq), do: limit(make_array(seq), count)
+  def limit(seq, count), do: %Q{query: [71, [seq, count]]}
+  def offsets_of(seq, el) when is_list(seq), do: offsets_of(make_array(seq), el)
+  def offsets_of(seq, f) when is_function(f), do: %Q{query: [87, [seq, func(f)]]}
+  def offsets_of(seq, el), do: %Q{query: [87, [seq, el]]}
+  def contains(seq, data) when is_list(seq), do: contains(make_array(seq), data)
+  def contains(seq, list) when is_list(list) do
+    data = list |> Enum.map(fn
+      f when is_function(f) -> func(f)
+      x -> x
+    end)
+    %Q{query: [93, [seq | data]]}
+  end
+  def contains(seq, f) when is_function(f), do: contains(seq, func(f))
+  # TODO: contains with multiple functions
+  def contains(seq, el), do: %Q{query: [93, [seq, el]]}
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
 
