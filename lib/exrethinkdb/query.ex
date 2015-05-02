@@ -53,9 +53,9 @@ defmodule Exrethinkdb.Query do
   def distinct(sequence), do: %Q{query: [42, [sequence]]}
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
-
   def merge(objects), do: %Q{query: [35, objects]}
 
+  def map(seq, f) when is_list(seq), do: map(make_array(seq), f)
   def map(sequence, f), do: %Q{query: [38, [sequence, func(f)]]}
   def reduce(sequence, f), do: %Q{query: [37, [sequence, func(f)]]}
   def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
