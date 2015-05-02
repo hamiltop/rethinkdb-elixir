@@ -96,6 +96,8 @@ defmodule Exrethinkdb.Query do
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
 
+  def branch(expr, truthy, falsy), do: %Q{query: [65, [expr, truthy, falsy]]}
+
   # standard multi arg arithmetic operations
   [
     {:add, 24},
