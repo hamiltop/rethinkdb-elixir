@@ -123,8 +123,55 @@ defmodule QueryTest do
 
     %Collection{data: data} = Query.table(@table_name)
       |> Query.map( Exrethinkdb.Lambda.lambda fn (el) ->
-        Query.bracket(el, :name) + " " + "with map"
+        el[:name] + " " + "with map"
       end) |> Exrethinkdb.run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
+  end
+
+  test "filter by map", context do
+    require Exrethinkdb.Lambda
+
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> Exrethinkdb.run
+
+    %Collection{data: data} = Query.table(@table_name)
+    |> Query.filter(%{name: "Hello"})
+    |> Exrethinkdb.run
+    assert Enum.map(data, &(&1["name"])) == ["Hello"]
+  end
+
+  test "filter by lambda", context do
+    require Exrethinkdb.Lambda
+
+    q = Query.table_create(@table_name)
+    %Record{data: %{"tables_created" => 1}} = Exrethinkdb.run(context.socket, q)
+    table_query = Query.table(@table_name)
+
+    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> Exrethinkdb.run
+
+    %Collection{data: data} = Query.table(@table_name)
+    |> Query.filter(Exrethinkdb.Lambda.lambda fn (el) ->
+      el[:name] == "Hello"
+    end)
+    |> Exrethinkdb.run
+    assert Enum.map(data, &(&1["name"])) == ["Hello"]
+  end
+
+  test "nested functions" do
+    import Query
+    a = make_array([1,2,3]) |> map(fn (x) ->
+      make_array([4,5,6]) |> map(fn (y) ->
+        [x, y]
+      end)
+    end)
+    %{data: data} = Exrethinkdb.run(a)
+    assert data == [
+      [[1,4], [1,5], [1,6]],
+      [[2,4], [2,5], [2,6]],
+      [[3,4], [3,5], [3,6]]
+    ]
   end
 end
