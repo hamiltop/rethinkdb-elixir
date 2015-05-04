@@ -56,8 +56,8 @@ defmodule Exrethinkdb.Response do
       {:SUCCESS_SEQUENCE, 2} -> %Exrethinkdb.Collection{data: d["r"]}
       {:SUCCESS_PARTIAL, 3}  -> case :lists.keyfind(d["n"],2,rt) do
                                     {:SUCCESS_SEQUENCE, 2} ->
-                                    %Exrethinkdb.Changes{token: token, data: hd(d["r"]), pid: pid,note: d["n"]}
-                                    _ -> %Exrethinkdb.Cursor{token: token, data: d["r"], pid: pid, note: d["n"]}
+                                    %Exrethinkdb.Feed{token: token, data: hd(d["r"]), pid: pid,note: d["n"]}
+                                    _ -> %Exrethinkdb.Feed{token: token, data: d["r"], pid: pid, note: d["n"]}
                                 end
 
         {:WAIT_COMPLETE, 4}  -> %Exrethinkdb.Response{token: token, data: d}
