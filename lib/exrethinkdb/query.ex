@@ -2,6 +2,16 @@ defmodule Exrethinkdb.Query do
   alias __MODULE__, as: Q
   defstruct query: nil
 
+  @type t :: %Q{}
+  @type reql_string :: (String.t|%Q{})
+
+  defmacro __using__(_opts) do
+    quote do
+      import Exrethinkdb.Query.StringManipulation
+      import Exrethinkdb.Query
+    end
+  end
+
   def make_array(array), do:  %Q{query: [2, array]}
 
   def db(name), do:           %Q{query: [14, [name]]}

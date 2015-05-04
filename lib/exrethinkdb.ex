@@ -1,5 +1,12 @@
 defmodule Exrethinkdb do
- 
+
+  defmacro __using__(_opts) do
+    quote do
+      use Exrethinkdb.Query
+      import Exrethinkdb
+    end
+  end
+
   def connect(opts \\ []) do
     {:ok, pid} = Exrethinkdb.Connection.start_link(opts)  
     pid
