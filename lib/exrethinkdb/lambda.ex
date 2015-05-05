@@ -7,8 +7,10 @@ defmodule Exrethinkdb.Lambda do
 
   defp build(block) do
     Macro.prewalk block, fn 
-      {:+, _, args} ->      quote do: Query.add(unquote(args))
-      {:-, _, args} ->      quote do: Query.sub(unquote(args))
+      {:+, _, args} ->      quote do: Query.MathLogic.add(unquote(args))
+      {:<>, _, args} ->     quote do: Query.MathLogic.add(unquote(args))
+      {:++, _, args} ->     quote do: Query.MathLogic.add(unquote(args))
+      {:-, _, args} ->      quote do: Query.MathLogic.sub(unquote(args))
       {:*, _, args} ->      quote do: Query.mul(unquote(args))
       {:/, _, args} ->      quote do: Query.div(unquote(args))
       {:rem, _, [a, b]} ->  quote do: Query.mod(unquote(a), unquote(b))

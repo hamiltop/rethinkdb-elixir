@@ -4,10 +4,13 @@ defmodule Exrethinkdb.Query do
 
   @type t :: %Q{}
   @type reql_string :: (String.t|%Q{})
+  @type reql_number :: (integer|%Q{})
+  @type reql_array :: ([term]|%Q{})
 
   defmacro __using__(_opts) do
     quote do
       import Exrethinkdb.Query.StringManipulation
+      import Exrethinkdb.Query.MathLogic
       import Exrethinkdb.Query
     end
   end
@@ -110,8 +113,6 @@ defmodule Exrethinkdb.Query do
 
   # standard multi arg arithmetic operations
   [
-    {:add, 24},
-    {:sub, 25},
     {:mul, 26},
     {:div, 27},
     {:eq, 17},

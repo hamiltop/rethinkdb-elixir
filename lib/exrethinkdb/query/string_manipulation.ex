@@ -11,40 +11,46 @@ defmodule Exrethinkdb.Query.StringManipulation do
 
   Example:
 
-      iex> "hello world" |> match("hello") |> run
-      iex> "hello world" |> match(~r(hello)) |> run
+      iex> "hello world" |> match("hello") |> run conn
+      iex> "hello world" |> match(~r(hello)) |> run conn
 
   """
   @spec match( (Q.reql_string), (Regex.t|Q.reql_string) ) :: Q.t
-  def match(string_a, regex = %Regex{}), do: match(string_a, Regex.source(regex))
-  def match(string_a, string_b), do: %Q{query: [97, [string_a, string_b]]}
+  def match(string, regex = %Regex{}), do: match(string, Regex.source(regex))
+  def match(string, match_string), do: %Q{query: [97, [string, match_string]]}
 
   @doc """
-  Split a `string` with a given `separator`.
-  
-  Default `separator  is whitespace.
+  Split a `string` on whitespace.
 
-  If a `max_results` is not included, return all results.
-
-      iex> "abracadabra" |> split |> run
+      iex> "abracadabra" |> split |> run conn
       %Exrethinkdb.Record{data: ["abracadabra"]}
-      iex> "abra-cadabra" |> split("-") |> run
+  """
+  @spec split(Q.reql_string) :: Q.t
+  def split(string), do: %Q{query: [149, [string]]}
+
+  @doc """
+  Split a `string` on `separator`.
+
+      iex> "abra-cadabra" |> split("-") |> run conn
       %Exrethinkdb.Record{data: ["abra", "cadabra"]}
-      iex> "a-bra-ca-da-bra" |> split("-", 2) |> run
+  """
+  @spec split(Q.reql_string, Q.reql_string) :: Q.t
+  def split(string, separator), do: %Q{query: [149, [string, separator]]}
+
+  @doc """
+  Split a `string` with a given `separator` into `max_result` segments.
+  
+      iex> "a-bra-ca-da-bra" |> split("-", 2) |> run conn
       %Exrethinkdb.Record{data: ["a", "bra", "ca-da-bra"]}
   
   """
-  @spec split(Q.reql_string) :: Q.t
-  @spec split(Q.reql_string, Q.reql_string) :: Q.t
   @spec split(Q.reql_string, (Q.reql_string|nil), integer) :: Q.t
   def split(string, separator, max_results), do: %Q{query: [149, [string, separator, max_results]]}
-  def split(string), do: %Q{query: [149, [string]]}
-  def split(string, separator), do: %Q{query: [149, [string, separator]]}
 
   @doc """
   Convert a string to all upper case.
 
-      iex> "hi" |> upcase |> run
+      iex> "hi" |> upcase |> run conn
       %Exrethinkdb.Record{data: "HI"}
 
   """
@@ -54,7 +60,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   @doc """
   Convert a string to all down case.
 
-      iex> "Hi" |> downcase |> run
+      iex> "Hi" |> downcase |> run conn
       %Exrethinkdb.Record{data: "hi"}
 
   """
