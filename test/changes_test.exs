@@ -4,7 +4,7 @@ defmodule ChangesTest do
   alias Exrethinkdb.Feed
 
   setup_all do
-    socket = Exrethinkdb.connect
+    socket = TestConnection.connect
     {:ok, %{socket: socket}}
   end
 
@@ -12,27 +12,27 @@ defmodule ChangesTest do
   @table_name "query_test_table_1"
   setup context do
     q = Query.db_drop(@db_name)
-    Exrethinkdb.run(context.socket, q)
+    TestConnection.run(q)
 
     q = Query.table_drop(@table_name)
-    Exrethinkdb.run(context.socket, q)
+    TestConnection.run(q)
     {:ok, context}
   end
 
-  test "changes", context do
+  test "changes" do
     q = Query.db_create(@db_name)
-    Exrethinkdb.run(context.socket, q)
+    TestConnection.run(q)
     q = Query.table_create(@table_name)
-    Exrethinkdb.run(context.socket, q)
+    TestConnection.run(q)
 
     q = Query.table(@table_name) |> Query.changes
-    changes = %Feed{} = Exrethinkdb.run(context.socket, q)
+    changes = %Feed{} = TestConnection.run(q)
     t = Task.async fn ->
-      Exrethinkdb.next(changes)
+      TestConnection.next(changes)
     end
     data = %{"test" => "data"}
     q = Query.table(@table_name) |> Query.insert(data)
-    res = Exrethinkdb.run(context.socket, q)
+    res = TestConnection.run(q)
     expected = res.data["id"]
     changes = Task.await(t) 
     ^expected = changes.data |> hd |> Map.get("id")
@@ -43,7 +43,7 @@ defmodule ChangesTest do
     end
     1..6 |> Enum.each fn _ ->
       q = Query.table(@table_name) |> Query.insert(data)
-      Exrethinkdb.run(context.socket, q)
+      TestConnection.run(q)
     end
     data = Task.await(t) 
     5 = Enum.count(data)

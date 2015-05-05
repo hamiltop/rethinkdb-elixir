@@ -27,30 +27,43 @@ conn = Exrethinkdb.connect([name: :foo]})
 ####Supervised Connection
 Start the supervisor with:
 ```elixir
-worker(Exrethinkdb.Connection, [])
 worker(Exrethinkdb.Connection, [[name: :foo]])
 worker(Exrethinkdb.Connection, [[name: :bar, host: 'localhost', port: 28015]])
 ```
 
+####Default Connection
+An `Exrethinkdb.Connection` does parallel queries via pipelining. It can and should be shared among multiple processes. Because of this, it is common to have one connection shared in your application. To create a default connection, we create a new module and `use Exrethinkdb.Connection`.
+```elixir
+defmodule FooDatabase do
+  use Exrethinkdb.Connection
+end
+```
+This connection can be supervised without a name (it will assume the module as the name).
+```elixir
+worker(Exrethinkdb.Connection, [])
+```
+Queries can be run without providing a connection (it will use the name connection).
+```elixir
+use Exrethinkdb.Query
+table("people") |> FooDatabase.run
+```
+
 ###Query
-`Exrethinkdb.run/1` will use the default registered connection. `Exrethinkdb.run/2` accepts a process as the first argument.
+`Exrethinkdb.run/2` accepts a process as the second argument (to facilitate piping).
 
 ####Insert
 ```elixir
 
 q = Query.table("people")
   |> Query.insert(%{first_name: "John", last_name: "Smith"})
-# Default connection
-Exrethinkdb.run q
-# Run on unnamed connection
-Exrethinkdb.run conn, q
+  |> Exrethinkdb.run conn
 ```
 
 ####Filter
 ```elixir
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
-result = Exrethinkdb.run q
+  |> Exrethinkdb.run conn
 ```
 
 ####Functions
@@ -77,14 +90,14 @@ require Exrethinkdb.Lambda
 import Query
 import Exrethinkdb.Lambda
 
+conn = Exrethinkdb.connect
+
 table("people")
   |> has_fields(["first_name", "last_name"])
   |> map(lambda fn (person) ->
     person[:first_name] + " " + person[:last_name]
-  end) |> Exrethinkdb.run
+  end) |> Exrethinkdb.run conn
 ```
-
-
 
 See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
 
@@ -96,12 +109,16 @@ Change feeds can be consumed either incrementally (by calling `Exrethinkdb.next/
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
   |> Query.changes
-results = Exrethinkdb.run q
+  |> Exrethinkdb.run conn
 # get one result
 first_change = Exrethinkdb.next results
 # get stream, chunked in groups of 5, Inspect
 results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
 ```
+
+###Shortcuts
+
+Calling `use Exrethinkdb` will import all functions into the current scope. If you are using a custom connection, using that connection module will import all functions into the current scope. If you use both `Exrethinkdb` and your custom connection, you will have a namespace clash.
 
 ###Questions
 
@@ -110,12 +127,18 @@ The current state of elixir-rethinkdb (https://github.com/azukiapp/elixir-rethin
 
 A lot of the code from elixir-rethinkdb will probably be useful as we go forward.
 
+###Roadmap
+Version 1.0.0 will be limited to individual connections and implement the entire documented ReQL (as of rethinkdb 2.0)
+
+While not provided by this library, we will also include example code for:
+
+* Connection Pooling
+* Supervised Feeds
+
+The goal for 1.0.0 is to be stable. Issues have been filed for work that needs to be completed before 1.0.0 and tagged with the 1.0.0 milestone.
+
 ###Contributing
-Contributions are welcome. The easiest thing to do would be to start updating Exrethinkdb.Query to support the rest of the api. Right now it supports a small subset.
+Contributions are welcome. Take a look at the Issues. Anything that is tagged `Help Wanted` or `Feedback Wanted` is a good candidate for contributions. Even if you don't know where to start, respond to an interesting issue and you will be pointed in the right direction.
 
 ####Testing
-I'm a little unorthodox when it comes to testing. Testing complex logic is good. Testing "Did I type that line correctly?" is less good.
-
-Right now there are some rough tests in place that use a local rethinkdb instance. If you are doing something complicated, then writing a test there is better than nothing. If you are merely adding another function to `Exrethinkdb.Query` and you are copying directly from the spec, then a test isn't going to be that useful.
-
-All that said, each new feature has characteristics that influence testing. Take everything on a case by case basis.
+Be intentional. Whether you are writing production code or tests, make sure there is value in the test being writtne.
