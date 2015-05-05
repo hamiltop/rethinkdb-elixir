@@ -1,4 +1,4 @@
-Exrethinkdb
+Exrethinkdb [![Build Status](https://travis-ci.org/hamiltop/exrethinkdb.svg?branch=master)](https://travis-ci.org/hamiltop/exrethinkdb)
 ===========
 
 Pipeline enabled Rethinkdb client in pure Elixir. Still a work in progress.
