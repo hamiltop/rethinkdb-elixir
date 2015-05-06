@@ -4,15 +4,22 @@ defmodule Exrethinkdb.Query.Macros do
 
   defmacro operate_on_two_args(op, opcode) do
     quote do
-      def unquote(op)(numA, numB) do
-        %Q{query: [unquote(opcode), [wrap(numA), wrap(numB)]]}
+      def unquote(op)(left, right) do
+        %Q{query: [unquote(opcode), [wrap(left), wrap(right)]]}
       end
     end
   end
   defmacro operate_on_list(op, opcode) do
     quote do
-      def unquote(op)(list) when is_list(list) do
-        %Q{query: [unquote(opcode), Enum.map(list, &wrap/1)]}
+      def unquote(op)(args) when is_list(args) do
+        %Q{query: [unquote(opcode), Enum.map(args, &wrap/1)]}
+      end
+    end
+  end
+  defmacro operate_on_single_arg(op, opcode) do
+    quote do
+      def unquote(op)(arg) do
+        %Q{query: [unquote(opcode), [arg]]}
       end
     end
   end

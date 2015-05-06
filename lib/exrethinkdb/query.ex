@@ -4,8 +4,10 @@ defmodule Exrethinkdb.Query do
 
   @type t :: %Q{}
   @type reql_string :: (String.t|%Q{})
-  @type reql_number :: (integer|%Q{})
+  @type reql_number :: (integer|float|%Q{})
   @type reql_array :: ([term]|%Q{})
+  @type reql_bool :: (boolean|%Q{})
+  @type reql_datum :: term
 
   defmacro __using__(_opts) do
     quote do
@@ -110,38 +112,6 @@ defmodule Exrethinkdb.Query do
   def desc(key), do: %Q{query: [74, [key]]}
 
   def branch(expr, truthy, falsy), do: %Q{query: [65, [expr, truthy, falsy]]}
-
-  # standard multi arg arithmetic operations
-  [
-    {:mul, 26},
-    {:div, 27},
-    {:eq, 17},
-    {:ne, 18},
-    {:lt, 19},
-    {:le, 20},
-    {:gt, 21},
-    {:ge, 22},
-    {:and, 67},
-    {:or, 66}
-  ] |> Enum.map fn ({op, opcode}) ->
-    def unquote(op)(numA, numB) when is_list(numB), do: %Q{query: [unquote(opcode), [numA|numB]]}
-    def unquote(op)(numA, numB), do: %Q{query: [unquote(opcode), [numA, numB]]}
-    def unquote(op)(nums) when is_list(nums), do: %Q{query: [unquote(opcode), nums]}
-  end
-
-  # arithmetic unary ops
-  [
-    {:not, 23},
-    # Not supported yet
-    # {:floor, 183},
-    # {:ceil, 184},
-    # {:round, 185}
-  ] |> Enum.map fn ({op, opcode}) ->
-    def unquote(op)(val), do: %Q{query: [unquote(opcode), [val]]}
-  end
-
-  # arithmetic ops that don't fit into the above
-  def mod(numA, numB), do: %Q{query: [28, [numA, numB]]}
 
   def func(f) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
