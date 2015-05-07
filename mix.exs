@@ -3,7 +3,7 @@ defmodule Exrethinkdb.Mixfile do
 
   def project do
     [app: :exrethinkdb,
-     version: "0.0.1",
+     version: "0.0.2",
      elixir: "~> 1.0",
      description: "RethinkDB driver for Elixir",
      package: package,
