@@ -33,6 +33,10 @@ defmodule Exrethinkdb.Connection.Pool do
 
     supervise(children, strategy: :one_for_one)
   end
+  
+  def run(query, pid) do
+    Exrethinkdb.Connection.run query, get_connection(pid)
+  end
 
   def get_connection(pid) do
     connections = Supervisor.which_children(pid) |>
