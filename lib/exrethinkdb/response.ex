@@ -48,20 +48,26 @@ defmodule Exrethinkdb.Response do
   defstruct token: nil, data: ""
 
   def parse(raw_data, token, pid) do
+    rt = Exrethinkdb.Ql2.Response.ResponseType |> Map.from_struct |> Map.to_list
     d = Poison.decode!(raw_data)
-    case d["t"] do
-      1  -> %Exrethinkdb.Record{data: hd(d["r"])}
-      2  -> %Exrethinkdb.Collection{data: d["r"]}
-      3  -> case d["n"] do
-          [2] -> %Exrethinkdb.Feed{token: token, data: hd(d["r"]), pid: pid, note: d["n"]}
-           _  -> %Exrethinkdb.Feed{token: token, data: d["r"], pid: pid, note: d["n"]}
-        end
-      4  -> %Exrethinkdb.Response{token: token, data: d}
-      16  -> %Exrethinkdb.Response{token: token, data: d}
-      17  -> %Exrethinkdb.Response{token: token, data: d}
-      18  -> %Exrethinkdb.Response{token: token, data: d}
+    case :lists.keyfind(d["t"],2,rt) do
+
+      {:SUCCESS_ATOM, 1}  -> %Exrethinkdb.Record{data: hd(d["r"])}
+      {:SUCCESS_SEQUENCE, 2} -> %Exrethinkdb.Collection{data: d["r"]}
+      {:SUCCESS_PARTIAL, 3}  -> case :lists.keyfind(d["n"],2,rt) do
+                                    {:SUCCESS_SEQUENCE, 2} ->
+                                    %Exrethinkdb.Feed{token: token, data: hd(d["r"]), pid: pid,note: d["n"]}
+                                    _ -> %Exrethinkdb.Feed{token: token, data: d["r"], pid: pid, note: d["n"]}
+                                end
+
+        {:WAIT_COMPLETE, 4}  -> %Exrethinkdb.Response{token: token, data: d}
+        {:RUNTIME_ERROR, 18}    -> raise Exrethinkdb.RqlRuntimeError, message: d["r"] |> hd
+        {:COMPILE_ERROR, 17}    -> raise Exrethinkdb.RqlCompileError,message: d["r"] |> hd
+        {:CLIENT_ERROR, 16}     -> raise Exrethinkdb.RqlDriverError, message: d["r"] |> hd
     end
   end
+
+
 
   def to_order_by_limit_feed(%{token: token, pid: pid, data: data, note: [3]}) do
     data = data |> Enum.map(fn (el) -> el["new_val"] end)

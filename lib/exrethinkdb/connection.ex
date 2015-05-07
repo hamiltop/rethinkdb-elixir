@@ -1,5 +1,16 @@
 defmodule Exrethinkdb.Connection do
   use GenServer
+  import  Exrethinkdb.Ql2
+  alias Exrethinkdb.Ql2
+  alias Exrethinkdb.RqlDriverError
+
+  @proto_version  Ql2.VersionDummy.Version |> Map.from_struct|> Map.get(:V0_4)
+
+  @proto_protocol  Ql2.VersionDummy.Protocol |> Map.from_struct|> Map.get(:JSON)
+  @proto_query_type  Ql2.Query.QueryType |> Map.from_struct
+
+
+  @proto_response_type  Ql2.Response.ResponseType |> Map.from_struct
 
   defmacro __using__(_opts) do
     quote do
@@ -49,29 +60,38 @@ defmodule Exrethinkdb.Connection do
   end
 
   def init(opts) do
-    host = Dict.get(opts, :host, 'localhost')
+    host = Dict.get(opts, :host, {127,0,0,1})
     port = Dict.get(opts, :port, 28015)
-    socket = connect(host, port)
+    auth_key = Dict.get(opts, :auth_key, "")
+    socket = connect(host, port,auth_key)
     :ok = :inet.setopts(socket, [active: true])
     {:ok, %{pending: %{}, current: {:start, ""}, socket: socket, token: 0}}
   end
 
-  defp connect(host, port) do
+  defp connect(host, port,auth_key) do
     host = case host do
        x when is_binary(x) -> String.to_char_list x
        x -> x
     end
     {:ok, socket} = :gen_tcp.connect(host, port, [active: false, mode: :binary])
-    :ok = handshake(socket)
+    :ok = handshake(socket,auth_key)
     socket
   end
 
-  defp handshake(socket) do
-    :ok = :gen_tcp.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, << 0 :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
-    {:ok, "SUCCESS" <> << 0 :: size(8)  >>} = :gen_tcp.recv(socket, 8)
-    :ok
+  defp handshake(socket,auth_key) do
+        :ok = :gen_tcp.send(socket, :binary.encode_unsigned(@proto_version,:little))
+        :ok = :gen_tcp.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
+        :ok = :gen_tcp.send(socket, auth_key)
+        :ok = :gen_tcp.send(socket, :binary.encode_unsigned(@proto_protocol,:little) )
+
+        case :gen_tcp.recv(socket, 8) do
+
+            {:ok, "SUCCESS" <> << 0 :: size(8)  >>} -> :ok
+            response   -> raise RqlDriverError, msg: "Invalid Auth Key"
+
+
+        end
+
   end
 
 
@@ -127,4 +147,6 @@ defmodule Exrethinkdb.Connection do
         {:noreply, %{state | current: {:length, length, token, new_data}}}
     end
   end
+
+
 end
