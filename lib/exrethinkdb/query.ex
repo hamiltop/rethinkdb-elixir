@@ -8,11 +8,13 @@ defmodule Exrethinkdb.Query do
   @type reql_array :: ([term]|%Q{})
   @type reql_bool :: (boolean|%Q{})
   @type reql_datum :: term
+  @type reql_func2 :: (term, term -> term)|%Q{}
 
   defmacro __using__(_opts) do
     quote do
       import Exrethinkdb.Query.StringManipulation
       import Exrethinkdb.Query.MathLogic
+      import Exrethinkdb.Query.Joins
       import Exrethinkdb.Query
     end
   end
