@@ -5,7 +5,17 @@ defmodule Exrethinkdb.Mixfile do
     [app: :exrethinkdb,
      version: "0.0.1",
      elixir: "~> 1.0",
+     description: "RethinkDB driver for Elixir",
+     package: package,
      deps: deps]
+  end
+
+  def package do
+    [
+      contributors: ["Peter Hamilton"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/hamiltop/exrethinkdb"}
+    ]
   end
 
   # Configuration for the OTP application
