@@ -10,7 +10,13 @@ defmodule Exrethinkdb.Connection do
         end
       end
       def connect(opts \\ []) do
-        Exrethinkdb.Connection.connect(Dict.put_new(opts, :name, __MODULE__))    
+        {:ok, pid} = start_link(opts)  
+        pid
+      end
+
+      def start_link(opts \\ []) do
+        opts = Dict.put_new(opts, :name, __MODULE__)
+        Exrethinkdb.Connection.start_link(opts)  
       end
 
       def run(query) do
@@ -18,7 +24,6 @@ defmodule Exrethinkdb.Connection do
       end
 
       defdelegate next(query), to: Exrethinkdb.Connection
-      defdelegate prepare_and_encode(query), to: Exrethinkdb.Connection
     end
   end
 
@@ -44,6 +49,7 @@ defmodule Exrethinkdb.Connection do
   end
 
   def start_link(opts \\ []) do
+    IO.inspect opts
     args = Dict.take(opts, [:host, :port])
     GenServer.start_link(__MODULE__, args, opts)
   end
