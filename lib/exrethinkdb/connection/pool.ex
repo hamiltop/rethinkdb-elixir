@@ -9,10 +9,14 @@ defmodule Exrethinkdb.Connection.Pool do
       end
       def start_link(opts \\ []) do
         opts = Dict.put_new(opts, :name, __MODULE__)
+        a = Agent.start_link(fn -> 0 end, name: __MODULE__.Agent)
         Exrethinkdb.Connection.Pool.start_link(opts)  
       end
       def run(query) do
-        conn = Exrethinkdb.Connection.Pool.get_connection(__MODULE__)        
+        n = Agent.get_and_update(__MODULE__.Agent, fn (count) ->
+          {count, count + 1}
+        end)
+        conn = Exrethinkdb.Connection.Pool.get_connection(__MODULE__, n)
         Exrethinkdb.Connection.run(query, conn)
       end
       
@@ -38,14 +42,15 @@ defmodule Exrethinkdb.Connection.Pool do
     Exrethinkdb.Connection.run query, get_connection(pid)
   end
 
-  def get_connection(pid) do
+  def get_connection(pid, n \\ 0) do
     connections = Supervisor.which_children(pid) |>
       Stream.map(fn
         {_id, :restarting, _type, _modules} -> nil
         {_id, :undefined, _type, _modules} -> nil
         {_id, child, _type, _modules} -> child   
       end) |> Stream.filter(&(&1 != nil)) |> Enum.to_list
-    count = Enum.count(connections)
-    Enum.at(connections, :random.uniform(count) - 1)
+    conn_length = Enum.count(connections)
+    n = rem(n, conn_length)
+    Enum.at(connections, n)
   end
 end

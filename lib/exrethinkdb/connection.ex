@@ -34,7 +34,7 @@ defmodule Exrethinkdb.Connection do
 
   def run(query, pid) do
     query = prepare_and_encode(query)
-    {response, token} = GenServer.call(pid, {:query, query})
+    {response, token} = GenServer.call(pid, {:query, query}, :infinity)
     Exrethinkdb.Response.parse(response, token, pid)
   end
 
