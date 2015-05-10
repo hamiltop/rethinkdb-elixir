@@ -16,10 +16,17 @@ defmodule Exrethinkdb.Query.Macros do
       end
     end
   end
+  defmacro operate_on_seq_and_list(op, opcode) do
+    quote do
+      def unquote(op)(seq, args) when is_list(args) do
+        %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)]]}
+      end
+    end
+  end
   defmacro operate_on_single_arg(op, opcode) do
     quote do
       def unquote(op)(arg) do
-        %Q{query: [unquote(opcode), [arg]]}
+        %Q{query: [unquote(opcode), [wrap(arg)]]}
       end
     end
   end

@@ -3,13 +3,15 @@ defmodule Exrethinkdb.Query do
   defstruct query: nil
 
   @type t :: %Q{}
-  @type reql_string :: (String.t|%Q{})
-  @type reql_number :: (integer|float|%Q{})
-  @type reql_array :: ([term]|%Q{})
-  @type reql_bool :: (boolean|%Q{})
-  @type reql_datum :: term
-  @type reql_func1 :: (term -> term)|%Q{}
-  @type reql_func2 :: (term, term -> term)|%Q{}
+  @type reql_string :: String.t|t
+  @type reql_number :: integer|float|t
+  @type reql_array  :: [term]|t
+  @type reql_bool   :: boolean|t
+  @type reql_obj    :: %{}|t
+  @type reql_datum  :: term
+  @type reql_func1  :: (term -> term)|%Q{}
+  @type reql_func2  :: (term, term -> term)|%Q{}
+  @type reql_opts   :: %{}
 
   defmacro __using__(_opts) do
     quote do
@@ -69,24 +71,18 @@ defmodule Exrethinkdb.Query do
   def pluck(selection, fields) when is_list(fields), do: %Q{query: [33, [selection | fields]]}
   def pluck(selection, field), do: %Q{query: [33, [selection, field]]}
   def without(selection, fields), do: %Q{query: [34, [selection | fields]]}
-  def distinct(sequence), do: %Q{query: [42, [sequence]]}
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
   def merge(objects), do: %Q{query: [35, objects]}
 
   def map(seq, f) when is_list(seq), do: map(make_array(seq), f)
   def map(sequence, f), do: %Q{query: [38, [sequence, func(f)]]}
-  def reduce(sequence, f), do: %Q{query: [37, [sequence, func(f)]]}
   def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
   def concat_map(sequence, f), do: flat_map(sequence, f)
 
   def order_by(sequence, order), do: order_by(sequence, order, %{})
   def order_by(sequence, order, options) when is_list(order), do: %Q{query: [41, [sequence | order], options]}
   def order_by(sequence, order, options), do: %Q{query: [41, [sequence, order], options]}
-
-  def count(sequence), do: %Q{query: [43, [sequence]]}
-  def count(sequence, f) when is_function(f), do: %Q{query: [43, [sequence, func(f)]]}
-  def count(sequence, d), do: %Q{query: [43, [sequence, d]]}
 
   def append(array, datum), do: %Q{query: [29, [array, datum]]}
   def prepend(array, datum), do: %Q{query: [30, [array, datum]]}
@@ -101,17 +97,6 @@ defmodule Exrethinkdb.Query do
   def offsets_of(seq, el) when is_list(seq), do: offsets_of(make_array(seq), el)
   def offsets_of(seq, f) when is_function(f), do: %Q{query: [87, [seq, func(f)]]}
   def offsets_of(seq, el), do: %Q{query: [87, [seq, el]]}
-  def contains(seq, data) when is_list(seq), do: contains(make_array(seq), data)
-  def contains(seq, list) when is_list(list) do
-    data = list |> Enum.map(fn
-      f when is_function(f) -> func(f)
-      x -> x
-    end)
-    %Q{query: [93, [seq | data]]}
-  end
-  def contains(seq, f) when is_function(f), do: contains(seq, func(f))
-  # TODO: contains with multiple functions
-  def contains(seq, el), do: %Q{query: [93, [seq, el]]}
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
 
