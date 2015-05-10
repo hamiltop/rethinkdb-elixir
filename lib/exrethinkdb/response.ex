@@ -49,7 +49,7 @@ defmodule Exrethinkdb.Response do
 
   def parse(raw_data, token, pid) do
     d = Poison.decode!(raw_data)
-    data = convert_reql_pseudotypes(d["r"])
+    data = Exrethinkdb.Query.Pseudotypes.convert_reql_pseudotypes(d["r"])
     case d["t"] do
       1  -> %Exrethinkdb.Record{data: hd(data)}
       2  -> %Exrethinkdb.Collection{data: data}
@@ -63,22 +63,6 @@ defmodule Exrethinkdb.Response do
       18  -> %Exrethinkdb.Response{token: token, data: d}
     end
   end
-
-  def convert_reql_pseudotypes(nil), do: nil
-  def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA", "data" => data}) do
-    a = Enum.map(data, fn ([k, data]) ->
-      %{} |> Map.put(k, data)
-    end) |> Enum.reduce(%{}, &Map.merge/2)
-  end
-  def convert_reql_pseudotypes(list) when is_list(list) do
-    Enum.map(list, &convert_reql_pseudotypes/1)
-  end
-  def convert_reql_pseudotypes(map) when is_map(map) do
-    Enum.map(map, fn {k, v} ->
-      {k, convert_reql_pseudotypes(v)}
-    end) |> Enum.into %{}
-  end
-  def convert_reql_pseudotypes(string), do: string
 
   def to_order_by_limit_feed(%{token: token, pid: pid, data: data, note: [3]}) do
     data = data |> Enum.map(fn (el) -> el["new_val"] end)
