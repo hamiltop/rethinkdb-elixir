@@ -20,6 +20,8 @@ defmodule Exrethinkdb.Lambda do
       {:<=, _, args} ->     quote do: Query.MathLogic.le(unquote(args))
       {:>, _, args} ->      quote do: Query.MathLogic.gt(unquote(args))
       {:>=, _, args} ->     quote do: Query.MathLogic.ge(unquote(args))
+      {:||, _, args} ->     quote do: Query.MathLogic.or_r(unquote(args))
+      {:&&, _, args} ->     quote do: Query.MathLogic.and_r(unquote(args))
       {:if, _, [expr, [do: truthy, else: falsy]]} ->
         quote do
           Query.branch(unquote(expr), unquote(truthy), unquote(falsy))
