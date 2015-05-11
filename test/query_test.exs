@@ -3,37 +3,22 @@ defmodule QueryTest do
   alias Exrethinkdb.Query
   alias Exrethinkdb.Record
   alias Exrethinkdb.Collection
+  use TestConnection
 
   setup_all do
-    socket = TestConnection.connect
+    socket = connect
     {:ok, %{socket: socket}}
   end
 
   @db_name "query_test_db_1"
   @table_name "query_test_table_1"
   setup context do
-    q = Query.db_drop(@db_name)
-    TestConnection.run(q)
+    q = db_drop(@db_name)
+    run(q)
 
-    q = Query.table_drop(@table_name)
-    TestConnection.run(q)
+    q = table_drop(@table_name)
+    run(q)
     {:ok, context}
-  end
-
-  test "databases" do
-    q = Query.db_create(@db_name)
-    %Record{data: %{"dbs_created" => 1}} = TestConnection.run(q)
-
-    q = Query.db_list
-    %Record{data: dbs} = TestConnection.run(q)
-    assert Enum.member?(dbs, @db_name)
-
-    q = Query.db_drop(@db_name)
-    %Record{data: %{"dbs_dropped" => 1}} = TestConnection.run(q)
-
-    q = Query.db_list
-    %Record{data: dbs} = TestConnection.run(q)
-    assert !Enum.member?(dbs, @db_name)
   end
 
   test "tables" do
@@ -58,7 +43,7 @@ defmodule QueryTest do
   end
 
   test "tables with specific database" do
-    q = Query.db_create(@db_name)
+    q = db_create(@db_name)
     %Record{data: %{"dbs_created" => 1}} = TestConnection.run(q)
     db_query = Query.db(@db_name)
 

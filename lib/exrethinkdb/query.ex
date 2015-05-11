@@ -19,6 +19,7 @@ defmodule Exrethinkdb.Query do
       import Exrethinkdb.Query.MathLogic
       import Exrethinkdb.Query.Joins
       import Exrethinkdb.Query.Aggregation
+      import Exrethinkdb.Query.Database
       import Exrethinkdb.Query
     end
   end
@@ -28,10 +29,6 @@ defmodule Exrethinkdb.Query do
   def db(name), do:           %Q{query: [14, [name]]}
   def table(name), do:        %Q{query: [15, [name]]}
   def table(query, name), do: %Q{query: [15, [query, name]]}
-
-  def db_create(name), do:    %Q{query: [57, [name]]}
-  def db_drop(name), do:      %Q{query: [58, [name]]}
-  def db_list, do:            %Q{query: [59]}
 
   def table_create(db_query, name, options), do: %Q{query: [60, [db_query, name], options]}
   def table_create(name, options = %{}), do: %Q{query: [60, [name], options]}
