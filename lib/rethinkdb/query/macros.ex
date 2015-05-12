@@ -4,6 +4,9 @@ defmodule RethinkDB.Query.Macros do
 
   defmacro operate_on_two_args(op, opcode) do
     quote do
+      def unquote(op)(left, right, opts) when is_map(opts) do
+        %Q{query: [unquote(opcode), [wrap(left), wrap(right)], opts]}
+      end
       def unquote(op)(left, right) do
         %Q{query: [unquote(opcode), [wrap(left), wrap(right)]]}
       end
@@ -32,15 +35,11 @@ defmodule RethinkDB.Query.Macros do
   end
   defmacro operate_on_single_arg(op, opcode) do
     quote do
-      def unquote(op)(arg) do
-        %Q{query: [unquote(opcode), [wrap(arg)]]}
-      end
-    end
-  end
-  defmacro operate_on_single_arg_with_opts(op, opcode) do
-    quote do
       def unquote(op)(arg, opts) when is_map(opts) do
         %Q{query: [unquote(opcode), [wrap(arg)], opts]}
+      end
+      def unquote(op)(arg) do
+        %Q{query: [unquote(opcode), [wrap(arg)]]}
       end
     end
   end

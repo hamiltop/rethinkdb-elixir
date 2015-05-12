@@ -41,4 +41,37 @@ defmodule WritingDataTest do
     assert Enum.map(data, &(&1["name"])) |> Enum.sort == ["Hello", "World"]
   end
 
+  test "update" do
+    table_query = table(@table_name)
+    q = insert(table_query, %{name: "Hello", attr: "World"})
+    %Record{data: %{"inserted" => 1, "generated_keys" => [key]}} = run(q)
+
+    record_query = table_query |> get(key)
+    q = record_query |> update(%{name: "Hi"})
+    run q
+    q = record_query
+    %Record{data: data} = run q
+    assert data == %{"id" => key, "name" => "Hi", "attr" => "World"}
+  end
+
+  test "replace" do
+    table_query = table(@table_name)
+    q = insert(table_query, %{name: "Hello", attr: "World"})
+    %Record{data: %{"inserted" => 1, "generated_keys" => [key]}} = run(q)
+
+    record_query = table_query |> get(key)
+    q = record_query |> replace(%{id: key, name: "Hi"})
+    run q
+    q = record_query
+    %Record{data: data} = run q
+    assert data == %{"id" => key, "name" => "Hi"}
+  end
+
+  test "sync" do
+    table_query = table(@table_name)
+    q = table_query |> sync
+    %Record{data: data} = run q
+    assert data == %{"synced" => 1}
+  end
+
 end

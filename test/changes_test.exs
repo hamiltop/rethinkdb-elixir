@@ -1,6 +1,5 @@
 defmodule ChangesTest do
   use ExUnit.Case
-  alias RethinkDB.Query
   alias RethinkDB.Feed
   use TestConnection
 

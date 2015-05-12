@@ -51,10 +51,6 @@ defmodule RethinkDB.Query do
 
   def between(query, lower, upper, options \\ %{}), do: [182, [query, lower, upper, options]]
 
-  def update(selection, object, options \\ %{}), do: %Q{query: [53, [selection, object], options]}
-  def replace(selection, object, options \\ %{}), do: %Q{query: [55, [selection, object], options]}
-  def delete(selection, options \\ %{}), do: %Q{query: [54, [selection], options]}
-
   def changes(selection), do: %Q{query: [152, [selection]]}
 
   def get_field(seq, field) when is_list(seq), do: get_field(make_array(seq), field)

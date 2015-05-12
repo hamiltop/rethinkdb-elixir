@@ -112,8 +112,8 @@ defmodule RethinkDB.Query.Aggregation do
   """
   @spec min(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
   def min(seq, opts) when is_map(opts), do: %Q{query: [147, [wrap(seq)], opts]}
-  operate_on_two_args(:min, 147)
   operate_on_single_arg(:min, 147)
+  operate_on_two_args(:min, 147)
 
   @doc """
   Finds the maximum element of a sequence. The max command can be called with:
@@ -131,8 +131,8 @@ defmodule RethinkDB.Query.Aggregation do
   """
   @spec max(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
   def max(seq, opts) when is_map(opts), do: %Q{query: [148, [wrap(seq)], opts]}
-  operate_on_two_args(:max, 148)
   operate_on_single_arg(:max, 148)
+  operate_on_two_args(:max, 148)
 
   @doc """
   Removes duplicates from elements in a sequence.
