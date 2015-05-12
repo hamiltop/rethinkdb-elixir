@@ -3,7 +3,7 @@ defmodule RethinkDB.Mixfile do
 
   def project do
     [app: :rethinkdb,
-     version: "0.0.3",
+     version: "0.0.4",
      elixir: "~> 1.0",
      description: "RethinkDB driver for Elixir",
      package: package,
@@ -14,7 +14,7 @@ defmodule RethinkDB.Mixfile do
     [
       contributors: ["Peter Hamilton"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/hamiltop/exrethinkdb"}
+      links: %{"GitHub" => "https://github.com/hamiltop/rethinkdb-elixir"}
     ]
   end
 
