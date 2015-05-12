@@ -1,7 +1,7 @@
 RethinkDB [![Build Status](https://travis-ci.org/hamiltop/rethinkdb-elixir.svg?branch=master)](https://travis-ci.org/hamiltop/rethinkdb-elixir)
 ===========
 
-Pipeline enabled Rethinkdb client in pure Elixir. Still a work in progress.
+Pipeline enabled RethinkDB client in pure Elixir. Still a work in progress.
 
 ###Connection
 
@@ -40,7 +40,7 @@ end
 ```
 This connection can be supervised without a name (it will assume the module as the name).
 ```elixir
-worker(RethinkDB.Connection, [])
+worker(FooConnection, [])
 ```
 Queries can be run without providing a connection (it will use the name connection).
 ```elixir
