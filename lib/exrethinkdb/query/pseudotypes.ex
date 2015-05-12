@@ -1,4 +1,4 @@
-defmodule Exrethinkdb.Query.Pseudotypes do
+defmodule RethinkDB.Query.Pseudotypes do
 
   def convert_reql_pseudotypes(nil), do: nil
   def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data) do

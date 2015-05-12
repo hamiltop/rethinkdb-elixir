@@ -1,25 +1,25 @@
-defmodule Exrethinkdb.Query.MathLogic do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.MathLogic do
+  alias RethinkDB.Query, as: Q
   @moduledoc """
   ReQL methods for math and logic operations.
 
-  All examples assume that `use Exrethinkdb` has been called.
+  All examples assume that `use RethinkDB` has been called.
   """
 
-  require Exrethinkdb.Query.Macros
-  import Exrethinkdb.Query.Macros
+  require RethinkDB.Query.Macros
+  import RethinkDB.Query.Macros
 
   @doc """
   Sum two numbers, concatenate two strings, or concatenate 2 arrays.
 
       iex> add(1, 2) |> run conn
-      %Exrethinkdb.Record{data: 3}
+      %RethinkDB.Record{data: 3}
 
       iex> add("hello", " world") |> run conn
-      %Exrethinkdb.Record{data: "hello world"}
+      %RethinkDB.Record{data: "hello world"}
 
       iex> add([1,2], [3,4]) |> run conn
-      %Exrethinkdb.Record{data: [1,2,3,4]}
+      %RethinkDB.Record{data: [1,2,3,4]}
 
   """
   @spec add((Q.reql_number | Q.reql_string), (Q.reql_number | Q.reql_string)) :: Q.t
@@ -29,10 +29,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Add multiple values.
 
       iex> add([1, 2]) |> run conn
-      %Exrethinkdb.Record{data: 3}
+      %RethinkDB.Record{data: 3}
 
       iex> add(["hello", " world"]) |> run
-      %Exrethinkdb.Record{data: "hello world"}
+      %RethinkDB.Record{data: "hello world"}
 
   """
   @spec add([(Q.reql_number | Q.reql_string | Q.reql_array)]) :: Q.t
@@ -42,7 +42,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Subtract two numbers.
 
       iex> sub(1, 2) |> run conn
-      %Exrethinkdb.Record{data: -1}
+      %RethinkDB.Record{data: -1}
 
   """
   @spec sub(Q.reql_number, Q.reql_number) :: Q.t
@@ -52,7 +52,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Subtract multiple values. Left associative.
 
       iex> sub([9, 1, 2]) |> run conn
-      %Exrethinkdb.Record{data: 6}
+      %RethinkDB.Record{data: 6}
 
   """
   @spec sub([Q.reql_number]) :: Q.t
@@ -62,10 +62,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Multiply two numbers, or make a periodic array.
 
       iex> mul(2,3) |> run conn
-      %Exrethinkdb.Record{data: 6}
+      %RethinkDB.Record{data: 6}
 
       iex> mul([1,2], 2) |> run conn
-      %Exrethinkdb.Record{data: [1,2,1,2]}
+      %RethinkDB.Record{data: [1,2,1,2]}
 
   """
   @spec mul((Q.reql_number | Q.reql_array), (Q.reql_number | Q.reql_array)) :: Q.t
@@ -74,7 +74,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Multiply multiple values.
 
       iex> mul([2,3,4]) |> run conn
-      %Exrethinkdb.Record{data: 24}
+      %RethinkDB.Record{data: 24}
 
   """
   @spec mul([(Q.reql_number | Q.reql_array)]) :: Q.t
@@ -84,7 +84,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Divide two numbers.
 
       iex> divide(12, 4) |> run conn
-      %Exrethinkdb.Record{data: 3}
+      %RethinkDB.Record{data: 3}
 
   """
   @spec divide(Q.reql_number, Q.reql_number) :: Q.t
@@ -93,7 +93,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Divide a list of numbers. Left associative.
 
       iex> divide([12, 2, 3]) |> run conn
-      %Exrethinkdb.Record{data: 2}
+      %RethinkDB.Record{data: 2}
 
   """
   @spec divide([Q.reql_number]) :: Q.t
@@ -103,7 +103,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Find the remainder when dividing two numbers.
 
       iex> mod(23, 4) |> run conn
-      %Exrethinkdb.Record{data: 3}
+      %RethinkDB.Record{data: 3}
 
   """
   @spec mod(Q.reql_number, Q.reql_number) :: Q.t
@@ -113,10 +113,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Compute the logical “and” of two values.
 
       iex> and(true, true) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> and(false, true) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
   """
   @spec and_r(Q.reql_bool, Q.reql_bool) :: Q.t
   operate_on_two_args(:and_r, 67)
@@ -124,10 +124,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Compute the logical “and” of all values in a list.
 
       iex> and_r([true, true, true]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> and_r([false, true, true]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
   """
   @spec and_r([Q.reql_bool]) :: Q.t
   operate_on_list(:and_r, 67)
@@ -136,10 +136,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Compute the logical “or” of two values.
 
       iex> or_r(true, false) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> or_r(false, false) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
   """
   @spec or_r(Q.reql_bool, Q.reql_bool) :: Q.t
@@ -148,10 +148,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Compute the logical “or” of all values in a list.
 
       iex> or_r([true, true, true]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> or_r([false, true, true]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
   """
   @spec or_r([Q.reql_bool]) :: Q.t
@@ -161,10 +161,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if two values are equal.
 
       iex> eq(1,1) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> eq(1, 2) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
   """
   @spec eq(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:eq, 17)
@@ -172,10 +172,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are equal.
 
       iex> eq([2, 2, 2]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> eq([2, 1, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
   """
   @spec eq([Q.reql_datum]) :: Q.t
   operate_on_list(:eq, 17)
@@ -184,10 +184,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if two values are not equal.
 
       iex> ne(1,1) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> ne(1, 2) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec ne(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:ne, 18)
@@ -195,10 +195,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are not equal.
 
       iex> ne([2, 2, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> ne([2, 1, 2]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec ne([Q.reql_datum]) :: Q.t
   operate_on_list(:ne, 18)
@@ -207,10 +207,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if one value is less than the other.
 
       iex> lt(2,1) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> lt(1, 2) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec lt(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:lt, 19)
@@ -218,10 +218,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are less than the next. Left associative.
 
       iex> lt([1, 4, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> lt([1, 4, 5]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec lt([Q.reql_datum]) :: Q.t
   operate_on_list(:lt, 19)
@@ -230,10 +230,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if one value is less than or equal to the other.
 
       iex> le(1,1) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> le(1, 2) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec le(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:le, 20)
@@ -241,10 +241,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are less than or equal to the next. Left associative.
 
       iex> le([1, 4, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> le([1, 4, 4]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec le([Q.reql_datum]) :: Q.t
   operate_on_list(:le, 20)
@@ -253,10 +253,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if one value is greater than the other.
 
       iex> gt(1,2) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> gt(2,1) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec gt(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:gt, 21)
@@ -264,10 +264,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are greater than the next. Left associative.
 
       iex> gt([1, 4, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> gt([10, 4, 2]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec gt([Q.reql_datum]) :: Q.t
   operate_on_list(:gt, 21)
@@ -276,10 +276,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if one value is greater than or equal to the other.
 
       iex> ge(1,1) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
 
       iex> ge(2, 1) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec ge(Q.reql_datum, Q.reql_datum) :: Q.t
   operate_on_two_args(:ge, 22)
@@ -287,10 +287,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   Test if all values in a list are greater than or equal to the next. Left associative.
 
       iex> le([1, 4, 2]) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
       iex> le([10, 4, 4]) |> run conn
-      %Exrethinkdb.Record{data: true}
+      %RethinkDB.Record{data: true}
   """
   @spec ge([Q.reql_datum]) :: Q.t
   operate_on_list(:ge, 22)
@@ -299,7 +299,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Compute the logical inverse (not) of an expression.
 
       iex> not(true) |> run conn
-      %Exrethinkdb.Record{data: false}
+      %RethinkDB.Record{data: false}
 
   """
   @spec not_r(Q.reql_bool) :: Q.t
@@ -309,7 +309,7 @@ defmodule Exrethinkdb.Query.MathLogic do
   Generate a random float between 0 and 1.
 
       iex> random |> run conn
-      %Exrethinkdb.Record{data: 0.43}
+      %RethinkDB.Record{data: 0.43}
 
   """
   @spec random :: Q.t
@@ -319,10 +319,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   random value will be an interger. If upper is a float it will be a float.
 
       iex> random(5) |> run conn
-      %Exrethinkdb.Record{data: 3}
+      %RethinkDB.Record{data: 3}
 
       iex> random(5.0) |> run conn
-      %Exrethinkdb.Record{data: 3.7}
+      %RethinkDB.Record{data: 3.7}
 
   """
   @spec random(Q.reql_number) :: Q.t
@@ -333,10 +333,10 @@ defmodule Exrethinkdb.Query.MathLogic do
   random value will be an interger. If one of them is a float it will be a float.
 
       iex> random(5, 10) |> run conn
-      %Exrethinkdb.Record{data: 8}
+      %RethinkDB.Record{data: 8}
 
       iex> random(5.0, 15.0,) |> run conn
-      %Exrethinkdb.Record{data: 8.34}
+      %RethinkDB.Record{data: 8.34}
 
   """
   @spec random(Q.reql_number, Q.reql_number) :: Q.t

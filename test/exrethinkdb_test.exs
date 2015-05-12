@@ -1,4 +1,4 @@
-defmodule ExrethinkdbTest do
+defmodule RethinkDBTest do
   use ExUnit.Case
 
   test "the truth" do

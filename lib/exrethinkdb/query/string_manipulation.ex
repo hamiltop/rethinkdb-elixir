@@ -1,9 +1,9 @@
-defmodule Exrethinkdb.Query.StringManipulation do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.StringManipulation do
+  alias RethinkDB.Query, as: Q
   @moduledoc """
   ReQL methods for string manipulation.
 
-  All examples assume that `use Exrethinkdb` has been called.
+  All examples assume that `use RethinkDB` has been called.
   """
 
   @doc """
@@ -23,7 +23,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   Split a `string` on whitespace.
 
       iex> "abracadabra" |> split |> run conn
-      %Exrethinkdb.Record{data: ["abracadabra"]}
+      %RethinkDB.Record{data: ["abracadabra"]}
   """
   @spec split(Q.reql_string) :: Q.t
   def split(string), do: %Q{query: [149, [string]]}
@@ -32,7 +32,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   Split a `string` on `separator`.
 
       iex> "abra-cadabra" |> split("-") |> run conn
-      %Exrethinkdb.Record{data: ["abra", "cadabra"]}
+      %RethinkDB.Record{data: ["abra", "cadabra"]}
   """
   @spec split(Q.reql_string, Q.reql_string) :: Q.t
   def split(string, separator), do: %Q{query: [149, [string, separator]]}
@@ -41,7 +41,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   Split a `string` with a given `separator` into `max_result` segments.
   
       iex> "a-bra-ca-da-bra" |> split("-", 2) |> run conn
-      %Exrethinkdb.Record{data: ["a", "bra", "ca-da-bra"]}
+      %RethinkDB.Record{data: ["a", "bra", "ca-da-bra"]}
   
   """
   @spec split(Q.reql_string, (Q.reql_string|nil), integer) :: Q.t
@@ -51,7 +51,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   Convert a string to all upper case.
 
       iex> "hi" |> upcase |> run conn
-      %Exrethinkdb.Record{data: "HI"}
+      %RethinkDB.Record{data: "HI"}
 
   """
   @spec upcase(Q.reql_string) :: Q.t
@@ -61,7 +61,7 @@ defmodule Exrethinkdb.Query.StringManipulation do
   Convert a string to all down case.
 
       iex> "Hi" |> downcase |> run conn
-      %Exrethinkdb.Record{data: "hi"}
+      %RethinkDB.Record{data: "hi"}
 
   """
   @spec downcase(Q.reql_string) :: Q.t

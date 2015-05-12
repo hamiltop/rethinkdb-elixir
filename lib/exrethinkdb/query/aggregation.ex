@@ -1,13 +1,13 @@
-defmodule Exrethinkdb.Query.Aggregation do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.Aggregation do
+  alias RethinkDB.Query, as: Q
   @moduledoc """
   ReQL methods for aggregation operations.
 
-  All examples assume that `use Exrethinkdb` has been called.
+  All examples assume that `use RethinkDB` has been called.
   """
 
-  require Exrethinkdb.Query.Macros
-  import Exrethinkdb.Query.Macros
+  require RethinkDB.Query.Macros
+  import RethinkDB.Query.Macros
 
   @doc """
   Takes a stream and partitions it into multiple groups based on the fields or 

@@ -1,16 +1,16 @@
-defmodule Exrethinkdb do
+defmodule RethinkDB do
 
   defmacro __using__(_opts) do
     quote do
-      use Exrethinkdb.Query
-      import Exrethinkdb
+      use RethinkDB.Query
+      import RethinkDB
     end
   end
 
-  defdelegate connect(), to: Exrethinkdb.Connection
-  defdelegate connect(opts), to: Exrethinkdb.Connection
-  defdelegate run(query, pid), to: Exrethinkdb.Connection
-  defdelegate next(collection), to: Exrethinkdb.Connection
-  defdelegate prepare_and_encode(query), to: Exrethinkdb.Connection
+  defdelegate connect(), to: RethinkDB.Connection
+  defdelegate connect(opts), to: RethinkDB.Connection
+  defdelegate run(query, pid), to: RethinkDB.Connection
+  defdelegate next(collection), to: RethinkDB.Connection
+  defdelegate prepare_and_encode(query), to: RethinkDB.Connection
 
 end

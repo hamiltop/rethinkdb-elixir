@@ -1,12 +1,12 @@
 defmodule AggregationTest do
   use ExUnit.Case
   use TestConnection
-  alias Exrethinkdb.Query.Aggregation, as: A
+  alias RethinkDB.Query.Aggregation, as: A
 
-  alias Exrethinkdb.Record
+  alias RethinkDB.Record
 
-  require Exrethinkdb.Lambda
-  import Exrethinkdb.Lambda
+  require RethinkDB.Lambda
+  import RethinkDB.Lambda
 
   setup_all do
     TestConnection.connect
