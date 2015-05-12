@@ -2,7 +2,7 @@ defmodule MathLogicTest do
   use ExUnit.Case
   use TestConnection
 
-  alias Exrethinkdb.Record
+  alias RethinkDB.Record
   
   setup_all do
     TestConnection.connect

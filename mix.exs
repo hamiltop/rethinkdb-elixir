@@ -1,8 +1,8 @@
-defmodule Exrethinkdb.Mixfile do
+defmodule RethinkDB.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :exrethinkdb,
+    [app: :rethinkdb,
      version: "0.0.3",
      elixir: "~> 1.0",
      description: "RethinkDB driver for Elixir",

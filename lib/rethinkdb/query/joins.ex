@@ -1,13 +1,13 @@
-defmodule Exrethinkdb.Query.Joins do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.Joins do
+  alias RethinkDB.Query, as: Q
   @moduledoc """
   ReQL methods for join operations.
 
-  All examples assume that `use Exrethinkdb` has been called.
+  All examples assume that `use RethinkDB` has been called.
   """
 
-  require Exrethinkdb.Query.Macros
-  import Exrethinkdb.Query.Macros
+  require RethinkDB.Query.Macros
+  import RethinkDB.Query.Macros
 
   @doc """
   Returns an inner join of two sequences. The returned sequence represents an

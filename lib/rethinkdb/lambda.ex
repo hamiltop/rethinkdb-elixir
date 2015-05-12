@@ -1,5 +1,5 @@
-defmodule Exrethinkdb.Lambda do
-  alias Exrethinkdb.Query
+defmodule RethinkDB.Lambda do
+  alias RethinkDB.Query
  
   defmacro lambda(block) do
     build(block)

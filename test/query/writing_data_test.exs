@@ -1,8 +1,8 @@
 defmodule WritingDataTest do
   use ExUnit.Case
   use TestConnection
-  alias Exrethinkdb.Record
-  alias Exrethinkdb.Collection
+  alias RethinkDB.Record
+  alias RethinkDB.Collection
 
   setup_all do
     connect

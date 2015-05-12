@@ -1,5 +1,5 @@
-defmodule Exrethinkdb.Query.Macros do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.Macros do
+  alias RethinkDB.Query, as: Q
   @moduledoc false
 
   defmacro operate_on_two_args(op, opcode) do

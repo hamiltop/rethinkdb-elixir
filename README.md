@@ -1,4 +1,4 @@
-Exrethinkdb [![Build Status](https://travis-ci.org/hamiltop/exrethinkdb.svg?branch=master)](https://travis-ci.org/hamiltop/exrethinkdb)
+RethinkDB [![Build Status](https://travis-ci.org/hamiltop/exrethinkdb.svg?branch=master)](https://travis-ci.org/hamiltop/exrethinkdb)
 ===========
 
 Pipeline enabled Rethinkdb client in pure Elixir. Still a work in progress.
@@ -9,116 +9,116 @@ Connections are managed by a GenServer. The GenServer will register itself with 
 
 ####Basic Local Connection
 ```elixir
-alias Exrethinkdb.Query
+alias RethinkDB.Query
 
-conn = Exrethinkdb.connect
+conn = RethinkDB.connect
 ```
 
 ####Basic Remote Connection
 ```elixir
-conn = Exrethinkdb.connect([host: "10.0.0.17", port: 28015])
+conn = RethinkDB.connect([host: "10.0.0.17", port: 28015])
 ```
 
 ####Named Connection
 ```elixir
-conn = Exrethinkdb.connect([name: :foo]})
+conn = RethinkDB.connect([name: :foo]})
 ```
 
 ####Supervised Connection
 Start the supervisor with:
 ```elixir
-worker(Exrethinkdb.Connection, [[name: :foo]])
-worker(Exrethinkdb.Connection, [[name: :bar, host: 'localhost', port: 28015]])
+worker(RethinkDB.Connection, [[name: :foo]])
+worker(RethinkDB.Connection, [[name: :bar, host: 'localhost', port: 28015]])
 ```
 
 ####Default Connection
-An `Exrethinkdb.Connection` does parallel queries via pipelining. It can and should be shared among multiple processes. Because of this, it is common to have one connection shared in your application. To create a default connection, we create a new module and `use Exrethinkdb.Connection`.
+An `RethinkDB.Connection` does parallel queries via pipelining. It can and should be shared among multiple processes. Because of this, it is common to have one connection shared in your application. To create a default connection, we create a new module and `use RethinkDB.Connection`.
 ```elixir
 defmodule FooDatabase do
-  use Exrethinkdb.Connection
+  use RethinkDB.Connection
 end
 ```
 This connection can be supervised without a name (it will assume the module as the name).
 ```elixir
-worker(Exrethinkdb.Connection, [])
+worker(RethinkDB.Connection, [])
 ```
 Queries can be run without providing a connection (it will use the name connection).
 ```elixir
-use Exrethinkdb.Query
+use RethinkDB.Query
 table("people") |> FooDatabase.run
 ```
 
 ###Query
-`Exrethinkdb.run/2` accepts a process as the second argument (to facilitate piping).
+`RethinkDB.run/2` accepts a process as the second argument (to facilitate piping).
 
 ####Insert
 ```elixir
 
 q = Query.table("people")
   |> Query.insert(%{first_name: "John", last_name: "Smith"})
-  |> Exrethinkdb.run conn
+  |> RethinkDB.run conn
 ```
 
 ####Filter
 ```elixir
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
-  |> Exrethinkdb.run conn
+  |> RethinkDB.run conn
 ```
 
 ####Functions
-Exrethinkdb supports RethinkDB functions in queries. There are two approaches you can take:
+RethinkDB supports RethinkDB functions in queries. There are two approaches you can take:
 
 Use RethinkDB operators
 ```elixir
-import Exrethinkdb.Query
+import RethinkDB.Query
 
 make_array([1,2,3]) |> map(fn (x) -> add(x, 1) end)
 ```
 
 Use Elixir operators via the lambda macro
 ```elixir
-require Exrethinkdb.Lambda
-import Exrethinkdb.Lambda
+require RethinkDB.Lambda
+import RethinkDB.Lambda
 
 make_array([1,2,3]) |> map(lambda fn (x) -> x + 1 end)
 ```
 
 ####Map
 ```elixir
-require Exrethinkdb.Lambda
+require RethinkDB.Lambda
 import Query
-import Exrethinkdb.Lambda
+import RethinkDB.Lambda
 
-conn = Exrethinkdb.connect
+conn = RethinkDB.connect
 
 table("people")
   |> has_fields(["first_name", "last_name"])
   |> map(lambda fn (person) ->
     person[:first_name] + " " + person[:last_name]
-  end) |> Exrethinkdb.run conn
+  end) |> RethinkDB.run conn
 ```
 
-See [query.ex](lib/exrethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
+See [query.ex](lib/rethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
 
 ###Changes
 
-Change feeds can be consumed either incrementally (by calling `Exrethinkdb.next/1`) or via the Enumerable Protocol.
+Change feeds can be consumed either incrementally (by calling `RethinkDB.next/1`) or via the Enumerable Protocol.
 
 ```elixir
 q = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
   |> Query.changes
-  |> Exrethinkdb.run conn
+  |> RethinkDB.run conn
 # get one result
-first_change = Exrethinkdb.next results
+first_change = RethinkDB.next results
 # get stream, chunked in groups of 5, Inspect
 results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
 ```
 
 ###Shortcuts
 
-Calling `use Exrethinkdb` will import all functions into the current scope. If you are using a custom connection, using that connection module will import all functions into the current scope. If you use both `Exrethinkdb` and your custom connection, you will have a namespace clash.
+Calling `use RethinkDB` will import all functions into the current scope. If you are using a custom connection, using that connection module will import all functions into the current scope. If you use both `RethinkDB` and your custom connection, you will have a namespace clash.
 
 ###Questions
 

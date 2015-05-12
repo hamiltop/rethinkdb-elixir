@@ -1,4 +1,4 @@
-defmodule Exrethinkdb.Query do
+defmodule RethinkDB.Query do
   alias __MODULE__, as: Q
   defstruct query: nil
 
@@ -15,13 +15,13 @@ defmodule Exrethinkdb.Query do
 
   defmacro __using__(_opts) do
     quote do
-      import Exrethinkdb.Query.StringManipulation
-      import Exrethinkdb.Query.MathLogic
-      import Exrethinkdb.Query.Joins
-      import Exrethinkdb.Query.Aggregation
-      import Exrethinkdb.Query.Database
-      import Exrethinkdb.Query.WritingData
-      import Exrethinkdb.Query
+      import RethinkDB.Query.StringManipulation
+      import RethinkDB.Query.MathLogic
+      import RethinkDB.Query.Joins
+      import RethinkDB.Query.Aggregation
+      import RethinkDB.Query.Database
+      import RethinkDB.Query.WritingData
+      import RethinkDB.Query
     end
   end
 
@@ -141,14 +141,14 @@ defmodule Exrethinkdb.Query do
     %{query: query ++ el, vars: vars}
   end
 end
-defimpl Poison.Encoder, for: Exrethinkdb.Query do
+defimpl Poison.Encoder, for: RethinkDB.Query do
   def encode(%{query: query}, options) do
     Poison.Encoder.encode(query, options)
   end
 end
-defimpl Access, for: Exrethinkdb.Query do
+defimpl Access, for: RethinkDB.Query do
   def get(%{query: query}, term) do
-    Exrethinkdb.Query.bracket(query, term)
+    RethinkDB.Query.bracket(query, term)
   end
   def get_and_update(_,_,_), do: raise "get_and_update not supported"
 end

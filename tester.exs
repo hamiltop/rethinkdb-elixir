@@ -1,7 +1,7 @@
-alias Exrethinkdb.Query
+alias RethinkDB.Query
 
-a = Exrethinkdb.local_connection
-b = Exrethinkdb.run(a, Query.table("people") |> Query.changes)
+a = RethinkDB.local_connection
+b = RethinkDB.run(a, Query.table("people") |> Query.changes)
 
 b |> Enum.each fn (el) ->
   IO.inspect el

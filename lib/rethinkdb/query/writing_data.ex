@@ -1,8 +1,8 @@
-defmodule Exrethinkdb.Query.WritingData do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.WritingData do
+  alias RethinkDB.Query, as: Q
 
-  require Exrethinkdb.Query.Macros
-  import Exrethinkdb.Query.Macros
+  require RethinkDB.Query.Macros
+  import RethinkDB.Query.Macros
 
   @doc """
   Insert documents into a table. Accepts a single document or an array of 

@@ -1,45 +1,45 @@
-defmodule Exrethinkdb.Connection do
+defmodule RethinkDB.Connection do
   use GenServer
 
   defmacro __using__(_opts) do
     quote do
       defmacro __using__(_opts) do
         quote do
-          use Exrethinkdb.Query
+          use RethinkDB.Query
           import unquote(__MODULE__)
         end
       end
       def connect(opts \\ []) do
-        Exrethinkdb.Connection.connect(Dict.put_new(opts, :name, __MODULE__))    
+        RethinkDB.Connection.connect(Dict.put_new(opts, :name, __MODULE__))    
       end
 
       def run(query) do
-        Exrethinkdb.Connection.run(query, __MODULE__)  
+        RethinkDB.Connection.run(query, __MODULE__)  
       end
 
-      defdelegate next(query), to: Exrethinkdb.Connection
-      defdelegate prepare_and_encode(query), to: Exrethinkdb.Connection
+      defdelegate next(query), to: RethinkDB.Connection
+      defdelegate prepare_and_encode(query), to: RethinkDB.Connection
     end
   end
 
   def connect(opts \\ []) do
-    {:ok, pid} = Exrethinkdb.Connection.start_link(opts)  
+    {:ok, pid} = RethinkDB.Connection.start_link(opts)  
     pid
   end
 
   def run(query, pid) do
     query = prepare_and_encode(query)
     {response, token} = GenServer.call(pid, {:query, query})
-    Exrethinkdb.Response.parse(response, token, pid)
+    RethinkDB.Response.parse(response, token, pid)
   end
 
   def next(%{token: token, pid: pid}) do
     {response, token} = GenServer.call(pid, {:continue, token}, :infinity)
-    Exrethinkdb.Response.parse(response, token, pid)
+    RethinkDB.Response.parse(response, token, pid)
   end
 
   def prepare_and_encode(query) do
-    query = Exrethinkdb.Query.prepare(query)
+    query = RethinkDB.Query.prepare(query)
     Poison.encode!([1, query])      
   end
 
