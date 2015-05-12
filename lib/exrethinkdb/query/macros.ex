@@ -16,6 +16,13 @@ defmodule Exrethinkdb.Query.Macros do
       end
     end
   end
+  defmacro operate_on_list_with_opts(op, opcode) do
+    quote do
+      def unquote(op)(args, opts) when is_list(args) and is_map(opts) do
+        %Q{query: [unquote(opcode), Enum.map(args, &wrap/1), opts]}
+      end
+    end
+  end
   defmacro operate_on_seq_and_list(op, opcode) do
     quote do
       def unquote(op)(seq, args) when is_list(args) do
@@ -30,6 +37,14 @@ defmodule Exrethinkdb.Query.Macros do
       end
     end
   end
+  defmacro operate_on_single_arg_with_opts(op, opcode) do
+    quote do
+      def unquote(op)(arg, opts) when is_map(opts) do
+        %Q{query: [unquote(opcode), [wrap(arg)], opts]}
+      end
+    end
+  end
+  
   defmacro operate_on_zero_args(op, opcode) do
     quote do
       def unquote(op)(), do: %Q{query: [unquote(opcode)]}

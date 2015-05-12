@@ -79,7 +79,7 @@ defmodule QueryTest do
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = Query.table(@table_name)
 
-    q = Query.insert(table_query, %{name: "Hello", attr: "World"})
+    q = insert(table_query, %{name: "Hello", attr: "World"})
     %Record{data: %{"inserted" => 1, "generated_keys" => [key]}} = TestConnection.run(q)
 
     %Collection{data: [%{"id" => ^key, "name" => "Hello", "attr" => "World"}]} = TestConnection.run(table_query)
@@ -90,7 +90,7 @@ defmodule QueryTest do
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = Query.table(@table_name)
 
-    q = Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}])
+    q = insert(table_query, [%{name: "Hello"}, %{name: "World"}])
     %Record{data: %{"inserted" => 2}} = TestConnection.run(q)
 
     %Collection{data: data} = TestConnection.run(table_query)
@@ -104,7 +104,7 @@ defmodule QueryTest do
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = Query.table(@table_name)
 
-    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
     %Collection{data: data} = Query.table(@table_name)
       |> Query.map( Exrethinkdb.Lambda.lambda fn (el) ->
@@ -120,7 +120,7 @@ defmodule QueryTest do
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = Query.table(@table_name)
 
-    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
     %Collection{data: data} = Query.table(@table_name)
     |> Query.filter(%{name: "Hello"})
@@ -135,7 +135,7 @@ defmodule QueryTest do
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = Query.table(@table_name)
 
-    Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
     %Collection{data: data} = Query.table(@table_name)
     |> Query.filter(Exrethinkdb.Lambda.lambda fn (el) ->

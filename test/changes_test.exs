@@ -43,7 +43,7 @@ defmodule ChangesTest do
       changes |> Enum.take(5)  
     end
     1..6 |> Enum.each fn _ ->
-      q = table(@table_name) |> Query.insert(data)
+      q = table(@table_name) |> insert(data)
       run(q)
     end
     data = Task.await(t) 

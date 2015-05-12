@@ -20,6 +20,7 @@ defmodule Exrethinkdb.Query do
       import Exrethinkdb.Query.Joins
       import Exrethinkdb.Query.Aggregation
       import Exrethinkdb.Query.Database
+      import Exrethinkdb.Query.WritingData
       import Exrethinkdb.Query
     end
   end
@@ -49,10 +50,6 @@ defmodule Exrethinkdb.Query do
   def get_all(query, id, options \\ %{}), do: %Q{query: [78, [query,  id], options]}
 
   def between(query, lower, upper, options \\ %{}), do: [182, [query, lower, upper, options]]
-
-  def insert(table, object, options \\ %{})
-  def insert(table, object, options) when is_list(object), do: %Q{query: [56, [table, make_array(object)], options]}
-  def insert(table, object, options), do: %Q{query: [56, [table, object], options]}
 
   def update(selection, object, options \\ %{}), do: %Q{query: [53, [selection, object], options]}
   def replace(selection, object, options \\ %{}), do: %Q{query: [55, [selection, object], options]}
