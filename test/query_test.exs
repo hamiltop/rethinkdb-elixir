@@ -1,8 +1,8 @@
 defmodule QueryTest do
   use ExUnit.Case
-  alias Exrethinkdb.Query
-  alias Exrethinkdb.Record
-  alias Exrethinkdb.Collection
+  alias RethinkDB.Query
+  alias RethinkDB.Record
+  alias RethinkDB.Collection
   use TestConnection
 
   setup_all do
@@ -98,7 +98,7 @@ defmodule QueryTest do
   end
 
   test "map" do
-    require Exrethinkdb.Lambda
+    require RethinkDB.Lambda
 
     q = Query.table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
@@ -107,14 +107,14 @@ defmodule QueryTest do
     Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
     %Collection{data: data} = Query.table(@table_name)
-      |> Query.map( Exrethinkdb.Lambda.lambda fn (el) ->
+      |> Query.map( RethinkDB.Lambda.lambda fn (el) ->
         el[:name] + " " + "with map"
       end) |> TestConnection.run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
   end
 
   test "filter by map" do
-    require Exrethinkdb.Lambda
+    require RethinkDB.Lambda
 
     q = Query.table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
@@ -129,7 +129,7 @@ defmodule QueryTest do
   end
 
   test "filter by lambda" do
-    require Exrethinkdb.Lambda
+    require RethinkDB.Lambda
 
     q = Query.table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
@@ -138,7 +138,7 @@ defmodule QueryTest do
     Query.insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
     %Collection{data: data} = Query.table(@table_name)
-    |> Query.filter(Exrethinkdb.Lambda.lambda fn (el) ->
+    |> Query.filter(RethinkDB.Lambda.lambda fn (el) ->
       el[:name] == "Hello"
     end)
     |> TestConnection.run

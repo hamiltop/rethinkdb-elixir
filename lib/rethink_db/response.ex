@@ -1,18 +1,18 @@
-defmodule Exrethinkdb.Record do
+defmodule RethinkDB.Record do
   defstruct data: ""
 end
 
-defmodule Exrethinkdb.Collection do
+defmodule RethinkDB.Collection do
   defstruct data: []
 end
 
-defmodule Exrethinkdb.OrderByLimitFeed do
+defmodule RethinkDB.OrderByLimitFeed do
   defstruct token: nil, data: [], pid: nil
 
   defimpl Enumerable, for: __MODULE__ do
     def reduce(feed = %{data: data}, acc, fun) do
       stream = Stream.repeatedly(fn ->
-        Exrethinkdb.next(feed)
+        RethinkDB.next(feed)
       end) |> Stream.flat_map(fn (el) ->
         el.data
       end) |> Stream.scan(data, fn
@@ -27,13 +27,13 @@ defmodule Exrethinkdb.OrderByLimitFeed do
   end
 end
 
-defmodule Exrethinkdb.Feed do
+defmodule RethinkDB.Feed do
   defstruct token: nil, data: nil, pid: nil, note: nil
 
   defimpl Enumerable, for: __MODULE__ do
     def reduce(changes, acc, fun) do
       stream = Stream.repeatedly(fn ->
-        Exrethinkdb.next(changes)
+        RethinkDB.next(changes)
       end) |> Stream.flat_map(fn (el) ->
         el.data
       end)
@@ -44,29 +44,29 @@ defmodule Exrethinkdb.Feed do
   end
 end
 
-defmodule Exrethinkdb.Response do
+defmodule RethinkDB.Response do
   defstruct token: nil, data: ""
 
   def parse(raw_data, token, pid) do
     d = Poison.decode!(raw_data)
-    data = Exrethinkdb.Query.Pseudotypes.convert_reql_pseudotypes(d["r"])
+    data = RethinkDB.Query.Pseudotypes.convert_reql_pseudotypes(d["r"])
     case d["t"] do
-      1  -> %Exrethinkdb.Record{data: hd(data)}
-      2  -> %Exrethinkdb.Collection{data: data}
+      1  -> %RethinkDB.Record{data: hd(data)}
+      2  -> %RethinkDB.Collection{data: data}
       3  -> case d["n"] do
-          [2] -> %Exrethinkdb.Feed{token: token, data: hd(data), pid: pid, note: d["n"]}
-           _  -> %Exrethinkdb.Feed{token: token, data: data, pid: pid, note: d["n"]}
+          [2] -> %RethinkDB.Feed{token: token, data: hd(data), pid: pid, note: d["n"]}
+           _  -> %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}
         end
-      4  -> %Exrethinkdb.Response{token: token, data: d}
-      16  -> %Exrethinkdb.Response{token: token, data: d}
-      17  -> %Exrethinkdb.Response{token: token, data: d}
-      18  -> %Exrethinkdb.Response{token: token, data: d}
+      4  -> %RethinkDB.Response{token: token, data: d}
+      16  -> %RethinkDB.Response{token: token, data: d}
+      17  -> %RethinkDB.Response{token: token, data: d}
+      18  -> %RethinkDB.Response{token: token, data: d}
     end
   end
 
   def to_order_by_limit_feed(%{token: token, pid: pid, data: data, note: [3]}) do
     data = data |> Enum.map(fn (el) -> el["new_val"] end)
-    %Exrethinkdb.OrderByLimitFeed{token: token, data: data, pid: pid}
+    %RethinkDB.OrderByLimitFeed{token: token, data: data, pid: pid}
   end
 end
 

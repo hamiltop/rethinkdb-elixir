@@ -1,11 +1,11 @@
 defmodule StringManipulationTest do
   use ExUnit.Case
-  use Exrethinkdb
+  use RethinkDB
 
-  alias Exrethinkdb.Record
+  alias RethinkDB.Record
   
   setup_all do
-    pid = Exrethinkdb.connect
+    pid = RethinkDB.connect
     {:ok, %{conn: pid}}
   end
 

@@ -1,13 +1,13 @@
-defmodule Exrethinkdb.Query.Database do
-  alias Exrethinkdb.Query, as: Q
+defmodule RethinkDB.Query.Database do
+  alias RethinkDB.Query, as: Q
   @moduledoc """
   ReQL methods for database manipulation operations.
 
-  All examples assume that `use Exrethinkdb` has been called.
+  All examples assume that `use RethinkDB` has been called.
   """
 
-  require Exrethinkdb.Query.Macros
-  import Exrethinkdb.Query.Macros
+  require RethinkDB.Query.Macros
+  import RethinkDB.Query.Macros
 
   @doc """
   Create a database. A RethinkDB database is a collection of tables, similar to 

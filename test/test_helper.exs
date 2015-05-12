@@ -1,6 +1,6 @@
 ExUnit.start()
 defmodule TestConnection do
-  use Exrethinkdb.Connection
+  use RethinkDB.Connection
 
   def test_db_name, do: "query_test_db_1"
   def test_table_name, do: "query_test_table_1"
