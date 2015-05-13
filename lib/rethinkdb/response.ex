@@ -49,7 +49,7 @@ defmodule RethinkDB.Response do
 
   def parse(raw_data, token, pid) do
     d = Poison.decode!(raw_data)
-    data = RethinkDB.Query.Pseudotypes.convert_reql_pseudotypes(d["r"])
+    data = RethinkDB.Pseudotypes.convert_reql_pseudotypes(d["r"])
     case d["t"] do
       1  -> %RethinkDB.Record{data: hd(data)}
       2  -> %RethinkDB.Collection{data: data}

@@ -9,9 +9,11 @@ defmodule RethinkDB.Query do
   @type reql_bool   :: boolean|t
   @type reql_obj    :: %{}|t
   @type reql_datum  :: term
-  @type reql_func1  :: (term -> term)|%Q{}
-  @type reql_func2  :: (term, term -> term)|%Q{}
+  @type reql_func0  :: (() -> term)|t
+  @type reql_func1  :: (term -> term)|t
+  @type reql_func2  :: (term, term -> term)|t
   @type reql_opts   :: %{}
+  @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
 
   defmacro __using__(_opts) do
     quote do
@@ -21,6 +23,7 @@ defmodule RethinkDB.Query do
       import RethinkDB.Query.Aggregation
       import RethinkDB.Query.Database
       import RethinkDB.Query.WritingData
+      import RethinkDB.Query.ControlStructures
       import RethinkDB.Query
     end
   end
@@ -95,8 +98,12 @@ defmodule RethinkDB.Query do
   def func(f) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
 
-    args = Enum.map(1..arity, fn _ -> make_ref end)
+    args = case arity do
+      0 -> []
+      _ -> Enum.map(1..arity, fn _ -> make_ref end)
+    end
     params = Enum.map(args, &var/1)
+
     res = case apply(f, params) do
       x when is_list(x) -> make_array(x)
       x -> x

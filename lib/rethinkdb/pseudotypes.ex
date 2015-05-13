@@ -1,6 +1,16 @@
-defmodule RethinkDB.Query.Pseudotypes do
+defmodule RethinkDB.Pseudotypes do
+  defmodule Binary do
+    defstruct data: nil
+
+    def parse(%{"$reql_type$" => "BINARY", "data" => data}) do
+      %__MODULE__{data: :base64.decode(data)}
+    end
+  end
 
   def convert_reql_pseudotypes(nil), do: nil
+  def convert_reql_pseudotypes(%{"$reql_type$" => "BINARY"} = data) do
+    Binary.parse(data)
+  end
   def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data) do
     parse_grouped_data(data)
   end
