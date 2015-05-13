@@ -1,4 +1,4 @@
-defmodule AggregationTest do
+defmodule ControlStructuresTest do
   use ExUnit.Case
   use TestConnection
 
