@@ -7,7 +7,7 @@ If you were expecting `Exrethinkdb` you are in the right place. We decided to ch
 
 ###Connection
 
-Connections are managed by a GenServer. The GenServer will register itself with a default name. If you want multiple connections on a node, be sure to give them explicit names or set the name to `nil` to make it skip registration.
+Connections are managed by a GenServer.
 
 ####Basic Local Connection
 ```elixir
