@@ -24,7 +24,7 @@ defmodule RethinkDB.Lambda do
       {:&&, _, args} ->     quote do: Query.MathLogic.and_r(unquote(args))
       {:if, _, [expr, [do: truthy, else: falsy]]} ->
         quote do
-          Query.branch(unquote(expr), unquote(truthy), unquote(falsy))
+          Query.ControlStructures.branch(unquote(expr), unquote(truthy), unquote(falsy))
         end
       x -> x
     end

@@ -93,8 +93,6 @@ defmodule RethinkDB.Query do
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
 
-  def branch(expr, truthy, falsy), do: %Q{query: [65, [expr, truthy, falsy]]}
-
   def func(f) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
 

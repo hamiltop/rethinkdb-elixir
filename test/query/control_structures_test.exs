@@ -33,4 +33,13 @@ defmodule ControlStructuresTest do
     %Record{data: data} = run q
     assert data == [1,2,3]
   end
+
+  test "branch" do
+    q = branch(true, 1, 2)
+    %Record{data: data} = run q
+    assert data == 1 
+    q = branch(false, 1, 2)
+    %Record{data: data} = run q
+    assert data == 2 
+  end
 end

@@ -56,4 +56,15 @@ defmodule RethinkDB.Query.ControlStructures do
   @spec do_r(Q.reql_datum | Q.reql_func0, Q.reql_func1) :: Q.t
   operate_on_single_arg(:do_r, 64)
   def do_r(data, f) when is_function(f), do: %Q{query: [64, [wrap(f), wrap(data)]]}
+
+  @doc """
+  If the `test` expression returns False or None, the false_branch will be 
+  evaluated. Otherwise, the true_branch will be evaluated.
+
+  The branch command is effectively an if renamed due to language constraints.
+  """
+  @spec branch(Q.reql_datum, Q.reql_datum, Q.reql_datum) :: Q.t
+  def branch(test, true_branch, false_branch) do
+    %Q{query: [65, [wrap(test), wrap(true_branch), wrap(false_branch)]]}
+  end
 end
