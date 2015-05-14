@@ -58,8 +58,8 @@ defmodule ControlStructuresTest do
 
   test "for_each" do
     table_query = db(@db_name) |> table(@table_name)
-    q = [1,2,3] |> for_each(fn(_) ->
-      table_query |> insert(%{a: 1})
+    q = [1,2,3] |> for_each(fn(x) ->
+      table_query |> insert(%{a: x})
     end)
     run q
     %Collection{data: data} = run table_query
