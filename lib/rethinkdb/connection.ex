@@ -39,7 +39,7 @@ defmodule RethinkDB.Connection do
   end
 
   def prepare_and_encode(query) do
-    query = RethinkDB.Query.prepare(query)
+    query = RethinkDB.Prepare.prepare(query)
     Poison.encode!([1, query])      
   end
 
