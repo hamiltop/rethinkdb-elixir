@@ -3,9 +3,22 @@ defmodule ControlStructuresTest do
   use TestConnection
 
   alias RethinkDB.Record
+  alias RethinkDB.Collection
 
   setup_all do
     connect
+    :ok
+  end
+
+  @db_name "query_test_db_1"
+  @table_name "query_test_table_1"
+  setup do
+    q = db_drop(@db_name)
+    run(q)
+    q = db_create(@db_name)
+    run(q)
+    q = db(@db_name) |> table_create(@table_name)
+    run(q)
     :ok
   end
 
@@ -42,4 +55,15 @@ defmodule ControlStructuresTest do
     %Record{data: data} = run q
     assert data == 2 
   end
+
+  test "for_each" do
+    table_query = db(@db_name) |> table(@table_name)
+    q = [1,2,3] |> for_each(fn(_) ->
+      table_query |> insert(%{a: 1})
+    end)
+    run q
+    %Collection{data: data} = run table_query
+    assert Enum.count(data) == 3
+  end
+        
 end

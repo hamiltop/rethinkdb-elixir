@@ -67,4 +67,10 @@ defmodule RethinkDB.Query.ControlStructures do
   def branch(test, true_branch, false_branch) do
     %Q{query: [65, [wrap(test), wrap(true_branch), wrap(false_branch)]]}
   end
+
+  @doc """
+  Loop over a sequence, evaluating the given write query for each element.
+  """
+  @spec for_each(Q.reql_array, Q.reql_func1) :: Q.t
+  operate_on_two_args(:for_each, 68)
 end
