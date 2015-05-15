@@ -4,6 +4,7 @@ defmodule ControlStructuresTest do
 
   alias RethinkDB.Record
   alias RethinkDB.Collection
+  alias RethinkDB.Response
 
   setup_all do
     connect
@@ -64,6 +65,12 @@ defmodule ControlStructuresTest do
     run q
     %Collection{data: data} = run table_query
     assert Enum.count(data) == 3
+  end
+
+  test "error" do
+    q = do_r(fn -> error("hello") end)
+    %Response{data: data} = run q
+    assert data["r"] == ["hello"]
   end
         
 end

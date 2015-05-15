@@ -73,4 +73,10 @@ defmodule RethinkDB.Query.ControlStructures do
   """
   @spec for_each(Q.reql_array, Q.reql_func1) :: Q.t
   operate_on_two_args(:for_each, 68)
+
+  @doc """
+  Throw a runtime error.
+  """
+  @spec error(Q.reql_string) :: Q.t
+  operate_on_single_arg(:error, 12)
 end
