@@ -79,4 +79,14 @@ defmodule RethinkDB.Query.ControlStructures do
   """
   @spec error(Q.reql_string) :: Q.t
   operate_on_single_arg(:error, 12)
+
+  @doc """
+  Handle non-existence errors. Tries to evaluate and return its first argument. 
+  If an error related to the absence of a value is thrown in the process, or if 
+  its first argument returns nil, returns its second argument. (Alternatively, 
+  the second argument may be a function which will be called with either the text 
+  of the non-existence error or nil.)
+  """
+  @spec default(Q.t, Q.t) :: Q.t
+  operate_on_two_args(:default, 92)
 end

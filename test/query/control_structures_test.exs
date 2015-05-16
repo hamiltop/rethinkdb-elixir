@@ -72,5 +72,13 @@ defmodule ControlStructuresTest do
     %Response{data: data} = run q
     assert data["r"] == ["hello"]
   end
-        
+
+  test "default" do
+    q = 1 |> default "test"
+    %Record{data: data} = run q
+    assert data == 1
+    q = nil |> default "test"
+    %Record{data: data} = run q
+    assert data == "test"
+  end
 end
