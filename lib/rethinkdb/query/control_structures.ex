@@ -89,4 +89,58 @@ defmodule RethinkDB.Query.ControlStructures do
   """
   @spec default(Q.t, Q.t) :: Q.t
   operate_on_two_args(:default, 92)
+
+  @doc """
+  Create a javascript expression.
+
+  `timeout` is the number of seconds before `js` times out. The default value 
+  is 5 seconds.
+  """
+  @spec js(Q.reql_string, Q.reql_number) :: Q.t
+  operate_on_single_arg(:js, 11)
+  def js(javascript, number), do: %Q{query: [11, [wrap(javascript)], %{timeout: number}]}
+
+  @doc """
+  Convert a value of one type into another.
+
+  * a sequence, selection or object can be coerced to an array
+  * an array of key-value pairs can be coerced to an object
+  * a string can be coerced to a number
+  * any datum (single value) can be coerced to a string
+  * a binary object can be coerced to a string and vice-versa
+  """
+  @spec coerce_to(Q.reql_datum, Q.reql_string) :: Q.t
+  operate_on_two_args(:coerce_to, 51)
+
+  @doc """
+  Gets the type of a value.
+  """
+  @spec type_of(Q.reql_datum) :: Q.t
+  operate_on_single_arg(:type_of, 52)
+
+  @doc """
+  Get information about a ReQL value.
+  """
+  @spec info(Q.t) :: Q.t
+  operate_on_single_arg(:info, 79)
+
+  @doc """
+  Parse a JSON string on the server.
+  """
+  @spec json(Q.reql_string) :: Q.t
+  operate_on_single_arg(:json, 98)
+
+  @doc """
+  Retrieve data from the specified URL over HTTP. The return type depends on 
+  the result_format option, which checks the Content-Type of the response by 
+  default.
+  """
+  @spec http(Q.reql_string, Q.reql_obj) :: Q.t
+  def http(url, opts \\ %{}), do: %Q{query: [153, [url], opts]}
+
+  @doc """
+  Return a UUID (universally unique identifier), a string that can be used as a unique ID.
+  """
+  @spec uuid() :: Q.t
+  operate_on_zero_args(:uuid, 169)
 end

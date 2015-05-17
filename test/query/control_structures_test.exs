@@ -81,4 +81,55 @@ defmodule ControlStructuresTest do
     %Record{data: data} = run q
     assert data == "test"
   end
+
+  test "js" do
+    q = js "[40,100,1,5,25,10].sort()"
+    %Record{data: data} = run q
+    assert data == [1,10,100,25,40,5] # couldn't help myself...
+  end
+
+  test "coerce_to" do
+    q = "91" |> coerce_to "number"  
+    %Record{data: data} = run q
+    assert data == 91
+  end
+
+  test "type_of" do
+    q = "91" |> type_of
+    %Record{data: data} = run q
+    assert data == "STRING"
+    q = 91 |> type_of
+    %Record{data: data} = run q
+    assert data == "NUMBER"
+    q = [91] |> type_of
+    %Record{data: data} = run q
+    assert data == "ARRAY"
+  end
+
+  test "info" do
+    q = [91] |> info
+    %Record{data: data} = run q
+    assert data == %{"type" => "ARRAY", "value" => "[91]"}
+  end
+
+  test "json" do
+    q = "{\"a\": 5, \"b\": 6}" |> json
+    %Record{data: data} = run q
+    assert data == %{"a" => 5, "b" => 6}
+  end
+
+  test "http" do
+    q = "http://httpbin.org/get" |> http
+    %Record{data: data} = run q
+    assert data == %{"args" => %{},
+      "headers" => %{"Accept" => "*/*", "Accept-Encoding" => "deflate;q=1, gzip;q=0.5",
+        "Host" => "httpbin.org", "User-Agent" => "RethinkDB/2.0.1"},
+      "origin" => "76.103.35.5", "url" => "http://httpbin.org/get"}
+  end
+
+  test "uuid" do
+    q = uuid  
+    %Record{data: data} = run q
+    assert String.length(String.replace(data, "-", ""))  == 32
+  end
 end
