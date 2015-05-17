@@ -1,5 +1,6 @@
 defmodule RethinkDB.Connection do
   use GenServer
+  require Logger
 
   defmacro __using__(_opts) do
     quote do
@@ -15,6 +16,10 @@ defmodule RethinkDB.Connection do
 
       def run(query) do
         RethinkDB.Connection.run(query, __MODULE__)  
+      end
+
+      def stop do
+        RethinkDB.Connection.stop(__MODULE__)
       end
 
       defdelegate next(query), to: RethinkDB.Connection
@@ -37,6 +42,10 @@ defmodule RethinkDB.Connection do
   def next(%{token: token, pid: pid}) do
     {response, token} = GenServer.call(pid, {:continue, token}, :infinity)
     RethinkDB.Response.parse(response, token, pid)
+  end
+
+  def stop(pid) do
+    GenServer.cast(pid, :stop)
   end
 
   def close(%{token: token, pid: pid}) do
@@ -108,6 +117,10 @@ defmodule RethinkDB.Connection do
     make_request(query, token, from, state)
   end
 
+  def handle_cast(:stop, state) do
+    {:stop, :normal, state};
+  end
+
   def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
     new_pending = Dict.put_new(pending, token, from)
     bsize = :erlang.size(query)
@@ -149,5 +162,11 @@ defmodule RethinkDB.Connection do
       new_data ->
         {:noreply, %{state | current: {:length, length, token, new_data}}}
     end
+  end
+
+  def terminate(reason, %{socket: socket}) do
+    Logger.info("RethinkDB connection closing. Reason: #{reason}")    
+    :gen_tcp.close(socket)
+    :ok
   end
 end
