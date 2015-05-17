@@ -50,34 +50,45 @@ defmodule RethinkDB.Connection do
   end
 
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port])
+    args = Dict.take(opts, [:host, :port, :auth_key])
     GenServer.start_link(__MODULE__, args, opts)
   end
 
   def init(opts) do
     host = Dict.get(opts, :host, 'localhost')
     port = Dict.get(opts, :port, 28015)
-    socket = connect(host, port)
-    :ok = :inet.setopts(socket, [active: true])
+    auth_key = Dict.get(opts, :auth_key, "")
+    socket = connect(host, port, auth_key)
+    :ok = :inet.setopts(socket, [active: :once])
     {:ok, %{pending: %{}, current: {:start, ""}, socket: socket, token: 0}}
   end
 
-  defp connect(host, port) do
+  defp connect(host, port, auth_key) do
     host = case host do
        x when is_binary(x) -> String.to_char_list x
        x -> x
     end
     {:ok, socket} = :gen_tcp.connect(host, port, [active: false, mode: :binary])
-    :ok = handshake(socket)
+    :ok = handshake(socket, auth_key)
     socket
   end
 
-  defp handshake(socket) do
+  defp handshake(socket, auth_key) do
     :ok = :gen_tcp.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, << 0 :: little-size(32) >>)
+    :ok = :gen_tcp.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
+    :ok = :gen_tcp.send(socket, auth_key)
     :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
-    {:ok, "SUCCESS" <> << 0 :: size(8)  >>} = :gen_tcp.recv(socket, 8)
-    :ok
+    case recv_until_null(socket, "") do
+      "SUCCESS" -> :ok
+      error -> raise error
+    end
+  end
+
+  defp recv_until_null(socket, acc) do
+    case :gen_tcp.recv(socket, 1) do
+      {:ok, "\0"} -> acc
+      {:ok, a}    -> recv_until_null(socket, acc <> a)
+    end
   end
 
 
@@ -105,7 +116,8 @@ defmodule RethinkDB.Connection do
     {:noreply, %{state | pending: new_pending}}
   end
 
-  def handle_info({:tcp, _, data}, state) do
+  def handle_info({:tcp, _, data}, state = %{socket: socket}) do
+    :ok = :inet.setopts(socket, [active: :once])
     handle_recv(data, state)
   end
 
