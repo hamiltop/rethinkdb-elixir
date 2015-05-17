@@ -18,6 +18,7 @@ defmodule RethinkDB.Connection do
       end
 
       defdelegate next(query), to: RethinkDB.Connection
+      defdelegate close(query), to: RethinkDB.Connection
       defdelegate prepare_and_encode(query), to: RethinkDB.Connection
     end
   end
@@ -35,6 +36,11 @@ defmodule RethinkDB.Connection do
 
   def next(%{token: token, pid: pid}) do
     {response, token} = GenServer.call(pid, {:continue, token}, :infinity)
+    RethinkDB.Response.parse(response, token, pid)
+  end
+
+  def close(%{token: token, pid: pid}) do
+    {response, token} = GenServer.call(pid, {:stop, token}, :infinity)
     RethinkDB.Response.parse(response, token, pid)
   end
 
@@ -83,6 +89,11 @@ defmodule RethinkDB.Connection do
 
   def handle_call({:continue, token}, from, state) do
     query = "[2]"
+    make_request(query, token, from, state)
+  end
+
+  def handle_call({:stop, token}, from, state) do
+    query = "[3]"
     make_request(query, token, from, state)
   end
 
