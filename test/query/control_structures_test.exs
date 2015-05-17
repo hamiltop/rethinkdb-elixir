@@ -121,10 +121,9 @@ defmodule ControlStructuresTest do
   test "http" do
     q = "http://httpbin.org/get" |> http
     %Record{data: data} = run q
-    assert data == %{"args" => %{},
-      "headers" => %{"Accept" => "*/*", "Accept-Encoding" => "deflate;q=1, gzip;q=0.5",
-        "Host" => "httpbin.org", "User-Agent" => "RethinkDB/2.0.1"},
-      "origin" => "76.103.35.5", "url" => "http://httpbin.org/get"}
+    %{"args" => %{},
+      "headers" => _,
+      "origin" => _, "url" => "http://httpbin.org/get"} = data
   end
 
   test "uuid" do
