@@ -22,6 +22,7 @@ defmodule RethinkDB.Query do
       import RethinkDB.Query.Joins
       import RethinkDB.Query.Aggregation
       import RethinkDB.Query.Database
+      import RethinkDB.Query.Table
       import RethinkDB.Query.WritingData
       import RethinkDB.Query.ControlStructures
       import RethinkDB.Query
@@ -33,17 +34,6 @@ defmodule RethinkDB.Query do
   def db(name), do:           %Q{query: [14, [name]]}
   def table(name), do:        %Q{query: [15, [name]]}
   def table(query, name), do: %Q{query: [15, [query, name]]}
-
-  def table_create(db_query, name, options), do: %Q{query: [60, [db_query, name], options]}
-  def table_create(name, options = %{}), do: %Q{query: [60, [name], options]}
-  def table_create(db_query, name), do: %Q{query: [60, [db_query, name]]}
-  def table_create(name), do: %Q{query: [60, [name]]}
-
-  def table_drop(db_query, name), do:   %Q{query: [61, [db_query, name]]}
-  def table_drop(name), do:   %Q{query: [61, [name]]}
-
-  def table_list(db_query), do: %Q{query: [62, [db_query]]}
-  def table_list, do: %Q{query: [62]}
 
   def filter(query, f) when is_list(query), do: filter(make_array(query), f)
   def filter(query, f) when is_function(f), do: %Q{query: [39, [query, func(f)]]}

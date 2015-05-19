@@ -89,7 +89,7 @@ defmodule RethinkDB.Connection do
     :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
     case recv_until_null(socket, "") do
       "SUCCESS" -> :ok
-      error -> raise error
+      error -> raise "Error in connecting: #{error}"
     end
   end
 
