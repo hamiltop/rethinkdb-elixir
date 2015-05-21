@@ -25,15 +25,12 @@ defmodule RethinkDB.Query do
       import RethinkDB.Query.Table
       import RethinkDB.Query.WritingData
       import RethinkDB.Query.ControlStructures
+      import RethinkDB.Query.Selection
       import RethinkDB.Query
     end
   end
 
   def make_array(array), do:  %Q{query: [2, array]}
-
-  def db(name), do:           %Q{query: [14, [name]]}
-  def table(name), do:        %Q{query: [15, [name]]}
-  def table(query, name), do: %Q{query: [15, [query, name]]}
 
   def filter(query, f) when is_list(query), do: filter(make_array(query), f)
   def filter(query, f) when is_function(f), do: %Q{query: [39, [query, func(f)]]}

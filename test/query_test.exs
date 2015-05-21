@@ -33,12 +33,12 @@ defmodule QueryTest do
 
     q = table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
-    table_query = Query.table(@table_name)
+    table_query = table(@table_name)
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
-    %Collection{data: data} = Query.table(@table_name)
-      |> Query.map( RethinkDB.Lambda.lambda fn (el) ->
+    %Collection{data: data} = table(@table_name)
+      |> map( RethinkDB.Lambda.lambda fn (el) ->
         el[:name] + " " + "with map"
       end) |> TestConnection.run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
@@ -49,12 +49,12 @@ defmodule QueryTest do
 
     q = table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
-    table_query = Query.table(@table_name)
+    table_query = table(@table_name)
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
-    %Collection{data: data} = Query.table(@table_name)
-    |> Query.filter(%{name: "Hello"})
+    %Collection{data: data} = table(@table_name)
+    |> filter(%{name: "Hello"})
     |> TestConnection.run
     assert Enum.map(data, &(&1["name"])) == ["Hello"]
   end
@@ -64,12 +64,12 @@ defmodule QueryTest do
 
     q = table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
-    table_query = Query.table(@table_name)
+    table_query = table(@table_name)
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
 
-    %Collection{data: data} = Query.table(@table_name)
-    |> Query.filter(RethinkDB.Lambda.lambda fn (el) ->
+    %Collection{data: data} = table(@table_name)
+    |> filter(RethinkDB.Lambda.lambda fn (el) ->
       el[:name] == "Hello"
     end)
     |> TestConnection.run
