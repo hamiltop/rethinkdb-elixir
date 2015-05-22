@@ -32,4 +32,11 @@ defmodule RethinkDB.Query.Selection do
   operate_on_single_arg(:table, 15)
   operate_on_two_args(:table, 15)
 
+  @doc """
+  Get a document by primary key.
+
+  If no document exists with that primary key, get will return nil.
+  """
+  @spec get(Q.t, Q.reql_datum) :: Q.t
+  operate_on_two_args(:get, 16)
 end

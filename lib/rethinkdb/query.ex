@@ -36,7 +36,6 @@ defmodule RethinkDB.Query do
   def filter(query, f) when is_function(f), do: %Q{query: [39, [query, func(f)]]}
   def filter(query, filter), do: %Q{query: [39, [query, filter]]}
 
-  def get(query, id), do: %Q{query: [16, [query,  id]]}
   def get_all(query, id, options \\ %{}), do: %Q{query: [78, [query,  id], options]}
 
   def between(query, lower, upper, options \\ %{}), do: [182, [query, lower, upper, options]]
