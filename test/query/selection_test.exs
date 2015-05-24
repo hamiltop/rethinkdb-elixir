@@ -27,4 +27,16 @@ defmodule SelectionTest do
     %Record{data: data} = table(@table_name) |> get("a") |> run
     assert data == %{"a" => 5, "id" => "a"}
   end
+
+  test "get all" do
+    db_create(@db_name) |> run
+    table_create(@table_name) |> run
+    table(@table_name) |> insert(%{id: "a", a: 5}) |> run
+    table(@table_name) |> insert(%{id: "b", a: 5}) |> run
+    data = table(@table_name) |> get_all(["a", "b"]) |> run
+    assert Enum.to_list(data) == [
+      %{"a" => 5, "id" => "a"},
+      %{"a" => 5, "id" => "b"}
+    ]
+  end
 end

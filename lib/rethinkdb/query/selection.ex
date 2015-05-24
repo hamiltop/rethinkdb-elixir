@@ -39,4 +39,11 @@ defmodule RethinkDB.Query.Selection do
   """
   @spec get(Q.t, Q.reql_datum) :: Q.t
   operate_on_two_args(:get, 16)
+
+  @doc """
+  Get all documents where the given value matches the value of the requested index.
+  """
+  @spec get_all(Q.t, Q.reql_array) :: Q.t
+  operate_on_seq_and_list(:get_all, 78)
+  
 end
