@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.MathLogic do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL methods for math and logic operations.
 

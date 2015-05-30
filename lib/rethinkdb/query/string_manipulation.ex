@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.StringManipulation do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL methods for string manipulation.
 

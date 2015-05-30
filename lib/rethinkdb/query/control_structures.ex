@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.ControlStructures do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL method for Control Structure operations.
 

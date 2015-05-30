@@ -1,5 +1,5 @@
 defmodule RethinkDB.Prepare do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc false
 
   """

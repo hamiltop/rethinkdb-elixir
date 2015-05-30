@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.Joins do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL methods for join operations.
 
@@ -27,7 +27,7 @@ defmodule RethinkDB.Query.Joins do
 
   """
   @spec inner_join(Q.reql_array, Q.reql_array, Q.reql_func2) :: Q.t
-  def inner_join(left, right, f), do: %Q{query: [48, [wrap(left), wrap(right), Q.func(f)]]}
+  operate_on_three_args(:inner_join, 48)
 
   @doc """
   Returns a left outer join of two sequences. The returned sequence represents
@@ -45,7 +45,8 @@ defmodule RethinkDB.Query.Joins do
 
   """
   @spec outer_join(Q.reql_array, Q.reql_array, Q.reql_func2) :: Q.t
-  def outer_join(left, right, f), do: %Q{query: [49, [wrap(left), wrap(right), Q.func(f)]]}
+  operate_on_three_args(:outer_join, 49)
+
   @doc """
   Join tables using a field on the left-hand sequence matching primary keys or
   secondary indexes on the right-hand table. `eq_join` is more efficient than other
@@ -65,9 +66,7 @@ defmodule RethinkDB.Query.Joins do
 
   """
   @spec eq_join(Q.reql_array, Q.reql_string, Q.reql_array, %{}) :: Q.t
-  def eq_join(left, field, right, opts \\ %{}) do
-    %Q{query: [50, [wrap(left), field, wrap(right)], opts]}
-  end
+  operate_on_three_args(:eq_join, 50)
 
   @doc """
   Used to ‘zip’ up the result of a join by merging the ‘right’ fields into

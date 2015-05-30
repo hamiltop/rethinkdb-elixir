@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.Table do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL methods for table manipulation operations.
 

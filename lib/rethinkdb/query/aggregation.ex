@@ -1,5 +1,5 @@
 defmodule RethinkDB.Query.Aggregation do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
   @moduledoc """
   ReQL methods for aggregation operations.
 

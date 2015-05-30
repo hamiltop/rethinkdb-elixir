@@ -1,5 +1,6 @@
 defmodule RethinkDB.Query.Macros do
-  alias RethinkDB.Query, as: Q
+  alias RethinkDB.Q
+  alias RethinkDB.Query
   @moduledoc false
 
   defmacro operate_on_two_args(op, opcode) do
@@ -63,13 +64,13 @@ defmodule RethinkDB.Query.Macros do
     end
   end
 
-  def wrap(list) when is_list(list), do: Q.make_array(Enum.map(list, &wrap/1))
+  def wrap(list) when is_list(list), do: Query.make_array(Enum.map(list, &wrap/1))
   def wrap(q = %Q{}), do: q
   def wrap(map) when is_map(map) do
     Enum.map(map, fn {k,v} ->
       {k, wrap(v)}
     end) |> Enum.into(%{})
   end
-  def wrap(f) when is_function(f), do: Q.func(f)
+  def wrap(f) when is_function(f), do: Query.func(f)
   def wrap(data), do: data
 end

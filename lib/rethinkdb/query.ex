@@ -1,6 +1,5 @@
 defmodule RethinkDB.Query do
-  alias __MODULE__, as: Q
-  defstruct query: nil
+  alias RethinkDB.Q
 
   @type t :: %Q{}
   @type reql_string :: String.t|t
@@ -96,14 +95,4 @@ defmodule RethinkDB.Query do
   def var(val), do: %Q{query: [10, [val]]}
   def bracket(obj, key), do: %Q{query: [170, [obj, key]]}
 end
-defimpl Poison.Encoder, for: RethinkDB.Query do
-  def encode(%{query: query}, options) do
-    Poison.Encoder.encode(query, options)
-  end
-end
-defimpl Access, for: RethinkDB.Query do
-  def get(%{query: query}, term) do
-    RethinkDB.Query.bracket(query, term)
-  end
-  def get_and_update(_,_,_), do: raise "get_and_update not supported"
-end
+
