@@ -7,9 +7,20 @@ defmodule RethinkDB.Pseudotypes do
     end
   end
 
+  defmodule Geometry do
+    defstruct coordinates: [], type: nil
+
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coordinates, "type" => type}) do
+      %__MODULE__{coordinates: Enum.map(coordinates, &List.to_tuple/1), type: type}
+    end
+  end
+
   def convert_reql_pseudotypes(nil), do: nil
   def convert_reql_pseudotypes(%{"$reql_type$" => "BINARY"} = data) do
     Binary.parse(data)
+  end
+  def convert_reql_pseudotypes(%{"$reql_type$" => "GEOMETRY"} = data) do
+    Geometry.parse(data)
   end
   def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data) do
     parse_grouped_data(data)

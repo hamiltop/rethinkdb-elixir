@@ -72,5 +72,6 @@ defmodule RethinkDB.Query.Macros do
     end) |> Enum.into(%{})
   end
   def wrap(f) when is_function(f), do: Query.func(f)
+  def wrap(t) when is_tuple(t), do: wrap(Tuple.to_list(t))
   def wrap(data), do: data
 end

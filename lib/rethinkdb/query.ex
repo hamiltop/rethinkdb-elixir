@@ -13,6 +13,7 @@ defmodule RethinkDB.Query do
   @type reql_func2  :: (term, term -> term)|t
   @type reql_opts   :: %{}
   @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
+  @type reql_geo    :: %RethinkDB.Pseudotypes.Geometry{}|{reql_number,reql_number}|t
 
   defmacro __using__(_opts) do
     quote do
@@ -94,5 +95,10 @@ defmodule RethinkDB.Query do
 
   def var(val), do: %Q{query: [10, [val]]}
   def bracket(obj, key), do: %Q{query: [170, [obj, key]]}
+
+  #@spec circle(reql_geo, reql_number, 
+  def circle(center, radius, opts) do
+    %Q{query: [165, [RethinkDB.Query.Macros.wrap(center), RethinkDB.Query.Macros.wrap(radius)], opts]}
+  end
 end
 
