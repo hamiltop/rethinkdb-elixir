@@ -20,6 +20,7 @@ defmodule RethinkDB.Query do
       import RethinkDB.Query.StringManipulation
       import RethinkDB.Query.MathLogic
       import RethinkDB.Query.Joins
+      import RethinkDB.Query.Geospatial
       import RethinkDB.Query.Aggregation
       import RethinkDB.Query.Database
       import RethinkDB.Query.Table
@@ -96,9 +97,5 @@ defmodule RethinkDB.Query do
   def var(val), do: %Q{query: [10, [val]]}
   def bracket(obj, key), do: %Q{query: [170, [obj, key]]}
 
-  #@spec circle(reql_geo, reql_number, 
-  def circle(center, radius, opts) do
-    %Q{query: [165, [RethinkDB.Query.Macros.wrap(center), RethinkDB.Query.Macros.wrap(radius)], opts]}
-  end
 end
 
