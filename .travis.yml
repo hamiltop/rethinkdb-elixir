@@ -13,5 +13,3 @@ before_script: rethinkdb --daemon
 install:
   - mix local.hex --force
   - mix deps.get --only test
-script:
-  - mix test
