@@ -409,12 +409,32 @@ defmodule RethinkDB.Query do
   @spec distance(Q.reql_geo, Q.reql_geo, Q.reql_opts) :: Q.t
   operate_on_two_args(:distance, 162)
 
+  @doc """
+  Convert a Line object into a Polygon object. If the last point does not 
+  specify the same coordinates as the first point, polygon will close the polygon 
+  by connecting them.
+  """
   @spec fill(Q.reql_line) :: Q.t
   operate_on_single_arg(:fill, 167)
 
+  @doc """
+  Convert a GeoJSON object to a ReQL geometry object.
+
+  RethinkDB only allows conversion of GeoJSON objects which have ReQL 
+  equivalents: Point, LineString, and Polygon. MultiPoint, MultiLineString, and 
+  MultiPolygon are not supported. (You could, however, store multiple points, 
+  lines and polygons in an array and use a geospatial multi index with them.)
+
+  Only longitude/latitude coordinates are supported. GeoJSON objects that use 
+  Cartesian coordinates, specify an altitude, or specify their own coordinate 
+  reference system will be rejected.
+  """
   @spec geojson(Q.reql_obj) :: Q.t
   operate_on_single_arg(:geojson, 157)
 
+  @doc """
+  Convert a ReQL geometry object to a GeoJSON object.
+  """
   @spec to_geojson(Q.reql_obj) :: Q.t
   operate_on_single_arg(:to_geojson, 158)
 

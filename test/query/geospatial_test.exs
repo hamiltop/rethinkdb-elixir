@@ -27,6 +27,16 @@ defmodule GeospatialTest do
     assert data == %Polygon{outer_coordinates: [{1,1}, {4,5}, {2,2}, {1,1}]}
   end
 
+  test "geojson" do
+    %Record{data: data} = geojson(%{coordinates: [1,1], type: "Point"}) |> run
+    assert data == %Point{coordinates: {1,1}}
+  end
+
+  test "to_geojson" do
+    %Record{data: data} = point({1,1}) |> to_geojson |> run
+    assert data == %{"type" => "Point", "coordinates" => [1,1]}
+  end
+
   test "point" do
     %Record{data: data} = point({1,1}) |> run
     assert data == %Point{coordinates: {1, 1}}
