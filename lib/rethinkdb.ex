@@ -2,7 +2,7 @@ defmodule RethinkDB do
 
   defmacro __using__(_opts) do
     quote do
-      use RethinkDB.Query
+      import RethinkDB.Query
       import RethinkDB
     end
   end

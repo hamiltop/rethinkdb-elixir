@@ -5,6 +5,13 @@ Pipeline enabled RethinkDB client in pure Elixir. Still a work in progress.
 If you are coming here from elixir-rethinkdb, welcome!
 If you were expecting `Exrethinkdb` you are in the right place. We decided to change the name to just `RethinkDB` and the repo to `rethinkdb-elixir`. Sorry if it has caused confusion. Better now in the early stages than later!
 
+###Recent changes
+While udner heavy development, I'll start the readme with recent breaking changes.
+
+* All query functions are under a single module. They were separate, but that caused confusion.
+
+##Getting Started
+
 ###Connection
 
 Connections are managed by a GenServer.

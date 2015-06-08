@@ -1,7 +1,7 @@
 defmodule AggregationTest do
   use ExUnit.Case
   use TestConnection
-  alias RethinkDB.Query.Aggregation, as: A
+  alias RethinkDB.Query
 
   alias RethinkDB.Record
 
@@ -196,19 +196,19 @@ defmodule AggregationTest do
   end
 
   test "min" do
-    query = [1,2,3,4] |> A.min
+    query = [1,2,3,4] |> Query.min
     %Record{data: data} = run query
     assert data == 1
   end
 
   test "min with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> A.min "b"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min "b"
     %Record{data: data} = run query
     assert data == %{"b" => 3}
   end
 
   test "min with function" do
-    query = [1,2,3,4] |> A.min(lambda fn (x) ->
+    query = [1,2,3,4] |> Query.min(lambda fn (x) ->
       if x == 1 do
         100 # Note, there's a bug in rethinkdb (https://github.com/rethinkdb/rethinkdb/issues/4213)
             # which means we can't return null here
@@ -221,19 +221,19 @@ defmodule AggregationTest do
   end
 
   test "max" do
-    query = [1,2,3,4] |> A.max
+    query = [1,2,3,4] |> Query.max
     %Record{data: data} = run query
     assert data == 4
   end
 
   test "max with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> A.max "b"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max "b"
     %Record{data: data} = run query
     assert data == %{"b" => 4}
   end
 
   test "max with function" do
-    query = [1,2,3,4] |> A.max(lambda fn (x) ->
+    query = [1,2,3,4] |> Query.max(lambda fn (x) ->
       if x == 4 do
         nil
       else

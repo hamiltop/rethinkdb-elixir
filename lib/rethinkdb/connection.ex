@@ -6,7 +6,7 @@ defmodule RethinkDB.Connection do
     quote do
       defmacro __using__(_opts) do
         quote do
-          use RethinkDB.Query
+          import RethinkDB.Query
           import unquote(__MODULE__)
         end
       end
