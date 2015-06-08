@@ -7,9 +7,40 @@ defmodule RethinkDB.Pseudotypes do
     end
   end
 
+  defmodule Geometry do
+    defmodule Point do
+      defstruct coordinates: []
+    end
+
+    defmodule Line do
+      defstruct coordinates: []
+    end
+
+    defmodule Polygon do
+      defstruct outer_coordinates: [], inner_coordinates: []
+    end
+
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => [x,y], "type" => "Point"}) do
+      %Point{coordinates: {x,y}}
+    end
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coords, "type" => "LineString"}) do
+      %Line{coordinates: Enum.map(coords, &List.to_tuple/1)}
+    end
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coords, "type" => "Polygon"}) do
+      {outer, inner} = case coords do
+        [outer, inner] -> {Enum.map(outer, &List.to_tuple/1), Enum.map(inner, &List.to_tuple/1)}
+        [outer | []] -> {Enum.map(outer, &List.to_tuple/1), []}
+      end
+      %Polygon{outer_coordinates: outer, inner_coordinates: inner}
+    end
+  end
+
   def convert_reql_pseudotypes(nil), do: nil
   def convert_reql_pseudotypes(%{"$reql_type$" => "BINARY"} = data) do
     Binary.parse(data)
+  end
+  def convert_reql_pseudotypes(%{"$reql_type$" => "GEOMETRY"} = data) do
+    Geometry.parse(data)
   end
   def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data) do
     parse_grouped_data(data)

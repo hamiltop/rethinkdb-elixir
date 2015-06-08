@@ -13,12 +13,17 @@ defmodule RethinkDB.Query do
   @type reql_func2  :: (term, term -> term)|t
   @type reql_opts   :: %{}
   @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
+  @type reql_geo_point    :: %RethinkDB.Pseudotypes.Geometry.Point{}|{reql_number,reql_number}|t
+  @type reql_geo_line     :: %RethinkDB.Pseudotypes.Geometry.Line{}|t
+  @type reql_geo_polygon  :: %RethinkDB.Pseudotypes.Geometry.Polygon{}|t
+  @type reql_geo    :: reql_geo_point|reql_geo_line|reql_geo_polygon
 
   defmacro __using__(_opts) do
     quote do
       import RethinkDB.Query.StringManipulation
       import RethinkDB.Query.MathLogic
       import RethinkDB.Query.Joins
+      import RethinkDB.Query.Geospatial
       import RethinkDB.Query.Aggregation
       import RethinkDB.Query.Database
       import RethinkDB.Query.Table
@@ -94,5 +99,6 @@ defmodule RethinkDB.Query do
 
   def var(val), do: %Q{query: [10, [val]]}
   def bracket(obj, key), do: %Q{query: [170, [obj, key]]}
+
 end
 
