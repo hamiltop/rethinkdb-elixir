@@ -22,7 +22,11 @@ defmodule RethinkDB.Prepare do
     {Enum.reverse(list), state}
   end
   defp prepare(map, state) when is_map(map) do
-    {map, state} = prepare(Enum.to_list(map), state)
+    {map, state} = Enum.reduce(map, {[], state}, fn({k,v}, {acc, state}) ->
+      {k, state} = prepare(k, state)
+      {v, state} = prepare(v, state)
+      {[{k, v} | acc], state}
+    end)
     {Enum.into(map, %{}), state}
   end
   defp prepare(ref, state = {max, map}) when is_reference(ref) do
@@ -34,7 +38,7 @@ defmodule RethinkDB.Prepare do
   defp prepare({k,v}, state) do
     {k, state} = prepare(k, state)
     {v, state} = prepare(v, state)
-    {{k,v}, state}
+    {[k,v], state}
   end
   defp prepare(el, state) do
     {el, state}

@@ -8,10 +8,30 @@ defmodule RethinkDB.Pseudotypes do
   end
 
   defmodule Geometry do
-    defstruct coordinates: [], type: nil
+    defmodule Point do
+      defstruct coordinates: []
+    end
 
-    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coordinates, "type" => type}) do
-      %__MODULE__{coordinates: Enum.map(coordinates, &List.to_tuple/1), type: type}
+    defmodule Line do
+      defstruct coordinates: []
+    end
+
+    defmodule Polygon do
+      defstruct outer_coordinates: [], inner_coordinates: []
+    end
+
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => [x,y], "type" => "Point"}) do
+      %Point{coordinates: {x,y}}
+    end
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coords, "type" => "LineString"}) do
+      %Line{coordinates: Enum.map(coords, &List.to_tuple/1)}
+    end
+    def parse(%{"$reql_type$" => "GEOMETRY", "coordinates" => coords, "type" => "Polygon"}) do
+      {outer, inner} = case coords do
+        [outer, inner] -> {Enum.map(outer, &List.to_tuple/1), Enum.map(inner, &List.to_tuple/1)}
+        [outer | []] -> {Enum.map(outer, &List.to_tuple/1), []}
+      end
+      %Polygon{outer_coordinates: outer, inner_coordinates: inner}
     end
   end
 

@@ -13,7 +13,10 @@ defmodule RethinkDB.Query do
   @type reql_func2  :: (term, term -> term)|t
   @type reql_opts   :: %{}
   @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
-  @type reql_geo    :: %RethinkDB.Pseudotypes.Geometry{}|{reql_number,reql_number}|t
+  @type reql_geo_point    :: %RethinkDB.Pseudotypes.Geometry.Point{}|{reql_number,reql_number}|t
+  @type reql_geo_line     :: %RethinkDB.Pseudotypes.Geometry.Line{}|t
+  @type reql_geo_polygon  :: %RethinkDB.Pseudotypes.Geometry.Polygon{}|t
+  @type reql_geo    :: reql_geo_point|reql_geo_line|reql_geo_polygon
 
   defmacro __using__(_opts) do
     quote do
