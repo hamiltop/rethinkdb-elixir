@@ -37,6 +37,7 @@ defmodule GeospatialTest do
     assert data == %{"type" => "Point", "coordinates" => [1,1]}
   end
 
+  # TODO: get_intersecting, get_nearest, includes, intersects
   test "point" do
     %Record{data: data} = point({1,1}) |> run
     assert data == %Point{coordinates: {1, 1}}
@@ -46,4 +47,5 @@ defmodule GeospatialTest do
     %Record{data: data} = line([{1,1}, {4,5}]) |> run
     assert data == %Line{coordinates: [{1, 1}, {4,5}]}
   end
+
 end

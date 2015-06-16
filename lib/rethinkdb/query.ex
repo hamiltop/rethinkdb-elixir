@@ -1301,7 +1301,26 @@ defmodule RethinkDB.Query do
   @spec sync(Q.t) :: Q.t
   operate_on_single_arg(:sync, 138)
 
+  """
+  Transformations Queries
+  """
 
+  @doc """
+  Transform each element of one or more sequences by applying a mapping function 
+  to them. If map is run with two or more sequences, it will iterate for as many 
+  items as there are in the shortest sequence.
+
+  Note that map can only be applied to sequences, not single values. If you wish 
+  to apply a function to a single value/selection (including an array), use the 
+  do command.
+  """
+  @spec map(Q.reql_array, Q.reql_func1) :: Q.t
+  operate_on_two_args(:map, 38)
+
+  def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
+  def concat_map(sequence, f), do: flat_map(sequence, f)
+
+  
   def make_array(array), do:  %Q{query: [2, array]}
 
   def filter(query, f) when is_list(query), do: filter(make_array(query), f)
@@ -1323,11 +1342,6 @@ defmodule RethinkDB.Query do
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
   def merge(objects), do: %Q{query: [35, objects]}
-
-  def map(seq, f) when is_list(seq), do: map(make_array(seq), f)
-  def map(sequence, f), do: %Q{query: [38, [sequence, func(f)]]}
-  def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
-  def concat_map(sequence, f), do: flat_map(sequence, f)
 
   def order_by(sequence, order), do: order_by(sequence, order, %{})
   def order_by(sequence, order, options) when is_list(order), do: %Q{query: [41, [sequence | order], options]}
