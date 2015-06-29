@@ -438,17 +438,58 @@ defmodule RethinkDB.Query do
   @spec to_geojson(Q.reql_obj) :: Q.t
   operate_on_single_arg(:to_geojson, 158)
 
+  @doc """
+  Get all documents where the given geometry object intersects the geometry 
+  object of the requested geospatial index.
+
+  The index argument is mandatory. This command returns the same results as 
+  `filter(r.row('index')) |> intersects(geometry)`. The total number of results 
+  is limited to the array size limit which defaults to 100,000, but can be 
+  changed with the `array_limit` option to run.
+  """
   @spec get_intersecting(Q.reql_array, Q.reql_geo, Q.reql_opts) :: Q.t
   operate_on_two_args(:get_intersecting, 166)
 
+  @doc """
+  Get all documents where the specified geospatial index is within a certain 
+  distance of the specified point (default 100 kilometers).
+
+  The index argument is mandatory. Optional arguments are:
+
+  * max_results: the maximum number of results to return (default 100).
+  * unit: Unit for the distance. Possible values are m (meter, the default), km 
+  (kilometer), mi (international mile), nm (nautical mile), ft (international 
+  foot).
+  * max_dist: the maximum distance from an object to the specified point (default 
+  100 km).
+  * geo_system: the reference ellipsoid to use for geographic coordinates. Possible 
+  values are WGS84 (the default), a common standard for Earth’s geometry, or 
+  unit_sphere, a perfect sphere of 1 meter radius.
+
+  The return value will be an array of two-item objects with the keys dist and 
+  doc, set to the distance between the specified point and the document (in the 
+  units specified with unit, defaulting to meters) and the document itself, 
+  respectively.
+
+  """
   @spec get_nearest(Q.reql_array, Q.reql_geo, Q.reql_opts) :: Q.t
   operate_on_two_args(:get_nearest, 168)
 
+  @doc """
+  Tests whether a geometry object is completely contained within another. When 
+  applied to a sequence of geometry objects, includes acts as a filter, returning 
+  a sequence of objects from the sequence that include the argument.
+  """
   @spec includes(Q.reql_geo, Q.reql_geo) :: Q.t
   operate_on_two_args(:includes, 164)
 
+  @doc """
+  Tests whether two geometry objects intersect with one another. When applied to 
+  a sequence of geometry objects, intersects acts as a filter, returning a 
+  sequence of objects from the sequence that intersect with the argument.
+  """
   @spec intersects(Q.reql_geo, Q.reql_geo) :: Q.t
-  operate_on_two_args(:intersects, 165)
+  operate_on_two_args(:intersects, 163)
 
   @doc """
   Construct a geometry object of type Line. The line can be specified in one of 
@@ -470,9 +511,30 @@ defmodule RethinkDB.Query do
   def point({la,lo}), do: point(la, lo)
   operate_on_two_args(:point, 159)
 
+  @doc """
+  Construct a geometry object of type Polygon. The Polygon can be specified in 
+  one of two ways:
+
+  Three or more two-item arrays, specifying latitude and longitude numbers of the 
+  polygon’s vertices;
+  * Three or more Point objects specifying the polygon’s vertices.
+  * Longitude (−180 to 180) and latitude (−90 to 90) of vertices are plotted on a 
+  perfect sphere. See Geospatial support for more information on ReQL’s 
+  coordinate system.
+
+  If the last point does not specify the same coordinates as the first point, 
+  polygon will close the polygon by connecting them. You cannot directly 
+  construct a polygon with holes in it using polygon, but you can use polygon_sub 
+  to use a second polygon within the interior of the first to define a hole.
+  """
   @spec polygon([Q.reql_geo]) :: Q.t
   operate_on_list(:polygon, 161)
 
+  @doc """
+  Use polygon2 to “punch out” a hole in polygon1. polygon2 must be completely 
+  contained within polygon1 and must have no holes itself (it must not be the 
+  output of polygon_sub itself).
+  """
   @spec polygon_sub(Q.reql_geo, Q.reql_geo) :: Q.t
   operate_on_two_args(:polygon_sub, 171)
 
