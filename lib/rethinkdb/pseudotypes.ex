@@ -35,6 +35,14 @@ defmodule RethinkDB.Pseudotypes do
     end
   end
 
+  defmodule Time do
+    defstruct epoch_time: nil, timezone: nil
+
+    def parse(%{"$reql_type$" => "TIME", "epoch_time" => epoch_time, "timezone" => timezone}) do
+      %__MODULE__{epoch_time: epoch_time, timezone: timezone}
+    end
+  end
+
   def convert_reql_pseudotypes(nil), do: nil
   def convert_reql_pseudotypes(%{"$reql_type$" => "BINARY"} = data) do
     Binary.parse(data)
@@ -44,6 +52,9 @@ defmodule RethinkDB.Pseudotypes do
   end
   def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data) do
     parse_grouped_data(data)
+  end
+  def convert_reql_pseudotypes(%{"$reql_type$" => "TIME"} = data) do
+    Time.parse(data)
   end
   def convert_reql_pseudotypes(list) when is_list(list) do
     Enum.map(list, &convert_reql_pseudotypes/1)

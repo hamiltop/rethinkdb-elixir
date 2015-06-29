@@ -1364,6 +1364,27 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:sync, 138)
 
   """
+  Date and Time Queries
+  """
+
+  @doc """
+  Return a time object representing the current time in UTC. The command now() is 
+  computed once when the server receives the query, so multiple instances of 
+  r.now() will always return the same time inside a query.
+  """
+  @spec now() :: Q.t
+  operate_on_zero_args(:now, 103)
+
+  @doc """
+  """
+  @spec time(reql_number, reql_number, reql_number, reql_string) :: Q.t
+  def time(year, month, day, timezone), do: %Q{query: [136, [year, month, day, timezone]]}
+  @spec time(reql_number, reql_number, reql_number, reql_number, reql_number, reql_number, reql_string) :: Q.t
+  def time(year, month, day, hour, minute, second, timezone) do
+    %Q{query: [136, [year, month, day, hour, minute, second, timezone]]}
+  end
+
+  """
   Transformations Queries
   """
 
