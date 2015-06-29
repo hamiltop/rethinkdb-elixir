@@ -1,4 +1,4 @@
-defmodule ControlStructuresTest do
+defmodule TransformationTest do
   use ExUnit.Case
   use TestConnection
 
