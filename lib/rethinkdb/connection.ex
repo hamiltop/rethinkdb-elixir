@@ -10,6 +10,11 @@ defmodule RethinkDB.Connection do
           import unquote(__MODULE__)
         end
       end
+
+      def start_link(opts \\ []) do
+        RethinkDB.Connection.start_link(Dict.put_new(opts, :name, __MODULE__))
+      end
+
       def connect(opts \\ []) do
         RethinkDB.Connection.connect(Dict.put_new(opts, :name, __MODULE__))    
       end
