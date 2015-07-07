@@ -1,4 +1,4 @@
-defmodule ChangesTest do
+defmodule ConnectionTest do
   use ExUnit.Case
   import Supervisor.Spec
 
