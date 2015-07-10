@@ -33,7 +33,11 @@ defmodule RethinkDB.Feed do
   defimpl Enumerable, for: __MODULE__ do
     def reduce(changes, acc, fun) do
       stream = Stream.unfold(changes, fn
-        x = %RethinkDB.Feed{} -> {x, RethinkDB.next(x)}
+        x = %RethinkDB.Feed{data: []} ->
+          r = RethinkDB.next(x)
+          {r, struct(r, data: [])}
+        x = %RethinkDB.Feed{} ->
+          {x, struct(x, data: [])}
         x = %RethinkDB.Collection{} -> {x, nil}
         nil -> nil
       end) |> Stream.flat_map(fn (el) ->

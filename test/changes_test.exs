@@ -19,6 +19,24 @@ defmodule ChangesTest do
     {:ok, context}
   end
 
+  test "first change" do
+    q = db_create(@db_name)
+    run(q)
+    q = table_create(@table_name)
+    run(q)
+
+    q = table(@table_name) |> changes
+    changes = %Feed{} = run(q)
+
+    t = Task.async fn ->
+      changes |> Enum.take(1)
+    end
+    data = %{"test" => "d"}
+    table(@table_name) |> insert(data) |> run
+    [h|[]] = Task.await(t)
+    assert %{"new_val" => %{"test" => "d"}} = h
+  end
+
   test "changes" do
     q = db_create(@db_name)
     run(q)
