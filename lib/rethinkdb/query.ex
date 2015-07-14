@@ -1435,6 +1435,82 @@ defmodule RethinkDB.Query do
   @spec during(Q.reql_time, Q.reql_time, Q.reql_time) :: Q.t
   operate_on_three_args(:during, 105)
 
+  @doc """
+  Return a new time object only based on the day, month and year (ie. the same 
+  day at 00:00).
+  """
+  @spec date(Q.reql_time) :: Q.t
+  operate_on_single_arg(:date, 106)
+
+  @doc """
+  Return the number of seconds elapsed since the beginning of the day stored in 
+  the time object.
+  """
+  @spec time_of_day(Q.reql_time) :: Q.t
+  operate_on_single_arg(:time_of_day, 126)
+
+  @doc """
+  Return the year of a time object.
+  """
+  @spec year(Q.reql_time) :: Q.t
+  operate_on_single_arg(:year, 128)
+
+  @doc """
+  Return the month of a time object as a number between 1 and 12.
+  """
+  @spec month(Q.reql_time) :: Q.t
+  operate_on_single_arg(:month, 129)
+
+  @doc """
+  Return the day of a time object as a number between 1 and 31.
+  """
+  @spec day(Q.reql_time) :: Q.t
+  operate_on_single_arg(:day, 130)
+
+  @doc """
+  Return the day of week of a time object as a number between 1 and 7 (following 
+  ISO 8601 standard).
+  """
+  @spec day_of_week(Q.reql_time) :: Q.t
+  operate_on_single_arg(:day_of_week, 131)
+
+  @doc """
+  Return the day of the year of a time object as a number between 1 and 366 
+  (following ISO 8601 standard).
+  """
+  @spec day_of_year(Q.reql_time) :: Q.t
+  operate_on_single_arg(:day_of_year, 132)
+
+  @doc """
+  Return the hour in a time object as a number between 0 and 23.
+  """
+  @spec hours(Q.reql_time) :: Q.t
+  operate_on_single_arg(:hours, 133)
+
+  @doc """
+  Return the minute in a time object as a number between 0 and 59.
+  """
+  @spec minutes(Q.reql_time) :: Q.t
+  operate_on_single_arg(:minutes, 134)
+
+  @doc """
+  Return the seconds in a time object as a number between 0 and 59.999 (double precision).
+  """
+  @spec seconds(Q.reql_time) :: Q.t
+  operate_on_single_arg(:seconds, 135)
+
+  @doc """
+  Convert a time object to a string in ISO 8601 format.
+  """
+  @spec to_iso8601(Q.reql_time) :: Q.t
+  operate_on_single_arg(:to_iso8601, 100)
+
+  @doc """
+  Convert a time object to its epoch time.
+  """
+  @spec to_epoch_time(Q.reql_time) :: Q.t
+  operate_on_single_arg(:to_epoch_time, 102)
+
   """
   Transformations Queries
   """
