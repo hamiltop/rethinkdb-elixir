@@ -66,6 +66,10 @@ defmodule RethinkDB.Query.Macros do
 
   def wrap(list) when is_list(list), do: Query.make_array(Enum.map(list, &wrap/1))
   def wrap(q = %Q{}), do: q
+  def wrap(t = %RethinkDB.Pseudotypes.Time{}) do
+    m = Map.from_struct(t) |> Map.put_new("$reql_type$", "TIME")
+    wrap(m)
+  end
   def wrap(map) when is_map(map) do
     Enum.map(map, fn {k,v} ->
       {k, wrap(v)}

@@ -20,6 +20,7 @@ defmodule RethinkDB.Query do
   @type reql_geo_line     :: %RethinkDB.Pseudotypes.Geometry.Line{}|t
   @type reql_geo_polygon  :: %RethinkDB.Pseudotypes.Geometry.Polygon{}|t
   @type reql_geo    :: reql_geo_point|reql_geo_line|reql_geo_polygon
+  @type reql_time   :: %RethinkDB.Pseudotypes.Time{}|t
 
   """
   Aggregation Functions
@@ -1376,6 +1377,18 @@ defmodule RethinkDB.Query do
   operate_on_zero_args(:now, 103)
 
   @doc """
+  Create a time object for a specific time.
+
+  A few restrictions exist on the arguments:
+
+  * year is an integer between 1400 and 9,999.
+  * month is an integer between 1 and 12.
+  * day is an integer between 1 and 31.
+  * hour is an integer.
+  * minutes is an integer.
+  * seconds is a double. Its value will be rounded to three decimal places 
+    (millisecond-precision).
+  * timezone can be 'Z' (for UTC) or a string with the format ±[hh]:[mm].
   """
   @spec time(reql_number, reql_number, reql_number, reql_string) :: Q.t
   def time(year, month, day, timezone), do: %Q{query: [136, [year, month, day, timezone]]}
@@ -1383,6 +1396,44 @@ defmodule RethinkDB.Query do
   def time(year, month, day, hour, minute, second, timezone) do
     %Q{query: [136, [year, month, day, hour, minute, second, timezone]]}
   end
+
+  @doc """
+  Create a time object based on seconds since epoch. The first argument is a 
+  double and will be rounded to three decimal places (millisecond-precision).
+  """
+  @spec epoch_time(reql_number) :: Q.t
+  operate_on_single_arg(:epoch_time, 101) 
+
+  @doc """
+  Create a time object based on an ISO 8601 date-time string (e.g. 
+  ‘2013-01-01T01:01:01+00:00’). We support all valid ISO 8601 formats except for 
+  week dates. If you pass an ISO 8601 date-time without a time zone, you must 
+  specify the time zone with the default_timezone argument.
+  """
+  @spec iso8601(reql_string) :: Q.t
+  operate_on_single_arg(:iso8601, 99)
+
+  @doc """
+  Return a new time object with a different timezone. While the time stays the 
+  same, the results returned by methods such as hours() will change since they 
+  take the timezone into account. The timezone argument has to be of the ISO 8601 
+  format.
+  """
+  @spec in_timezone(Q.reql_time, Q.reql_string) :: Q.t
+  operate_on_two_args(:in_timezone, 104)
+
+  @doc """
+  Return the timezone of the time object.
+  """
+  @spec timezone(Q.reql_time) :: Q.t
+  operate_on_single_arg(:timezone, 127)
+
+  @doc """
+  Return if a time is between two other times (by default, inclusive for the 
+  start, exclusive for the end).
+  """
+  @spec during(Q.reql_time, Q.reql_time, Q.reql_time) :: Q.t
+  operate_on_three_args(:during, 105)
 
   """
   Transformations Queries
