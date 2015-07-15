@@ -998,7 +998,35 @@ defmodule RethinkDB.Query do
   """
   @spec get_all(Q.t, Q.reql_array) :: Q.t
   operate_on_seq_and_list(:get_all, 78)
-  
+
+  @doc """
+  Get all documents between two keys. Accepts three optional arguments: index, 
+  left_bound, and right_bound. If index is set to the name of a secondary index, 
+  between will return all documents where that index’s value is in the specified 
+  range (it uses the primary key by default). left_bound or right_bound may be 
+  set to open or closed to indicate whether or not to include that endpoint of 
+  the range (by default, left_bound is closed and right_bound is open).
+  """
+  @spec between(Q.reql_array, Q.t, Q.t) :: Q.t
+  operate_on_three_args(:between, 182)
+
+  @doc """
+  Get all the documents for which the given predicate is true.
+
+  filter can be called on a sequence, selection, or a field containing an array 
+  of elements. The return type is the same as the type on which the function was 
+  called on.
+
+  The body of every filter is wrapped in an implicit .default(False), which means 
+  that if a non-existence errors is thrown (when you try to access a field that 
+  does not exist in a document), RethinkDB will just ignore the document. The 
+  default value can be changed by passing the named argument default. Setting 
+  this optional argument to r.error() will cause any non-existence errors to 
+  return a RqlRuntimeError.
+  """
+  @spec filter(Q.reql_array, Q.t) :: Q.t
+  operate_on_two_args(:filter, 39)
+
   """
   String Manipulation Queries
   """
@@ -1532,12 +1560,6 @@ defmodule RethinkDB.Query do
 
   
   def make_array(array), do:  %Q{query: [2, array]}
-
-  def filter(query, f) when is_list(query), do: filter(make_array(query), f)
-  def filter(query, f) when is_function(f), do: %Q{query: [39, [query, func(f)]]}
-  def filter(query, filter), do: %Q{query: [39, [query, filter]]}
-
-  def between(query, lower, upper, options \\ %{}), do: [182, [query, lower, upper, options]]
 
   def changes(selection), do: %Q{query: [152, [selection]]}
 

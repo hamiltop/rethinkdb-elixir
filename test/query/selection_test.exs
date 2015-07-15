@@ -4,6 +4,9 @@ defmodule SelectionTest do
 
   alias RethinkDB.Record
 
+  require RethinkDB.Lambda
+  import RethinkDB.Lambda
+
   setup_all do
     TestConnection.connect
     :ok
@@ -39,5 +42,32 @@ defmodule SelectionTest do
       %{"a" => 5, "id" => "a"},
       %{"a" => 5, "id" => "b"}
     ]
+  end
+
+  test "between" do
+    db_create(@db_name) |> run
+    table_drop(@table_name) |> run
+    table_create(@table_name) |> run
+    table(@table_name) |> insert(%{id: "a", a: 5}) |> run
+    table(@table_name) |> insert(%{id: "b", a: 5}) |> run
+    table(@table_name) |> insert(%{id: "c", a: 5}) |> run
+    %RethinkDB.Collection{data: data} = table(@table_name) |> between("b", "d") |> run
+    assert Enum.count(data) == 2
+  end
+
+  test "filter" do
+    db_create(@db_name) |> run
+    table_drop(@table_name) |> run
+    table_create(@table_name) |> run
+    table(@table_name) |> insert(%{id: "a", a: 5}) |> run
+    table(@table_name) |> insert(%{id: "b", a: 5}) |> run
+    table(@table_name) |> insert(%{id: "c", a: 6}) |> run
+    %RethinkDB.Collection{data: data} = table(@table_name) |> filter(%{a: 6}) |> run
+    assert Enum.count(data) == 1
+    %RethinkDB.Collection{data: data} = table(@table_name) |> filter(
+    lambda fn (x) ->
+      x["a"] == 5
+    end) |> run
+    assert Enum.count(data) == 2
   end
 end
