@@ -1555,10 +1555,89 @@ defmodule RethinkDB.Query do
   @spec map(Q.reql_array, Q.reql_func1) :: Q.t
   operate_on_two_args(:map, 38)
 
-  def flat_map(sequence, f), do: %Q{query: [40, [sequence, func(f)]]}
-  def concat_map(sequence, f), do: flat_map(sequence, f)
+  @doc """
+  Plucks one or more attributes from a sequence of objects, filtering out any 
+  objects in the sequence that do not have the specified fields. Functionally, 
+  this is identical to has_fields followed by pluck on a sequence.
+  """
+  @spec with_fields(Q.reql_array, Q.reql_array) :: Q.t
+  operate_on_seq_and_list(:with_fields, 96)
 
-  
+  @doc """
+  Concatenate one or more elements into a single sequence using a mapping function.
+  """
+  @spec flat_map(Q.reql_array, Q.reql_func1) :: Q.t
+  operate_on_two_args(:flat_map, 40)
+  operate_on_two_args(:concat_map, 40)
+ 
+  @doc """
+  Sort the sequence by document values of the given key(s). To specify the 
+  ordering, wrap the attribute with either r.asc or r.desc (defaults to 
+  ascending).
+
+  Sorting without an index requires the server to hold the sequence in memory, 
+  and is limited to 100,000 documents (or the setting of the array_limit option 
+  for run). Sorting with an index can be done on arbitrarily large tables, or 
+  after a between command using the same index.
+  """
+  @spec order_by(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:order_by, 41)
+
+  @doc """
+  Skip a number of elements from the head of the sequence.
+  """
+  @spec skip(Q.reql_array, Q.reql_number) :: Q.t
+  operate_on_two_args(:skip, 70)
+
+  @doc """
+  End the sequence after the given number of elements.
+  """
+  @spec limit(Q.reql_array, Q.reql_number) :: Q.t
+  operate_on_two_args(:limit, 71)
+
+  @doc """
+  Return the elements of a sequence within the specified range.
+  """
+  @spec slice(Q.reql_array, Q.reql_number, Q.reql_number) :: Q.t
+  operate_on_three_args(:slice, 30)
+
+  @doc """
+  Get the nth element of a sequence, counting from zero. If the argument is 
+  negative, count from the last element.
+  """
+  @spec nth(Q.reql_array, Q.reql_number) :: Q.t
+  operate_on_two_args(:nth, 45)
+
+  @doc """
+  Get the indexes of an element in a sequence. If the argument is a predicate, 
+  get the indexes of all elements matching it.
+  """
+  @spec offsets_of(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:offsets_of, 87)
+
+  @doc """
+  Test if a sequence is empty.
+  """
+  @spec is_empty(Q.reql_array) :: Q.t
+  operate_on_single_arg(:is_empty, 86)
+
+  @doc """
+  Concatenate two or more sequences.
+  """
+  @spec union(Q.reql_array, Q.reql_array) :: Q.t
+  operate_on_two_args(:union, 44)
+
+  @doc """
+  Select a given number of elements from a sequence with uniform random 
+  distribution. Selection is done without replacement.
+
+  If the sequence has less than the requested number of elements (i.e., calling 
+  sample(10) on a sequence with only five elements), sample will return the 
+  entire sequence in a random order.
+  """
+  @spec sample(Q.reql_array, Q.reql_number) :: Q.t
+  operate_on_two_args(:sample, 81)
+
   def make_array(array), do:  %Q{query: [2, array]}
 
   def changes(selection), do: %Q{query: [152, [selection]]}
@@ -1575,23 +1654,10 @@ defmodule RethinkDB.Query do
 
   def merge(objects), do: %Q{query: [35, objects]}
 
-  def order_by(sequence, order), do: order_by(sequence, order, %{})
-  def order_by(sequence, order, options) when is_list(order), do: %Q{query: [41, [sequence | order], options]}
-  def order_by(sequence, order, options), do: %Q{query: [41, [sequence, order], options]}
-
   def append(array, datum), do: %Q{query: [29, [array, datum]]}
   def prepend(array, datum), do: %Q{query: [30, [array, datum]]}
   def difference(arrayA, arrayB), do: %Q{query: [95, [arrayA, arrayB]]}
 
-  def slice(seq, start, end_el) when is_list(seq), do: slice(make_array(seq), start, end_el)
-  def slice(seq, start, end_el), do: %Q{query: [30, [seq, start, end_el]]}
-  def skip(seq, count) when is_list(seq), do: skip(make_array(seq), count)
-  def skip(seq, count), do: %Q{query: [70, [seq, count]]}
-  def limit(seq, count) when is_list(seq), do: limit(make_array(seq), count)
-  def limit(seq, count), do: %Q{query: [71, [seq, count]]}
-  def offsets_of(seq, el) when is_list(seq), do: offsets_of(make_array(seq), el)
-  def offsets_of(seq, f) when is_function(f), do: %Q{query: [87, [seq, func(f)]]}
-  def offsets_of(seq, el), do: %Q{query: [87, [seq, el]]}
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
 
