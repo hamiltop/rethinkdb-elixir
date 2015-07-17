@@ -1638,6 +1638,73 @@ defmodule RethinkDB.Query do
   @spec sample(Q.reql_array, Q.reql_number) :: Q.t
   operate_on_two_args(:sample, 81)
 
+  @doc """
+  Plucks out one or more attributes from either an object or a sequence of 
+  objects (projection).
+  """
+  @spec pluck(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  operate_on_two_args(:pluck, 33)
+
+  @doc """
+  The opposite of pluck; takes an object or a sequence of objects, and returns 
+  them with the specified paths removed.
+  """
+  @spec without(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  operate_on_two_args(:without, 34)
+
+  @doc """
+  Merge two or more objects together to construct a new object with properties 
+  from all. When there is a conflict between field names, preference is given to 
+  fields in the rightmost object in the argument list.
+  """
+  @spec merge(Q.reql_array, Q.reql_object|Q.reql_func1) :: Q.t
+  operate_on_two_args(:merge, 35)
+
+  @doc """
+  Append a value to an array.
+  """
+  @spec append(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:append, 29)
+
+  @doc """
+  Prepend a value to an array.
+  """
+  @spec append(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:prepend, 80)
+
+  @doc """
+  Remove the elements of one array from another array.
+  """
+  @spec difference(Q.reql_array, Q.reql_array) :: Q.t
+  operate_on_two_args(:difference, 95)
+
+  @doc """
+  Add a value to an array and return it as a set (an array with distinct values).
+  """
+  @spec set_insert(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:set_insert, 88)
+
+  @doc """
+  Intersect two arrays returning values that occur in both of them as a set (an 
+  array with distinct values).
+  """
+  @spec set_intersection(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:set_intersection, 89)
+
+  @doc """
+  Add a several values to an array and return it as a set (an array with distinct 
+  values).
+  """
+  @spec set_union(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:set_union, 90)
+
+  @doc """
+  Remove the elements of one array from another and return them as a set (an 
+  array with distinct values).
+  """
+  @spec set_difference(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_two_args(:set_difference, 91)
+
   def make_array(array), do:  %Q{query: [2, array]}
 
   def changes(selection), do: %Q{query: [152, [selection]]}
@@ -1646,17 +1713,7 @@ defmodule RethinkDB.Query do
   def get_field(seq, field), do: %Q{query: [31, [seq, field]]}
   def keys(object), do: %Q{query: [94, [object]]}
 
-  def pluck(seq, f) when is_list(seq), do: pluck(make_array(seq), f)
-  def pluck(selection, fields) when is_list(fields), do: %Q{query: [33, [selection | fields]]}
-  def pluck(selection, field), do: %Q{query: [33, [selection, field]]}
-  def without(selection, fields), do: %Q{query: [34, [selection | fields]]}
   def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
-
-  def merge(objects), do: %Q{query: [35, objects]}
-
-  def append(array, datum), do: %Q{query: [29, [array, datum]]}
-  def prepend(array, datum), do: %Q{query: [30, [array, datum]]}
-  def difference(arrayA, arrayB), do: %Q{query: [95, [arrayA, arrayB]]}
 
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
