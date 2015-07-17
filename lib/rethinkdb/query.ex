@@ -1638,6 +1638,10 @@ defmodule RethinkDB.Query do
   @spec sample(Q.reql_array, Q.reql_number) :: Q.t
   operate_on_two_args(:sample, 81)
 
+  """
+  Document Manipulation Queries
+  """
+
   @doc """
   Plucks out one or more attributes from either an object or a sequence of 
   objects (projection).
@@ -1705,15 +1709,74 @@ defmodule RethinkDB.Query do
   @spec set_difference(Q.reql_array, Q.reql_datum) :: Q.t
   operate_on_two_args(:set_difference, 91)
 
+  @doc """
+  Get a single field from an object. If called on a sequence, gets that field 
+  from every object in the sequence, skipping objects that lack it.
+  """
+  @spec get_field(Q.reql_obj|Q.reql_array, Q.reql_string) :: Q.t
+  operate_on_two_args(:get_field, 31)
+
+  @doc """
+  Test if an object has one or more fields. An object has a field if it has 
+  that key and the key has a non-null value. For instance, the object {'a': 
+  1,'b': 2,'c': null} has the fields a and b.
+  """
+  @spec has_fields(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  operate_on_two_args(:has_fields, 32)
+
+  @doc """
+  Insert a value in to an array at a given index. Returns the modified array.
+  """
+  @spec insert_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  operate_on_three_args(:insert_at, 82)
+
+  @doc """
+  Insert several values in to an array at a given index. Returns the modified array.
+  """
+  @spec splice_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  operate_on_three_args(:splice_at, 85)
+
+  @doc """
+  Remove one or more elements from an array at a given index. Returns the modified array.
+  """
+  @spec delete_at(Q.reql_array, Q.reql_number, Q.reql_number) :: Q.t
+  operate_on_two_args(:delete_at, 83)
+  operate_on_three_args(:delete_at, 83)
+
+  @doc """
+  Change a value in an array at a given index. Returns the modified array.
+  """
+  @spec change_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  operate_on_three_args(:change_at, 84)
+
+  @doc """
+  Return an array containing all of the object’s keys.
+  """
+  @spec keys(Q.reql_obj) :: Q.t
+  operate_on_single_arg(:keys, 94)
+
+  @doc """
+  Replace an object in a field instead of merging it with an existing object in a 
+  merge or update operation.
+  """
+  @spec literal(Q.reql_object) :: Q.t
+  operate_on_single_arg(:literal, 137)
+
+  @doc """
+  Creates an object from a list of key-value pairs, where the keys must be 
+  strings. r.object(A, B, C, D) is equivalent to r.expr([[A, B], [C, 
+  D]]).coerce_to('OBJECT').
+  """
+  @spec object(Q.reql_array) :: Q.t
+  operate_on_list(:object, 143)
+
+  """
+  Miscellaneous functions
+  """
+
   def make_array(array), do:  %Q{query: [2, array]}
 
   def changes(selection), do: %Q{query: [152, [selection]]}
-
-  def get_field(seq, field) when is_list(seq), do: get_field(make_array(seq), field)
-  def get_field(seq, field), do: %Q{query: [31, [seq, field]]}
-  def keys(object), do: %Q{query: [94, [object]]}
-
-  def has_fields(sequence, fields), do:  %Q{query: [32, [sequence, make_array(fields)]]}
 
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
