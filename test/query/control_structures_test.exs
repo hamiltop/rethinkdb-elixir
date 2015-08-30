@@ -108,8 +108,8 @@ defmodule ControlStructuresTest do
 
   test "info" do
     q = [91] |> info
-    %Record{data: data} = run q
-    assert data == %{"type" => "ARRAY", "value" => "[91]"}
+    %Record{data: %{"type" => type}} = run q
+    assert type == "ARRAY"
   end
 
   test "json" do
