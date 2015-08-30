@@ -53,7 +53,7 @@ worker(FooConnection, [])
 ```
 Queries can be run without providing a connection (it will use the name connection).
 ```elixir
-use RethinkDB.Query
+import RethinkDB.Query
 table("people") |> FooDatabase.run
 ```
 
