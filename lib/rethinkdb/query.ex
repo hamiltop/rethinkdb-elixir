@@ -1233,6 +1233,7 @@ defmodule RethinkDB.Query do
   def index_wait(table, indexes) when is_list(indexes) do
     %Q{query: [140, [wrap(table) | Enum.map(indexes, &wrap/1)]]}
   end
+  operate_on_two_args(:index_wait, 140)
 
   """
   Writing Data Queries
