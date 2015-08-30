@@ -64,6 +64,7 @@ defmodule GeospatialTest do
   test "get_intersecting" do
     table_create(@table_name) |> run
     table(@table_name) |> index_create("location", %{geo: true}) |> run
+    table(@table_name) |> index_wait("location") |> run
     table(@table_name) |> insert(
       %{location: point(0.001,0.001)}
     ) |> run
@@ -81,6 +82,7 @@ defmodule GeospatialTest do
   test "get_nearest" do
     table_create(@table_name) |> run
     table(@table_name) |> index_create("location", %{geo: true}) |> run
+    table(@table_name) |> index_wait("location") |> run
     table(@table_name) |> insert(
       %{location: point(0.001,0.001)}
     ) |> run
