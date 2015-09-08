@@ -5,6 +5,9 @@ defmodule JoinsTest do
   alias RethinkDB.Record
   alias RethinkDB.Collection
 
+  require RethinkDB.Lambda
+  import RethinkDB.Lambda
+
   setup_all do
     TestConnection.connect
     :ok
@@ -13,8 +16,8 @@ defmodule JoinsTest do
   test "inner join arrays" do
     left = [%{a: 1, b: 2}, %{a: 2, b: 3}]
     right = [%{a: 1, c: 4}, %{a: 2, c: 6}]
-    q = inner_join(left, right, fn l, r ->
-      eq(l[:a], r[:a])
+    q = inner_join(left, right,lambda fn l, r ->
+      l[:a] == r[:a]
     end)
     %Record{data: data} = run q
     assert data == [%{"left" => %{"a" => 1, "b" => 2}, "right" => %{"a" => 1, "c" => 4}},
@@ -26,8 +29,8 @@ defmodule JoinsTest do
   test "outer join arrays" do
     left = [%{a: 1, b: 2}, %{a: 2, b: 3}]
     right = [%{a: 1, c: 4}]
-    q = outer_join(left, right, fn l, r ->
-      eq(l[:a], r[:a])
+    q = outer_join(left, right, lambda fn l, r ->
+      l[:a] == r[:a]
     end)
     %Record{data: data} = run q
     assert data == [%{"left" => %{"a" => 1, "b" => 2}, "right" => %{"a" => 1, "c" => 4}},

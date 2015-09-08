@@ -22,9 +22,9 @@ defmodule RethinkDB.Query do
   @type reql_geo    :: reql_geo_point|reql_geo_line|reql_geo_polygon
   @type reql_time   :: %RethinkDB.Pseudotypes.Time{}|t
 
-  """
-  Aggregation Functions
-  """
+  #
+  #Aggregation Functions
+  #
 
   @doc """
   Takes a stream and partitions it into multiple groups based on the fields or 
@@ -171,9 +171,10 @@ defmodule RethinkDB.Query do
   operate_on_seq_and_list(:contains, 93)
   operate_on_two_args(:contains, 93)
 
-  """
-  Control Strucutres
-  """
+  #
+  #Control Strucutres
+  #
+
   @doc """
   `args` is a special term that’s used to splice an array of arguments into 
   another term. This is useful when you want to call a variadic term such as 
@@ -309,9 +310,9 @@ defmodule RethinkDB.Query do
   @spec uuid() :: Q.t
   operate_on_zero_args(:uuid, 169)
 
-  """
-  Database Operations
-  """
+  #
+  #Database Operations
+  #
 
   @doc """
   Create a database. A RethinkDB database is a collection of tables, similar to 
@@ -356,9 +357,9 @@ defmodule RethinkDB.Query do
   @spec db_list :: Q.t
   operate_on_zero_args(:db_list, 59)
 
-  """
-  Geospatial Queries
-  """
+  #
+  #Geospatial Queries
+  #
 
   @doc """
   Construct a circular line or polygon. A circle in RethinkDB is a polygon or 
@@ -539,9 +540,9 @@ defmodule RethinkDB.Query do
   @spec polygon_sub(Q.reql_geo, Q.reql_geo) :: Q.t
   operate_on_two_args(:polygon_sub, 171)
 
-  """
-  Joins Queries
-  """
+  #
+  #Joins Queries
+  #
 
   @doc """
   Returns an inner join of two sequences. The returned sequence represents an
@@ -614,9 +615,9 @@ defmodule RethinkDB.Query do
   @spec zip(Q.reql_array) :: Q.t
   operate_on_single_arg(:zip, 72)
 
-  """
-  Math and Logic Queries
-  """
+  #
+  #Math and Logic Queries
+  #
 
   @doc """
   Sum two numbers, concatenate two strings, or concatenate 2 arrays.
@@ -956,9 +957,9 @@ defmodule RethinkDB.Query do
     %Q{query: [151, [lower, upper], %{float: true}]}
   end
 
-  """
-  Selection Queries
-  """
+  #
+  #Selection Queries
+  #
 
   @doc """
   Reference a database.
@@ -1027,9 +1028,9 @@ defmodule RethinkDB.Query do
   @spec filter(Q.reql_array, Q.t) :: Q.t
   operate_on_two_args(:filter, 39)
 
-  """
-  String Manipulation Queries
-  """
+  #
+  #String Manipulation Queries
+  #
 
   @doc """
   Checks a string for matches. 
@@ -1092,9 +1093,9 @@ defmodule RethinkDB.Query do
   @spec downcase(Q.reql_string) :: Q.t
   def downcase(string), do: %Q{query: [142, [string]]}
 
-  """
-  Table Functions
-  """
+  #
+  #Table Functions
+  #
 
   @doc """
   Create a table. A RethinkDB table is a collection of JSON documents.
@@ -1235,9 +1236,9 @@ defmodule RethinkDB.Query do
   end
   operate_on_two_args(:index_wait, 140)
 
-  """
-  Writing Data Queries
-  """
+  #
+  #Writing Data Queries
+  #
 
   @doc """
   Insert documents into a table. Accepts a single document or an array of 
@@ -1393,9 +1394,9 @@ defmodule RethinkDB.Query do
   @spec sync(Q.t) :: Q.t
   operate_on_single_arg(:sync, 138)
 
-  """
-  Date and Time Queries
-  """
+  #
+  #Date and Time Queries
+  #
 
   @doc """
   Return a time object representing the current time in UTC. The command now() is 
@@ -1540,9 +1541,9 @@ defmodule RethinkDB.Query do
   @spec to_epoch_time(Q.reql_time) :: Q.t
   operate_on_single_arg(:to_epoch_time, 102)
 
-  """
-  Transformations Queries
-  """
+  #
+  #Transformations Queries
+  #
 
   @doc """
   Transform each element of one or more sequences by applying a mapping function 
@@ -1639,9 +1640,9 @@ defmodule RethinkDB.Query do
   @spec sample(Q.reql_array, Q.reql_number) :: Q.t
   operate_on_two_args(:sample, 81)
 
-  """
-  Document Manipulation Queries
-  """
+  #
+  #Document Manipulation Queries
+  #
 
   @doc """
   Plucks out one or more attributes from either an object or a sequence of 
@@ -1771,9 +1772,9 @@ defmodule RethinkDB.Query do
   @spec object(Q.reql_array) :: Q.t
   operate_on_list(:object, 143)
 
-  """
-  Miscellaneous functions
-  """
+  #
+  #Miscellaneous functions
+  #
 
   def make_array(array), do:  %Q{query: [2, array]}
 
