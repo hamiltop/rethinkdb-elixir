@@ -2,10 +2,8 @@ defmodule RethinkDB.Prepare do
   alias RethinkDB.Q
   @moduledoc false
 
-  """
-  This is a bunch of functions that transform the query from our data structures into
-  the over the wire format. The main role is to properly create unique function variable ids.
-  """
+  # This is a bunch of functions that transform the query from our data structures into
+  # the over the wire format. The main role is to properly create unique function variable ids.
 
   def prepare(query) do
     {val, _vars} = prepare(query, {0, %{}})

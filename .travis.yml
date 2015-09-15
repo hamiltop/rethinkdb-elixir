@@ -2,7 +2,7 @@ language: elixir
 elixir:
   - 1.0.4
   - 1.0.5
-  - 1.1.0-beta   
+  - 1.1.0-rc.0
 otp_release:
   - 17.4
 sudo: required
