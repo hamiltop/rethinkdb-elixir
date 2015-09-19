@@ -40,8 +40,10 @@ defmodule RethinkDB.Connection do
 
   def run(query, pid) do
     query = prepare_and_encode(query)
-    {response, token} = GenServer.call(pid, {:query, query})
-    RethinkDB.Response.parse(response, token, pid)
+    case GenServer.call(pid, {:query, query}) do
+      {response, token} -> RethinkDB.Response.parse(response, token, pid)
+      result -> result
+    end
   end
 
   def next(%{token: token, pid: pid}) do
@@ -72,19 +74,12 @@ defmodule RethinkDB.Connection do
     host = Dict.get(opts, :host, 'localhost')
     port = Dict.get(opts, :port, 28015)
     auth_key = Dict.get(opts, :auth_key, "")
-    socket = connect(host, port, auth_key)
-    :ok = :inet.setopts(socket, [active: :once])
-    {:ok, %{pending: %{}, current: {:start, ""}, socket: socket, token: 0}}
+    connect(host, port, auth_key)
+    {:ok, %{pending: %{}, current: {:start, ""}, token: 0, config: {host, port, auth_key}}}
   end
 
   defp connect(host, port, auth_key) do
-    host = case host do
-       x when is_binary(x) -> String.to_char_list x
-       x -> x
-    end
-    {:ok, socket} = :gen_tcp.connect(host, port, [active: false, mode: :binary])
-    :ok = handshake(socket, auth_key)
-    socket
+    GenServer.cast(self, {:connect, host, port, auth_key})
   end
 
   defp handshake(socket, auth_key) do
@@ -122,6 +117,24 @@ defmodule RethinkDB.Connection do
     make_request(query, token, from, state)
   end
 
+  def handle_cast({:connect, host, port, auth_key}, state) do
+    # TODO: prune state
+    Logger.debug("trying to connect")
+    host = case host do
+       x when is_binary(x) -> String.to_char_list x
+       x -> x
+    end
+    case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
+      {:ok, socket} ->
+        :ok = handshake(socket, auth_key)
+        :ok = :inet.setopts(socket, [active: :once])
+        {:noreply, Dict.put_new(state, :socket, socket)}
+      {:error, :econnrefused} ->
+        Process.send_after(self, {:"$gen_cast", {:connect, host, port, auth_key}}, 1000)
+        {:noreply, state}
+    end
+  end
+
   def handle_cast(:stop, state) do
     {:stop, :normal, state};
   end
@@ -130,8 +143,10 @@ defmodule RethinkDB.Connection do
     new_pending = Dict.put_new(pending, token, from)
     bsize = :erlang.size(query)
     payload = token <> << bsize :: little-size(32) >> <> query
-    :ok = :gen_tcp.send(socket, payload)
-    {:noreply, %{state | pending: new_pending}}
+    case :gen_tcp.send(socket, payload) do
+      :ok -> {:noreply, %{state | pending: new_pending}}
+      {:error, :closed} -> {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
+    end
   end
 
   def handle_info({:tcp, _, data}, state = %{socket: socket}) do
@@ -139,7 +154,21 @@ defmodule RethinkDB.Connection do
     handle_recv(data, state)
   end
 
-  def handle_info(_, state) do
+  def handle_info({:tcp_closed, _port}, state = %{pending: %{}, config: config}) do
+    state[:pending] |> Enum.each(fn {token, pid} ->
+      GenServer.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
+    end)
+    new_state = state
+      |> Map.delete(:socket)
+      |> Map.put(:pending, %{})
+      |> Map.put(:current, {:start, ""})
+    {host, port, auth_key} = config
+    connect(host, port, auth_key)
+    {:noreply, new_state}
+  end
+
+  def handle_info(msg, state) do
+    Logger.debug("Received unhandled info: #{inspect(msg)} with state #{inspect state}")
     {:noreply, state}
   end
 
@@ -170,7 +199,7 @@ defmodule RethinkDB.Connection do
   end
 
   def terminate(reason, %{socket: socket}) do
-    Logger.info("RethinkDB connection closing. Reason: #{reason}")    
+    Logger.info("RethinkDB connection closing. Reason: #{inspect(reason)}")    
     :gen_tcp.close(socket)
     :ok
   end
