@@ -1,5 +1,4 @@
-defmodule RethinkDB.Mixfile do
-  use Mix.Project
+defmodule RethinkDB.Mixfile do use Mix.Project
 
   def project do
     [app: :rethinkdb,
@@ -22,7 +21,11 @@ defmodule RethinkDB.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :poison]]
+    env_apps = case Mix.env do
+      :test -> [:flaky_connection]
+      _ -> []
+    end
+    [applications: [:logger, :poison | env_apps]]
   end
 
   # Dependencies can be Hex packages:
@@ -39,7 +42,8 @@ defmodule RethinkDB.Mixfile do
       {:poison, "~> 1.4"},
       {:earmark, "~> 0.1", only: :dev},
       {:ex_doc, "~> 0.7", only: :dev},
-      {:inch_ex, only: :dev}
+      {:inch_ex, only: :dev},
+      {:flaky_connection, github: "hamiltop/flaky_connection", only: :test}
     ]
   end
 end

@@ -118,8 +118,6 @@ defmodule RethinkDB.Connection do
   end
 
   def handle_cast({:connect, host, port, auth_key}, state) do
-    # TODO: prune state
-    Logger.debug("trying to connect")
     host = case host do
        x when is_binary(x) -> String.to_char_list x
        x -> x
@@ -149,13 +147,17 @@ defmodule RethinkDB.Connection do
     end
   end
 
+  def make_request(_query, _token, _from, state) do
+    {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
+  end
+
   def handle_info({:tcp, _, data}, state = %{socket: socket}) do
     :ok = :inet.setopts(socket, [active: :once])
     handle_recv(data, state)
   end
 
   def handle_info({:tcp_closed, _port}, state = %{pending: %{}, config: config}) do
-    state[:pending] |> Enum.each(fn {token, pid} ->
+    state[:pending] |> Enum.each(fn {_token, pid} ->
       GenServer.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
     new_state = state
@@ -198,8 +200,7 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def terminate(reason, %{socket: socket}) do
-    Logger.info("RethinkDB connection closing. Reason: #{inspect(reason)}")    
+  def terminate(_reason, %{socket: socket}) do
     :gen_tcp.close(socket)
     :ok
   end
