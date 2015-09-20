@@ -2,6 +2,8 @@ defmodule RethinkDB.Connection do
   use GenServer
   require Logger
 
+  alias RethinkDB.Connection.Request
+
   defmacro __using__(_opts) do
     quote do
       defmacro __using__(_opts) do
@@ -100,21 +102,20 @@ defmodule RethinkDB.Connection do
     end
   end
 
-
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
-    make_request(query, token, from, %{state | token: new_token}) 
+    Request.make_request(query, token, from, %{state | token: new_token}) 
   end
 
   def handle_call({:continue, token}, from, state) do
     query = "[2]"
-    make_request(query, token, from, state)
+    Request.make_request(query, token, from, state)
   end
 
   def handle_call({:stop, token}, from, state) do
     query = "[3]"
-    make_request(query, token, from, state)
+    Request.make_request(query, token, from, state)
   end
 
   def handle_cast({:connect, host, port, auth_key}, state) do
@@ -137,23 +138,9 @@ defmodule RethinkDB.Connection do
     {:stop, :normal, state};
   end
 
-  def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
-    new_pending = Dict.put_new(pending, token, from)
-    bsize = :erlang.size(query)
-    payload = token <> << bsize :: little-size(32) >> <> query
-    case :gen_tcp.send(socket, payload) do
-      :ok -> {:noreply, %{state | pending: new_pending}}
-      {:error, :closed} -> {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
-    end
-  end
-
-  def make_request(_query, _token, _from, state) do
-    {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
-  end
-
   def handle_info({:tcp, _, data}, state = %{socket: socket}) do
     :ok = :inet.setopts(socket, [active: :once])
-    handle_recv(data, state)
+    Request.handle_recv(data, state)
   end
 
   def handle_info({:tcp_closed, _port}, state = %{pending: %{}, config: config}) do
@@ -172,32 +159,6 @@ defmodule RethinkDB.Connection do
   def handle_info(msg, state) do
     Logger.debug("Received unhandled info: #{inspect(msg)} with state #{inspect state}")
     {:noreply, state}
-  end
-
-  def handle_recv(data, state = %{current: {:start, leftover}}) do
-    case leftover <> data do
-      << token :: binary-size(8), leftover :: binary >> ->
-        handle_recv("", %{state | current: {:token, token, leftover}})
-      new_data ->
-        {:noreply, %{state | current: {:start, new_data}}}
-    end
-  end
-  def handle_recv(data, state = %{current: {:token, token, leftover}}) do
-    case leftover <> data do
-      << length :: little-size(32), leftover :: binary >> ->
-        handle_recv("", %{state | current: {:length, length, token, leftover}})
-      new_data ->
-        {:noreply, %{state | current: {:token, token, new_data}}}
-    end
-  end
-  def handle_recv(data, state = %{current: {:length, length, token, leftover}, pending: pending}) do
-    case leftover <> data do
-      << response :: binary-size(length), leftover :: binary >> ->
-        GenServer.reply(pending[token], {response, token})
-        handle_recv("", %{state | current: {:start, leftover}, pending: Dict.delete(pending, token)})
-      new_data ->
-        {:noreply, %{state | current: {:length, length, token, new_data}}}
-    end
   end
 
   def terminate(_reason, %{socket: socket}) do
