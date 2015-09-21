@@ -26,8 +26,8 @@ defmodule ConnectionTest do
   end
 
   test "replies to pending queries on disconnect" do
-    conn = FlakyConnection.start('localhost', 28015, 28013)
-    TestConnection.connect([port: 28013])
+    conn = FlakyConnection.start('localhost', 28015)
+    TestConnection.connect([port: conn.port])
     RethinkDB.Query.table_create("foo_flaky_test") |> TestConnection.run
     %RethinkDB.Record{data: [table | _]} = RethinkDB.Query.table_list |> TestConnection.run
     change_feed = RethinkDB.Query.table(table) |> RethinkDB.Query.changes |> TestConnection.run
@@ -37,5 +37,19 @@ defmodule ConnectionTest do
     :timer.sleep(100)
     FlakyConnection.stop(conn)
     %RethinkDB.Exception.ConnectionClosed{} = Task.await(task)
+  end
+
+  test "supervised connection restarts on disconnect" do
+    conn = FlakyConnection.start('localhost', 28015)
+    children = [worker(TestConnection, [[port: conn.port]])]
+    {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
+    assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
+
+    FlakyConnection.stop(conn)
+    :timer.sleep(100) # this is a band-aid for a race condition in this test
+   
+    assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
+
+    Process.exit(sup, :normal)
   end
 end
