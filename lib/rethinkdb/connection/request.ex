@@ -34,7 +34,7 @@ defmodule RethinkDB.Connection.Request do
   def handle_recv(data, state = %{current: {:length, length, token, leftover}, pending: pending}) do
     case leftover <> data do
       << response :: binary-size(length), leftover :: binary >> ->
-        GenServer.reply(pending[token], {response, token})
+        Connection.reply(pending[token], {response, token})
         handle_recv("", %{state | current: {:start, leftover}, pending: Dict.delete(pending, token)})
       new_data ->
         {:noreply, %{state | current: {:length, length, token, new_data}}}

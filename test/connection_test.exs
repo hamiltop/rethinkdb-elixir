@@ -26,8 +26,9 @@ defmodule ConnectionTest do
   end
 
   test "replies to pending queries on disconnect" do
-    conn = FlakyConnection.start('localhost', 28015, 28014)
-    TestConnection.connect([port: 28014])
+    conn = FlakyConnection.start('localhost', 28015, 28013)
+    TestConnection.connect([port: 28013])
+    RethinkDB.Query.table_create("foo_flaky_test") |> TestConnection.run
     %RethinkDB.Record{data: [table | _]} = RethinkDB.Query.table_list |> TestConnection.run
     change_feed = RethinkDB.Query.table(table) |> RethinkDB.Query.changes |> TestConnection.run
     task = Task.async fn ->

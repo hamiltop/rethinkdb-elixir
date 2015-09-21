@@ -38,25 +38,25 @@ defmodule RethinkDB.Connection do
 
   def run(query, pid) do
     query = prepare_and_encode(query)
-    case GenServer.call(pid, {:query, query}) do
+    case Connection.call(pid, {:query, query}) do
       {response, token} -> RethinkDB.Response.parse(response, token, pid)
       result -> result
     end
   end
 
   def next(%{token: token, pid: pid}) do
-    case GenServer.call(pid, {:continue, token}, :infinity) do
+    case Connection.call(pid, {:continue, token}, :infinity) do
       {response, token} -> RethinkDB.Response.parse(response, token, pid)
       x -> x
     end
   end
 
   def stop(pid) do
-    GenServer.cast(pid, :stop)
+    Connection.cast(pid, :stop)
   end
 
   def close(%{token: token, pid: pid}) do
-    {response, token} = GenServer.call(pid, {:stop, token}, :infinity)
+    {response, token} = Connection.call(pid, {:stop, token}, :infinity)
     RethinkDB.Response.parse(response, token, pid)
   end
 
@@ -107,7 +107,7 @@ defmodule RethinkDB.Connection do
 
   def disconnect(_info, state = %{pending: pending}) do
     pending |> Enum.each(fn {_token, pid} ->
-      GenServer.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
+      Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
     new_state = state
       |> Map.delete(:socket)
