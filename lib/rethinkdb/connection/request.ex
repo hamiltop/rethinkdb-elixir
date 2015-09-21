@@ -6,7 +6,8 @@ defmodule RethinkDB.Connection.Request do
     payload = token <> << bsize :: little-size(32) >> <> query
     case :gen_tcp.send(socket, payload) do
       :ok -> {:noreply, %{state | pending: new_pending}}
-      {:error, :closed} -> {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
+      {:error, :closed} ->
+        {:disconnect, :closed, %RethinkDB.Exception.ConnectionClosed{}, state}
     end
   end
 
