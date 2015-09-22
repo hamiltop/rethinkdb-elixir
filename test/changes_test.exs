@@ -66,4 +66,41 @@ defmodule ChangesTest do
     data = Task.await(t) 
     5 = Enum.count(data)
   end
+
+  #test supervisable changefeed
+  defmodule TestChangefeed do
+    use RethinkDB.Changefeed
+
+    require Logger
+
+    def init(pid) do
+      {:ok, pid}
+    end
+
+    def handle_update(foo, pid) do
+      send pid, {:update, foo}
+      {:ok, pid}
+    end
+  end
+
+  test "supervised changefeed" do
+    q = db_create(@db_name)
+    run(q)
+    q = table_create(@table_name)
+    run(q)
+    q = table(@table_name) |> changes
+
+    {:ok, _} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      q,
+      TestConnection,
+      self,
+      [])
+    :timer.sleep(1000)
+    table(@table_name) |> insert(%{something: :blue}) |> run
+    receive do
+      {:update, [%{"new_val" => %{"something" => val}}]} ->
+        assert val == "blue"
+    end
+  end
 end
