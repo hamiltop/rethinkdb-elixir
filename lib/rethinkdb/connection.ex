@@ -95,10 +95,13 @@ defmodule RethinkDB.Connection do
   def connect(_info, state = %{config: {host, port, auth_key}}) do
     case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
       {:ok, socket} ->
-        :ok = handshake(socket, auth_key)
-        :ok = :inet.setopts(socket, [active: :once])
-        # TODO: investigate timeout vs hibernate
-        {:ok, Dict.put(state, :socket, socket)}
+        case handshake(socket, auth_key) do
+          {:error, _} -> {:stop, :normal, state}
+          :ok ->
+            :ok = :inet.setopts(socket, [active: :once])
+            # TODO: investigate timeout vs hibernate
+            {:ok, Dict.put(state, :socket, socket)}
+        end
       {:error, :econnrefused} ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
         {:backoff, backoff, Dict.put(state, :timeout, backoff)}
@@ -167,7 +170,7 @@ defmodule RethinkDB.Connection do
     :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
     case recv_until_null(socket, "") do
       "SUCCESS" -> :ok
-      error -> raise "Error in connecting: #{error}"
+      error = {:error, _} -> error
     end
   end
 
@@ -175,6 +178,7 @@ defmodule RethinkDB.Connection do
     case :gen_tcp.recv(socket, 1) do
       {:ok, "\0"} -> acc
       {:ok, a}    -> recv_until_null(socket, acc <> a)
+      x = {:error, _} -> x
     end
   end
 
