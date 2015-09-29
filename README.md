@@ -150,4 +150,4 @@ The goal for 1.0.0 is to be stable. Issues have been filed for work that needs t
 Contributions are welcome. Take a look at the Issues. Anything that is tagged `Help Wanted` or `Feedback Wanted` is a good candidate for contributions. Even if you don't know where to start, respond to an interesting issue and you will be pointed in the right direction.
 
 ####Testing
-Be intentional. Whether you are writing production code or tests, make sure there is value in the test being writtne.
+Be intentional. Whether you are writing production code or tests, make sure there is value in the test being written.
