@@ -1583,6 +1583,7 @@ defmodule RethinkDB.Query do
   after a between command using the same index.
   """
   @spec order_by(Q.reql_array, Q.reql_datum) :: Q.t
+  operate_on_single_arg(:order_by, 41)
   operate_on_two_args(:order_by, 41)
 
   @doc """

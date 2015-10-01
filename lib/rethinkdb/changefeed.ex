@@ -11,7 +11,8 @@ defmodule RethinkDB.Changefeed do
     end
   end
 
-  # When an update is received
+  # return {:subscribe, query, db, state}
+  # return {:stop, reason} 
   defcallback init(opts :: any) :: any
   #defcallback handle_data(data :: any, state)
   defcallback handle_update(update :: any, state :: any) :: any
