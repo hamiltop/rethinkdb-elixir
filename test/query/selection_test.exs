@@ -51,7 +51,7 @@ defmodule SelectionTest do
     table(@table_name) |> insert(%{id: "a", other_id: "c"}) |> run
     table(@table_name) |> insert(%{id: "b", other_id: "d"}) |> run
     table(@table_name) |> index_create("other_id") |> run
-    table(@table_name) |> index_wait("other_id") |> run
+    table(@table_name) |> index_wait(["other_id"]) |> run
     data = table(@table_name) |> get_all(["c", "d"], %{index: "other_id"}) |> run
     assert Enum.sort(Enum.to_list(data)) == [
       %{"id" => "a", "other_id" => "c"},

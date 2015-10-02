@@ -646,7 +646,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec add([(Q.reql_number | Q.reql_string | Q.reql_array)]) :: Q.t
-  operate_on_list(:add, 24)
+  operate_on_list(:add, 24, opts: false)
 
   @doc """
   Subtract two numbers.
@@ -666,7 +666,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec sub([Q.reql_number]) :: Q.t
-  operate_on_list(:sub, 25)
+  operate_on_list(:sub, 25, opts: false)
 
   @doc """
   Multiply two numbers, or make a periodic array.
@@ -688,7 +688,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec mul([(Q.reql_number | Q.reql_array)]) :: Q.t
-  operate_on_list(:mul, 26)
+  operate_on_list(:mul, 26, opts: false)
 
   @doc """
   Divide two numbers.
@@ -707,7 +707,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec divide([Q.reql_number]) :: Q.t
-  operate_on_list(:divide, 27)
+  operate_on_list(:divide, 27, opts: false)
 
   @doc """
   Find the remainder when dividing two numbers.
@@ -740,7 +740,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
   """
   @spec and_r([Q.reql_bool]) :: Q.t
-  operate_on_list(:and_r, 67)
+  operate_on_list(:and_r, 67, opts: false)
 
   @doc """
   Compute the logical “or” of two values.
@@ -765,7 +765,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec or_r([Q.reql_bool]) :: Q.t
-  operate_on_list(:or_r, 66)
+  operate_on_list(:or_r, 66, opts: false)
 
   @doc """
   Test if two values are equal.
@@ -788,7 +788,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
   """
   @spec eq([Q.reql_datum]) :: Q.t
-  operate_on_list(:eq, 17)
+  operate_on_list(:eq, 17, opts: false)
     
   @doc """
   Test if two values are not equal.
@@ -811,7 +811,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec ne([Q.reql_datum]) :: Q.t
-  operate_on_list(:ne, 18)
+  operate_on_list(:ne, 18, opts: false)
 
   @doc """
   Test if one value is less than the other.
@@ -834,7 +834,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec lt([Q.reql_datum]) :: Q.t
-  operate_on_list(:lt, 19)
+  operate_on_list(:lt, 19, opts: false)
 
   @doc """
   Test if one value is less than or equal to the other.
@@ -857,7 +857,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec le([Q.reql_datum]) :: Q.t
-  operate_on_list(:le, 20)
+  operate_on_list(:le, 20, opts: false)
 
   @doc """
   Test if one value is greater than the other.
@@ -880,7 +880,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec gt([Q.reql_datum]) :: Q.t
-  operate_on_list(:gt, 21)
+  operate_on_list(:gt, 21, opts: false)
 
   @doc """
   Test if one value is greater than or equal to the other.
@@ -903,7 +903,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec ge([Q.reql_datum]) :: Q.t
-  operate_on_list(:ge, 22)
+  operate_on_list(:ge, 22, opts: false)
 
   @doc """
   Compute the logical inverse (not) of an expression.
@@ -1134,9 +1134,7 @@ defmodule RethinkDB.Query do
   """
   @spec table_create(Q.t, Q.reql_string, Q.reql_opts) :: Q.t
   operate_on_single_arg(:table_create, 60)
-  def table_create(name, opt) when is_map(opt), do: %Q{query: [60, [wrap(name)], opt]}
   operate_on_two_args(:table_create, 60)
-  def table_create(db, name, opt) when is_map(opt), do: %Q{query: [60, [wrap(db), wrap(name)], opt]}
 
   @doc """
   Drop a table. The table and all its data will be deleted.
@@ -1151,15 +1149,15 @@ defmodule RethinkDB.Query do
   If the given table does not exist in the database, the command throws RqlRuntimeError.
   """
   @spec table_drop(Q.t, Q.reql_string) :: Q.t
-  operate_on_single_arg(:table_drop, 61)
-  operate_on_two_args(:table_drop, 61)
+  operate_on_single_arg(:table_drop, 61, opts: false)
+  operate_on_two_args(:table_drop, 61, opts: false)
 
   @doc """
   List all table names in a database. The result is a list of strings.
   """
   @spec table_list(Q.t) :: Q.t
-  operate_on_zero_args(:table_list, 62)
-  operate_on_single_arg(:table_list, 62)
+  operate_on_zero_args(:table_list, 62, opts: false)
+  operate_on_single_arg(:table_list, 62, opts: false)
 
   @doc """
   Create a new secondary index on a table. Secondary indexes improve the speed of 
@@ -1220,21 +1218,16 @@ defmodule RethinkDB.Query do
   indexes on this table if no indexes are specified.
   """
   @spec index_status(Q.t, Q.reql_string|Q.reql_array) :: Q.t
-  operate_on_single_arg(:index_status, 139)
-  def index_status(table, indexes) when is_list(indexes) do
-    %Q{query: [139, [wrap(table) | Enum.map(indexes, &wrap/1)]]}
-  end
+  operate_on_single_arg(:index_status, 139, opts: false)
+  operate_on_seq_and_list(:index_status, 139, opts: false)
 
   @doc """
   Wait for the specified indexes on this table to be ready, or for all indexes on 
   this table to be ready if no indexes are specified.
   """
   @spec index_wait(Q.t, Q.reql_string|Q.reql_array) :: Q.t
-  operate_on_single_arg(:index_wait, 140)
-  def index_wait(table, indexes) when is_list(indexes) do
-    %Q{query: [140, [wrap(table) | Enum.map(indexes, &wrap/1)]]}
-  end
-  operate_on_two_args(:index_wait, 140)
+  operate_on_single_arg(:index_wait, 140, opts: false)
+  operate_on_seq_and_list(:index_wait, 140, opts: false)
 
   #
   #Writing Data Queries
