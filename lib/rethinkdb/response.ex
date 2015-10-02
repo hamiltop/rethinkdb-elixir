@@ -4,6 +4,15 @@ end
 
 defmodule RethinkDB.Collection do
   defstruct data: []
+
+  defimpl Enumerable, for: __MODULE__ do
+    def reduce(%{data: data}, acc, fun) do
+      Enumerable.reduce(data, acc, fun)
+    end
+
+    def count(%{data: data}), do: Enumerable.count(data)
+    def member?(%{data: data}, el), do: Enumerable.member?(data, el)
+  end
 end
 
 defmodule RethinkDB.OrderByLimitFeed do

@@ -40,7 +40,7 @@ defmodule RethinkDB.Query.Macros do
   defmacro operate_on_seq_and_list(op, opcode) do
     quote do
       def unquote(op)(seq, args, opts) when is_list(args) and is_map(opts) do
-        %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)]]}
+        %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)], opts]}
       end
       def unquote(op)(seq, args) when is_list(args) do
         %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)]]}
