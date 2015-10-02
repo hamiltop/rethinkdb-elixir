@@ -44,6 +44,21 @@ defmodule SelectionTest do
     ]
   end
 
+  test "get all with index" do
+    db_create(@db_name) |> run
+    table_drop(@table_name) |> run
+    table_create(@table_name) |> run
+    table(@table_name) |> insert(%{id: "a", other_id: "c"}) |> run
+    table(@table_name) |> insert(%{id: "b", other_id: "d"}) |> run
+    table(@table_name) |> index_create("other_id") |> run
+    table(@table_name) |> index_wait("other_id") |> run
+    data = table(@table_name) |> get_all(["c", "d"], %{index: "other_id"}) |> run
+    assert Enum.sort(Enum.to_list(data)) == [
+      %{"id" => "a", "other_id" => "c"},
+      %{"id" => "b", "other_id" => "d"}
+    ]
+  end
+
   test "between" do
     db_create(@db_name) |> run
     table_drop(@table_name) |> run
