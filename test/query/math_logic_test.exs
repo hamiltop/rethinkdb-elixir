@@ -197,6 +197,7 @@ defmodule MathLogicTest do
     %Record{data: data} = random(50, 100) |> run
     assert is_integer(data) && data >= 50 && data <= 100
     %Record{data: data} = random(50, 100.0) |> run
+    IO.inspect data
     assert is_float(data) && data >= 50.0 && data <= 100.0
   end
 end

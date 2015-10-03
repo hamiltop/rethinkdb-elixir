@@ -913,7 +913,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec not_r(Q.reql_bool) :: Q.t
-  operate_on_single_arg(:not_r, 23)
+  operate_on_single_arg(:not_r, 23, opts: false)
 
   @doc """
   Generate a random float between 0 and 1.
@@ -923,10 +923,10 @@ defmodule RethinkDB.Query do
 
   """
   @spec random :: Q.t
-  def random, do: %Q{query: [151, []]}
+  operate_on_zero_args(:random, 151, opts: false)
   @doc """
   Generate a random value in the range [0,upper). If upper is an integer then the
-  random value will be an interger. If upper is a float it will be a float.
+  random value will be an integer. If upper is a float it will be a float.
 
       iex> random(5) |> run conn
       %RethinkDB.Record{data: 3}
@@ -936,8 +936,9 @@ defmodule RethinkDB.Query do
 
   """
   @spec random(Q.reql_number) :: Q.t
-  def random(upper) when is_integer(upper), do: %Q{query: [151, [upper]]}
-  def random(upper) when is_float(upper), do: %Q{query: [151, [upper], %{float: true}]}
+  def random(upper) when is_float(upper), do: random(upper, float: true)
+  operate_on_single_arg(:random, 151)
+
   @doc """
   Generate a random value in the range [lower,upper). If either arg is an integer then the
   random value will be an interger. If one of them is a float it will be a float.
@@ -950,12 +951,12 @@ defmodule RethinkDB.Query do
 
   """
   @spec random(Q.reql_number, Q.reql_number) :: Q.t
-  def random(lower, upper) when is_integer(lower) and is_integer(upper) do
-    %Q{query: [151, [lower, upper]]}
-  end
   def random(lower, upper) when is_float(lower) or is_float(upper) do
-    %Q{query: [151, [lower, upper], %{float: true}]}
+    random(lower, upper, float: true)
   end
+  operate_on_two_args(:random, 151)
+
+  # TODO implement round, floor, ceil
 
   #
   #Selection Queries
