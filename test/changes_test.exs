@@ -77,7 +77,8 @@ defmodule ChangesTest do
       {:ok, pid}
     end
 
-    def handle_data(_, pid) do
+    def handle_data(foo, pid) do
+      send pid, {:ready, foo}
       {:ok, pid}
     end
 
@@ -87,7 +88,7 @@ defmodule ChangesTest do
     end
   end
 
-  test "supervised changefeed" do
+  test "changefeed process" do
     q = db_create(@db_name)
     run(q)
     q = table_create(@table_name)
@@ -100,7 +101,9 @@ defmodule ChangesTest do
       TestConnection,
       self,
       [])
-    :timer.sleep(1000)
+    receive do
+      {:ready, _} -> :ok
+    end
     table(@table_name) |> insert(%{something: :blue}) |> run
     receive do
       {:update, [%{"new_val" => %{"something" => val}}]} ->
@@ -108,22 +111,48 @@ defmodule ChangesTest do
     end
   end
 
-  test "broken connection changefeed" do
-    f_conn = FlakyConnection.start('localhost', 28015)
-    port = f_conn.port
-    c = RethinkDB.connect(port: port)
+  test "single document changefeed" do
     q = db_create(@db_name)
     run(q)
     q = table_create(@table_name)
     run(q)
-    q = table(@table_name) |> changes
-    FlakyConnection.stop(f_conn)
+    %RethinkDB.Record{data: %{"generated_keys" => [id]}} = table(@table_name)
+                          |> insert(%{"test" => "value"}) |> run
+    q = table(@table_name) |> get(id) |> changes
+
     {:ok, _} = RethinkDB.Changefeed.start_link(
       TestChangefeed,
       q,
-      c,
+      TestConnection,
       self,
       [])
-    :timer.sleep(1000)
+    receive do
+      {:ready, data} ->
+        assert data["new_val"]["test"] == "value"
+    end
+    table(@table_name) |> get(id) |> update(%{"test" => "new_value"}) |> run
+    receive do
+      {:update, data} ->
+        assert data["new_val"]["test"] == "new_value"
+    end
   end
+#
+#  test "broken connection changefeed" do
+#    f_conn = FlakyConnection.start('localhost', 28015)
+#    port = f_conn.port
+#    c = RethinkDB.connect(port: port)
+#    q = db_create(@db_name)
+#    run(q)
+#    q = table_create(@table_name)
+#    run(q)
+#    q = table(@table_name) |> changes
+#    FlakyConnection.stop(f_conn)
+#    {:ok, _} = RethinkDB.Changefeed.start_link(
+#      TestChangefeed,
+#      q,
+#      c,
+#      self,
+#      [])
+#    :timer.sleep(1000)
+#  end
 end

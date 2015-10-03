@@ -36,35 +36,25 @@ defmodule RethinkDB.Changefeed do
       {:ok, state} -> state
     end
     run_task = run(query, conn)
-    {:ok, %{feed_state: feed_state, opts: opts, run: run_task}}
+    {:ok, %{feed_state: feed_state, opts: opts, state: :run, task: run_task}}
   end
 
-  def handle_info(msg = {:DOWN, ref, _, _, _}, state) do
-    IO.inspect msg
-    run_ref = state[:run] && state[:run].ref
-    next_ref = state[:next] && state[:next].ref
-    case ref do
-      ^run_ref  -> :ok
-      ^next_ref -> :ok
-      _ -> :ok
-    end
-    {:noreply, state}
-  end
-
-  def handle_info({ref, msg}, state) when is_reference(ref) do
-    run_ref = state[:run] && state[:run].ref
-    next_ref = state[:next] && state[:next].ref
+  def handle_info({ref, msg}, state = %{state: :next, task: %Task{ref: ref}}) do
+    Process.demonitor(ref, [:flush])
     mod = get_in(state, [:opts, :mod])
     feed_state = Dict.get(state, :feed_state)
-    # TODO: resolve race condition around :DOWN events
-    new_state = case ref do
-      ^run_ref  ->
-        #mod.handle_data(msg, feed_state) 
-        Dict.put(state, :next, next(msg))
-      ^next_ref ->
-        mod.handle_update(msg.data, feed_state) 
-        Dict.put(state, :next, next(msg))
-    end
+    mod.handle_update(msg.data, feed_state)
+    {:noreply, Dict.put(state, :task, next(msg))}
+  end
+
+  def handle_info({ref, msg}, state = %{state: :run, task: %Task{ref: ref}}) do
+    Process.demonitor(ref, [:flush])
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    mod.handle_data(msg.data, feed_state) 
+    new_state = state
+      |> Dict.put(:task, next(msg))
+      |> Dict.put(:state, :next)
     {:noreply, new_state}
   end
 
