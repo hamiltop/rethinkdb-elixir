@@ -14,7 +14,11 @@ defmodule RethinkDB.Changefeed do
   # return {:subscribe, query, db, state}
   # return {:stop, reason} 
   defcallback init(opts :: any) :: any
-  #defcallback handle_data(data :: any, state)
+  # return {:ok, state}
+  # return {:stop, reason, state}
+  defcallback handle_data(data :: any, state :: any) :: any
+  # return {:ok, state}
+  # return {:stop, reason, state}
   defcallback handle_update(update :: any, state :: any) :: any
 
   def start_link(mod, query, conn, args, opts) do
@@ -35,7 +39,8 @@ defmodule RethinkDB.Changefeed do
     {:ok, %{feed_state: feed_state, opts: opts, run: run_task}}
   end
 
-  def handle_info({:DOWN, ref, _, _, _}, state) do
+  def handle_info(msg = {:DOWN, ref, _, _, _}, state) do
+    IO.inspect msg
     run_ref = state[:run] && state[:run].ref
     next_ref = state[:next] && state[:next].ref
     case ref do

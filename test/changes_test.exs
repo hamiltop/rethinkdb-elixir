@@ -77,6 +77,10 @@ defmodule ChangesTest do
       {:ok, pid}
     end
 
+    def handle_data(_, pid) do
+      {:ok, pid}
+    end
+
     def handle_update(foo, pid) do
       send pid, {:update, foo}
       {:ok, pid}
@@ -102,5 +106,24 @@ defmodule ChangesTest do
       {:update, [%{"new_val" => %{"something" => val}}]} ->
         assert val == "blue"
     end
+  end
+
+  test "broken connection changefeed" do
+    f_conn = FlakyConnection.start('localhost', 28015)
+    port = f_conn.port
+    c = RethinkDB.connect(port: port)
+    q = db_create(@db_name)
+    run(q)
+    q = table_create(@table_name)
+    run(q)
+    q = table(@table_name) |> changes
+    FlakyConnection.stop(f_conn)
+    {:ok, _} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      q,
+      c,
+      self,
+      [])
+    :timer.sleep(1000)
   end
 end
