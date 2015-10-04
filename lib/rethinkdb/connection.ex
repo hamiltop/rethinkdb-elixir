@@ -104,7 +104,7 @@ defmodule RethinkDB.Connection do
         end
       {:error, :econnrefused} ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Dict.put(state, :timeout, backoff)}
+        {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
   end
 
