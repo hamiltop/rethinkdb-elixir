@@ -14,7 +14,6 @@ defmodule ConnectionTest do
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
     Process.exit(sup, :normal)
-    Process.exit(TestConnection, :normal)
   end
 
   test "reconnects if initial connect fails" do
@@ -24,7 +23,6 @@ defmodule ConnectionTest do
     :timer.sleep(1000)
     %RethinkDB.Record{} = RethinkDB.Query.table_list |> TestConnection.run
     FlakyConnection.stop(conn)
-    Process.exit(TestConnection, :normal)
   end
 
   test "replies to pending queries on disconnect" do
@@ -39,7 +37,6 @@ defmodule ConnectionTest do
     :timer.sleep(100)
     FlakyConnection.stop(conn)
     %RethinkDB.Exception.ConnectionClosed{} = Task.await(task)
-    Process.exit(TestConnection, :normal)
   end
 
   test "supervised connection restarts on disconnect" do
