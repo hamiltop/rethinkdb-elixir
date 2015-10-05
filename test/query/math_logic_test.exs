@@ -1,11 +1,12 @@
+defmodule MathLogicTestDB, do: use RethinkDB.Connection
 defmodule MathLogicTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use MathLogicTestDB
 
   alias RethinkDB.Record
   
   setup_all do
-    TestConnection.connect
+    connect
     :ok
   end
 
