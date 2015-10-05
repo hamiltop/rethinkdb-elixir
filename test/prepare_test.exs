@@ -1,5 +1,5 @@
 defmodule PrepareTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import RethinkDB.Prepare
 
   test "single elements" do

@@ -1,30 +1,27 @@
+defmodule ChangesTestDB, do: use RethinkDB.Connection
 defmodule ChangesTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias RethinkDB.Feed
-  use TestConnection
+  use ChangesTestDB
 
   setup_all do
     socket = connect
     {:ok, %{socket: socket}}
   end
 
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
-  setup context do
-    q = db_drop(@db_name)
-    run(q)
-
+  @table_name "changes_test_table_1"
+  setup do
     q = table_drop(@table_name)
-    run(q)
-    {:ok, context}
-  end
-
-  test "first change" do
-    q = db_create(@db_name)
     run(q)
     q = table_create(@table_name)
     run(q)
+    on_exit fn ->
+      table_drop(@table_name) |> run
+    end
+    :ok
+  end
 
+  test "first change" do
     q = table(@table_name) |> changes
     changes = %Feed{} = run(q)
 
@@ -38,11 +35,6 @@ defmodule ChangesTest do
   end
 
   test "changes" do
-    q = db_create(@db_name)
-    run(q)
-    q = table_create(@table_name)
-    run(q)
-
     q = table(@table_name) |> changes
     changes = %Feed{} = run(q)
     t = Task.async fn ->

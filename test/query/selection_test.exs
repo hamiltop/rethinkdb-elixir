@@ -1,6 +1,7 @@
+defmodule SelectionTestDB, do: use RethinkDB.Connection
 defmodule SelectionTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use SelectionTestDB
 
   alias RethinkDB.Record
 
@@ -8,33 +9,30 @@ defmodule SelectionTest do
   import RethinkDB.Lambda
 
   setup_all do
-    TestConnection.connect
+    connect
     :ok
   end
 
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
-  setup context do
-    q = db_drop(@db_name)
-    run(q)
-
+  @table_name "selection_test_table_1"
+  setup do
     q = table_drop(@table_name)
     run(q)
-    {:ok, context}
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
+    :ok
   end
 
   test "get" do
-    db_create(@db_name) |> run
-    table_create(@table_name) |> run
     table(@table_name) |> insert(%{id: "a", a: 5}) |> run
     %Record{data: data} = table(@table_name) |> get("a") |> run
     assert data == %{"a" => 5, "id" => "a"}
   end
 
   test "get all" do
-    db_create(@db_name) |> run
-    table_drop(@table_name) |> run
-    table_create(@table_name) |> run
     table(@table_name) |> insert(%{id: "a", a: 5}) |> run
     table(@table_name) |> insert(%{id: "b", a: 5}) |> run
     data = table(@table_name) |> get_all(["a", "b"]) |> run
@@ -45,9 +43,6 @@ defmodule SelectionTest do
   end
 
   test "get all with index" do
-    db_create(@db_name) |> run
-    table_drop(@table_name) |> run
-    table_create(@table_name) |> run
     table(@table_name) |> insert(%{id: "a", other_id: "c"}) |> run
     table(@table_name) |> insert(%{id: "b", other_id: "d"}) |> run
     table(@table_name) |> index_create("other_id") |> run
@@ -60,9 +55,6 @@ defmodule SelectionTest do
   end
 
   test "between" do
-    db_create(@db_name) |> run
-    table_drop(@table_name) |> run
-    table_create(@table_name) |> run
     table(@table_name) |> insert(%{id: "a", a: 5}) |> run
     table(@table_name) |> insert(%{id: "b", a: 5}) |> run
     table(@table_name) |> insert(%{id: "c", a: 5}) |> run
@@ -71,9 +63,6 @@ defmodule SelectionTest do
   end
 
   test "filter" do
-    db_create(@db_name) |> run
-    table_drop(@table_name) |> run
-    table_create(@table_name) |> run
     table(@table_name) |> insert(%{id: "a", a: 5}) |> run
     table(@table_name) |> insert(%{id: "b", a: 5}) |> run
     table(@table_name) |> insert(%{id: "c", a: 6}) |> run

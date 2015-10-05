@@ -1,6 +1,7 @@
+defmodule JoinsTestDB, do: use RethinkDB.Connection
 defmodule JoinsTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use JoinsTestDB
 
   alias RethinkDB.Record
   alias RethinkDB.Collection
@@ -9,7 +10,20 @@ defmodule JoinsTest do
   import RethinkDB.Lambda
 
   setup_all do
-    TestConnection.connect
+    connect
+    :ok
+  end
+
+  @table_name "joins_test_table_1"
+  setup do
+    q = table_drop(@table_name)
+    run(q)
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
     :ok
   end
 
@@ -39,24 +53,19 @@ defmodule JoinsTest do
     assert data == [%{"a" => 1, "b" => 2, "c" => 4}, %{"a" => 2, "b" => 3}]
   end
 
-  require TestConnection
-
   test "eq join arrays" do
-    TestConnection.with_test_db do
-
-      table_create("test_1") |> run
-      table_create("test_2") |> run
-      table("test_1") |> insert([%{id: 3, a: 1, b: 2}, %{id: 2, a: 2, b: 3}]) |> run
-      table("test_2") |> insert([%{id: 1, c: 4}]) |> run
-      q = eq_join(table("test_1"), :a, table("test_2"), %{index: :id})
-      %Collection{data: data} = run q
-      %Collection{data: data2} = q |> zip |> run
-      table_drop("test_1") |> run
-      table_drop("test_2") |> run
-      assert data == [
-        %{"left" => %{"id" => 3, "a" => 1, "b" => 2}, "right" => %{"id" => 1, "c" => 4}}
-      ]
-      assert data2 == [%{"id" => 1, "a" => 1, "b" => 2, "c" => 4}]
-    end
+    table_create("test_1") |> run
+    table_create("test_2") |> run
+    table("test_1") |> insert([%{id: 3, a: 1, b: 2}, %{id: 2, a: 2, b: 3}]) |> run
+    table("test_2") |> insert([%{id: 1, c: 4}]) |> run
+    q = eq_join(table("test_1"), :a, table("test_2"), %{index: :id})
+    %Collection{data: data} = run q
+    %Collection{data: data2} = q |> zip |> run
+    table_drop("test_1") |> run
+    table_drop("test_2") |> run
+    assert data == [
+      %{"left" => %{"id" => 3, "a" => 1, "b" => 2}, "right" => %{"id" => 1, "c" => 4}}
+    ]
+    assert data2 == [%{"id" => 1, "a" => 1, "b" => 2, "c" => 4}]
   end
 end

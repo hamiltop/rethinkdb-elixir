@@ -1,6 +1,7 @@
+defmodule ControlStructuresTestDB, do: use RethinkDB.Connection
 defmodule ControlStructuresTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use ControlStructuresTestDB
 
   alias RethinkDB.Record
   alias RethinkDB.Collection
@@ -11,16 +12,17 @@ defmodule ControlStructuresTest do
     :ok
   end
 
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
+  @table_name "control_test_table_1"
   setup do
-    q = db_drop(@db_name)
+    q = table_drop(@table_name)
     run(q)
-    q = db_create(@db_name)
-    run(q)
-    q = db(@db_name) |> table_create(@table_name)
+    q = table_create(@table_name)
     run(q)
     :ok
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
   end
 
   test "args" do
@@ -58,7 +60,7 @@ defmodule ControlStructuresTest do
   end
 
   test "for_each" do
-    table_query = db(@db_name) |> table(@table_name)
+    table_query = table(@table_name)
     q = [1,2,3] |> for_each(fn(x) ->
       table_query |> insert(%{a: x})
     end)

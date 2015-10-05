@@ -1,89 +1,80 @@
 defmodule QueryTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias RethinkDB.Query
   alias RethinkDB.Record
   alias RethinkDB.Collection
   use TestConnection
+  require RethinkDB.Lambda
 
   setup_all do
     socket = connect
     {:ok, %{socket: socket}}
   end
 
-  @db_name "query_test_db_1"
   @table_name "query_test_table_1"
-  setup context do
-    q = db_drop(@db_name)
-    run(q)
-
+  setup do
     q = table_drop(@table_name)
     run(q)
-    {:ok, context}
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
+    :ok
   end
+
 
   test "make_array" do
     array = [%{"name" => "hello"}, %{"name:" => "world"}]
     q = Query.make_array(array)
-    %Record{data: data} = TestConnection.run(q)
+    %Record{data: data} = run(q)
     assert Enum.sort(data) == Enum.sort(array)
   end
 
   test "map" do
-    require RethinkDB.Lambda
-
-    q = table_create(@table_name)
-    %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = table(@table_name)
 
-    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
     %Collection{data: data} = table(@table_name)
       |> map( RethinkDB.Lambda.lambda fn (el) ->
         el[:name] + " " + "with map"
-      end) |> TestConnection.run
+      end) |> run
     assert Enum.sort(data) == ["Hello with map", "World with map"]
   end
 
   test "filter by map" do
-    require RethinkDB.Lambda
-
-    q = table_create(@table_name)
-    %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = table(@table_name)
 
-    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
     %Collection{data: data} = table(@table_name)
     |> filter(%{name: "Hello"})
-    |> TestConnection.run
+    |> run
     assert Enum.map(data, &(&1["name"])) == ["Hello"]
   end
 
   test "filter by lambda" do
-    require RethinkDB.Lambda
-
-    q = table_create(@table_name)
-    %Record{data: %{"tables_created" => 1}} = TestConnection.run(q)
     table_query = table(@table_name)
 
-    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> TestConnection.run
+    insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
     %Collection{data: data} = table(@table_name)
     |> filter(RethinkDB.Lambda.lambda fn (el) ->
       el[:name] == "Hello"
     end)
-    |> TestConnection.run
+    |> run
     assert Enum.map(data, &(&1["name"])) == ["Hello"]
   end
 
   test "nested functions" do
-    import Query
     a = make_array([1,2,3]) |> map(fn (x) ->
       make_array([4,5,6]) |> map(fn (y) ->
         [x, y]
       end)
     end)
-    %{data: data} = TestConnection.run(a)
+    %{data: data} = run(a)
     assert data == [
       [[1,4], [1,5], [1,6]],
       [[2,4], [2,5], [2,6]],

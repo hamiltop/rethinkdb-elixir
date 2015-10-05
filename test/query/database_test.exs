@@ -1,6 +1,7 @@
+defmodule DatabaseTestDB, do: use RethinkDB.Connection
 defmodule DatabaseTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use DatabaseTestDB
   alias RethinkDB.Record
 
   setup_all do
@@ -8,14 +9,18 @@ defmodule DatabaseTest do
     :ok
   end
 
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
+  @db_name "db_test_db_1"
+  @table_name "db_test_table_1"
   setup do
-    q = db_drop(@db_name)
-    run(q)
-
     q = table_drop(@table_name)
     run(q)
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+      db_drop(@db_name) |> run
+    end
     :ok
   end
 
@@ -31,7 +36,7 @@ defmodule DatabaseTest do
     %Record{data: %{"dbs_dropped" => 1}} = run(q)
 
     q = db_list
-    %Record{data: dbs} = TestConnection.run(q)
+    %Record{data: dbs} = run(q)
     assert !Enum.member?(dbs, @db_name)
   end
 end

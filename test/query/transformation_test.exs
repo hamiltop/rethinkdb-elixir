@@ -1,6 +1,8 @@
+defmodule TransformationTestDB, do: use RethinkDB.Connection
 defmodule TransformationTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+
+  use TransformationTestDB
 
   alias RethinkDB.Record
 
@@ -12,15 +14,16 @@ defmodule TransformationTest do
     :ok
   end
 
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
+  @table_name "trans_test_table_1"
   setup do
-    q = db_drop(@db_name)
+    q = table_drop(@table_name)
     run(q)
-    q = db_create(@db_name)
+    q = table_create(@table_name)
     run(q)
-    q = db(@db_name) |> table_create(@table_name)
-    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
     :ok
   end
 

@@ -1,26 +1,36 @@
+defmodule TableTestDB, do: use RethinkDB.Connection
 defmodule TableTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use TableTestDB
   alias RethinkDB.Record
 
   setup_all do
     connect
     :ok
   end
-
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
-
+  
+  @db_name "table_test_db_1"
+  @table_name "table_test_table_1"
   setup do
     q = db_drop(@db_name)
     run(q)
-
+    q = db_create(@db_name)
+    run(q)
     q = table_drop(@table_name)
     run(q)
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+      q = db_drop(@db_name)
+      run(q)
+    end
     :ok
   end
 
   test "tables" do
+    table_drop(@table_name) |> run
     q = table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = run q
 
@@ -42,6 +52,7 @@ defmodule TableTest do
   end
 
   test "tables with specific database" do
+    db_drop(@db_name) |> run
     q = db_create(@db_name)
     %Record{data: %{"dbs_created" => 1}} = run q
     db_query = db(@db_name)
