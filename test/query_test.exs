@@ -3,7 +3,8 @@ defmodule QueryTest do
   alias RethinkDB.Query
   alias RethinkDB.Record
   alias RethinkDB.Collection
-  use TestConnection
+  use RethinkDB.Connection
+  import RethinkDB.Query
   require RethinkDB.Lambda
 
   @table_name "query_test_table_1"

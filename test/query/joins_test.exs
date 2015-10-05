@@ -1,7 +1,7 @@
-defmodule JoinsTestDB, do: use RethinkDB.Connection
 defmodule JoinsTest do
   use ExUnit.Case, async: true
-  use JoinsTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
   alias RethinkDB.Collection

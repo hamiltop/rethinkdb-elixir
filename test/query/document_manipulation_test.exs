@@ -1,7 +1,7 @@
-defmodule DocumentManipulationTestDB, do: use RethinkDB.Connection
 defmodule DocumentManipulationTest do
   use ExUnit.Case, async: true
-  use DocumentManipulationTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
 

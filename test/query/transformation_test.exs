@@ -1,8 +1,8 @@
-defmodule TransformationTestDB, do: use RethinkDB.Connection
 defmodule TransformationTest do
   use ExUnit.Case, async: true
 
-  use TransformationTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
 

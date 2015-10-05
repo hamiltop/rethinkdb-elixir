@@ -1,7 +1,7 @@
-defmodule DateTimeTestDB, do: use RethinkDB.Connection
 defmodule DateTimeTest do
   use ExUnit.Case, async: true
-  use DateTimeTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
   alias RethinkDB.Pseudotypes.Time
