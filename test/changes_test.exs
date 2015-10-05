@@ -4,20 +4,19 @@ defmodule ChangesTest do
   alias RethinkDB.Feed
   use ChangesTestDB
 
-  setup_all do
-    socket = connect
-    {:ok, %{socket: socket}}
-  end
-
   @table_name "changes_test_table_1"
-  setup do
-    q = table_drop(@table_name)
-    run(q)
-    q = table_create(@table_name)
-    run(q)
+  setup_all do
+    connect
+    table_create(@table_name) |> run
     on_exit fn ->
+      connect
       table_drop(@table_name) |> run
     end
+    :ok
+  end
+
+  setup do
+    table(@table_name) |> delete |> run
     :ok
   end
 

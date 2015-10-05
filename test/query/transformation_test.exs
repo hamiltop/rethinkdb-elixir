@@ -14,19 +14,6 @@ defmodule TransformationTest do
     :ok
   end
 
-  @table_name "trans_test_table_1"
-  setup do
-    q = table_drop(@table_name)
-    run(q)
-    q = table_create(@table_name)
-    run(q)
-    on_exit fn ->
-      q = table_drop(@table_name)
-      run(q)
-    end
-    :ok
-  end
-
   test "map" do
     %Record{data: data} = map([1,2,3], lambda &(&1 + 1)) |> run
     assert data == [2,3,4]
