@@ -1,7 +1,7 @@
-defmodule AggregationTestDB, do: use RethinkDB.Connection
 defmodule AggregationTest do
   use ExUnit.Case, async: true
-  use AggregationTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
   alias RethinkDB.Query
 
   alias RethinkDB.Record

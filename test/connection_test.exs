@@ -1,7 +1,8 @@
-defmodule ConnectionTestDB, do: use RethinkDB.Connection
 defmodule ConnectionTest do
   use ExUnit.Case, async: true
   import Supervisor.Spec
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   test "Connections can be supervised" do
     children = [worker(RethinkDB.Connection, [])]
@@ -11,18 +12,18 @@ defmodule ConnectionTest do
   end
 
   test "using Connection works with supervision" do
-    children = [worker(ConnectionTestDB, [])]
+    children = [worker(__MODULE__, [])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
     Process.exit(sup, :normal)
   end
 
   test "reconnects if initial connect fails" do
-    ConnectionTestDB.connect([port: 28014])
-    %RethinkDB.Exception.ConnectionClosed{} = RethinkDB.Query.table_list |> ConnectionTestDB.run
+    connect([port: 28014])
+    %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
     conn = FlakyConnection.start('localhost', 28015, 28014)
     :timer.sleep(1000)
-    %RethinkDB.Record{} = RethinkDB.Query.table_list |> ConnectionTestDB.run
+    %RethinkDB.Record{} = RethinkDB.Query.table_list |> run
     FlakyConnection.stop(conn)
   end
 
@@ -30,18 +31,18 @@ defmodule ConnectionTest do
 
   test "replies to pending queries on disconnect" do
     conn = FlakyConnection.start('localhost', 28015)
-    ConnectionTestDB.connect([port: conn.port])
+    connect([port: conn.port])
     table = "foo_flaky_test"
-    RethinkDB.Query.table_create(table)|> ConnectionTestDB.run
+    RethinkDB.Query.table_create(table)|> run
     on_exit fn ->
-      ConnectionTestDB.connect
-      RethinkDB.Query.table_drop(table) |> ConnectionTestDB.run
-      GenServer.cast(ConnectionTestDB, :stop)
+      connect
+      RethinkDB.Query.table_drop(table) |> run
+      GenServer.cast(__MODULE__, :stop)
     end
-    RethinkDB.Query.table(table) |> RethinkDB.Query.index_wait |> ConnectionTestDB.run
-    change_feed = RethinkDB.Query.table(table) |> RethinkDB.Query.changes |> ConnectionTestDB.run
+    table(table) |> index_wait |> run
+    change_feed = table(table) |> changes |> run
     task = Task.async fn ->
-      ConnectionTestDB.next change_feed
+      next change_feed
     end
     :timer.sleep(100)
     FlakyConnection.stop(conn)
@@ -50,7 +51,7 @@ defmodule ConnectionTest do
 
   test "supervised connection restarts on disconnect" do
     conn = FlakyConnection.start('localhost', 28015)
-    children = [worker(ConnectionTestDB, [[port: conn.port]])]
+    children = [worker(__MODULE__, [[port: conn.port]])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
 

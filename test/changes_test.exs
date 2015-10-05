@@ -1,8 +1,8 @@
-defmodule ChangesTestDB, do: use RethinkDB.Connection
 defmodule ChangesTest do
   use ExUnit.Case, async: true
   alias RethinkDB.Feed
-  use ChangesTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   @table_name "changes_test_table_1"
   setup_all do

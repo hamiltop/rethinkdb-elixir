@@ -1,7 +1,7 @@
-defmodule MathLogicTestDB, do: use RethinkDB.Connection
 defmodule MathLogicTest do
   use ExUnit.Case, async: true
-  use MathLogicTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
   

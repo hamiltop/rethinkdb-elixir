@@ -1,7 +1,8 @@
-defmodule TableTest do
+defmodule TableDBTest do
   use ExUnit.Case, async: true
   use RethinkDB.Connection
   import RethinkDB.Query
+
   alias RethinkDB.Record
 
   setup_all do
@@ -9,28 +10,30 @@ defmodule TableTest do
     :ok
   end
   
-  @table_name "table_test_table_1"
+  @db_name "table_db_test_db_1"
+  @table_name "table_db_test_table_1"
 
-  test "tables" do
-    table_drop(@table_name) |> run
+  test "tables with specific database" do
+    db_create(@db_name) |> run
     on_exit fn ->
-      table_drop(@table_name) |> run
+      db_drop(@db_name) |> run
     end
-    q = table_create(@table_name)
+
+    q = db(@db_name) |> table_create(@table_name)
     %Record{data: %{"tables_created" => 1}} = run q
 
-    q = table_list
+    q = db(@db_name) |> table_list
     %Record{data: tables} = run q
     assert Enum.member?(tables, @table_name)
 
-    q = table_drop(@table_name)
+    q = db(@db_name) |> table_drop(@table_name)
     %Record{data: %{"tables_dropped" => 1}} = run q
 
-    q = table_list
+    q = db(@db_name) |> table_list
     %Record{data: tables} = run q
     assert !Enum.member?(tables, @table_name)
 
-    q = table_create(@table_name, %{primary_key: "not_id"})
+    q = db(@db_name) |> table_create(@table_name, %{primary_key: "not_id"})
     %Record{data: result} = run q
     %{"config_changes" => [%{"new_val" => %{"primary_key" => primary_key}}]} = result
     assert primary_key == "not_id"

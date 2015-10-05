@@ -1,7 +1,8 @@
-defmodule WritingDataTestDB, do: use RethinkDB.Connection
 defmodule WritingDataTest do
   use ExUnit.Case, async: true
-  use WritingDataTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
+
   alias RethinkDB.Record
   alias RethinkDB.Collection
 

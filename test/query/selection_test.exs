@@ -1,7 +1,7 @@
-defmodule SelectionTestDB, do: use RethinkDB.Connection
 defmodule SelectionTest do
   use ExUnit.Case, async: true
-  use SelectionTestDB
+  use RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
 
