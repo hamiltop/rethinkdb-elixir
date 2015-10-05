@@ -1,5 +1,5 @@
 defmodule StringManipulationTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   use RethinkDB
 
   alias RethinkDB.Record

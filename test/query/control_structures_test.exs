@@ -1,6 +1,8 @@
+defmodule ControlStructuresTestDB, do: use RethinkDB.Connection
+defmodule ControlStructuresAdvTestDB, do: use RethinkDB.Connection
 defmodule ControlStructuresTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use ControlStructuresTestDB
 
   alias RethinkDB.Record
   alias RethinkDB.Collection
@@ -8,18 +10,6 @@ defmodule ControlStructuresTest do
 
   setup_all do
     connect
-    :ok
-  end
-
-  @db_name "query_test_db_1"
-  @table_name "query_test_table_1"
-  setup do
-    q = db_drop(@db_name)
-    run(q)
-    q = db_create(@db_name)
-    run(q)
-    q = db(@db_name) |> table_create(@table_name)
-    run(q)
     :ok
   end
 
@@ -55,16 +45,6 @@ defmodule ControlStructuresTest do
     q = branch(false, 1, 2)
     %Record{data: data} = run q
     assert data == 2 
-  end
-
-  test "for_each" do
-    table_query = db(@db_name) |> table(@table_name)
-    q = [1,2,3] |> for_each(fn(x) ->
-      table_query |> insert(%{a: x})
-    end)
-    run q
-    %Collection{data: data} = run table_query
-    assert Enum.count(data) == 3
   end
 
   test "error" do
@@ -130,5 +110,39 @@ defmodule ControlStructuresTest do
     q = uuid  
     %Record{data: data} = run q
     assert String.length(String.replace(data, "-", ""))  == 32
+  end
+end
+
+defmodule ControlStructuresAdvTest do
+  use ExUnit.Case, async: true
+  use ControlStructuresAdvTestDB
+
+  alias RethinkDB.Collection
+
+  @table_name "control_test_table_1"
+  setup_all do
+    connect
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      connect
+      table_drop(@table_name) |> run
+    end
+    :ok
+  end
+
+  setup do
+    table(@table_name) |> delete |> run
+    :ok
+  end
+
+  test "for_each" do
+    table_query = table(@table_name)
+    q = [1,2,3] |> for_each(fn(x) ->
+      table_query |> insert(%{a: x})
+    end)
+    run q
+    %Collection{data: data} = run table_query
+    assert Enum.count(data) == 3
   end
 end

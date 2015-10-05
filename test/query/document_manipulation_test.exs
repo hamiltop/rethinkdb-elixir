@@ -1,11 +1,12 @@
+defmodule DocumentManipulationTestDB, do: use RethinkDB.Connection
 defmodule DocumentManipulationTest do
-  use ExUnit.Case
-  use TestConnection
+  use ExUnit.Case, async: true
+  use DocumentManipulationTestDB
 
   alias RethinkDB.Record
 
   setup_all do
-    TestConnection.connect
+    connect
     :ok
   end
 
