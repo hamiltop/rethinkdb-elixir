@@ -1,4 +1,5 @@
 defmodule TableTestDB, do: use RethinkDB.Connection
+defmodule TableIndexTestDB, do: use RethinkDB.Connection
 defmodule TableTest do
   use ExUnit.Case, async: true
   use TableTestDB
@@ -75,6 +76,29 @@ defmodule TableTest do
     %Record{data: result} = run q
     %{"config_changes" => [%{"new_val" => %{"primary_key" => primary_key}}]} = result
     assert primary_key == "not_id"
+  end
+end
+defmodule TableIndexTest do
+  use ExUnit.Case, async: true
+  use TableIndexTestDB
+  alias RethinkDB.Record
+
+  setup_all do
+    connect
+    :ok
+  end
+  
+  @table_name "table_index_test_table_1"
+  setup do
+    q = table_drop(@table_name)
+    run(q)
+    q = table_create(@table_name)
+    run(q)
+    on_exit fn ->
+      q = table_drop(@table_name)
+      run(q)
+    end
+    :ok
   end
 
   test "indexes" do
