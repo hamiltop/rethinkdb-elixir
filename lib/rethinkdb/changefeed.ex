@@ -114,8 +114,6 @@ defmodule RethinkDB.Changefeed do
   def handle_info({ref, msg}, state = %{state: :next, task: %Task{ref: ref}}) do
     Process.demonitor(ref, [:flush])
     case msg do
-      %RethinkDB.Exception.ConnectionClosed{} ->
-        {:stop, :normal, state}
       %RethinkDB.Feed{data: data} ->
         mod = get_in(state, [:opts, :mod])
         feed_state = Dict.get(state, :feed_state)
@@ -125,6 +123,8 @@ defmodule RethinkDB.Changefeed do
           |> Dict.put(:feed_state, feed_state)
           |> Dict.put(:last, msg)
         {:noreply, new_state}
+      _ ->
+        {:stop, :normal, state}
     end
   end
 
