@@ -47,10 +47,7 @@ defmodule RethinkDB.Changefeed do
 
   def connect(_info, state = %{query: query, conn: conn}) do
     case RethinkDB.run(query, conn) do
-      %RethinkDB.Exception.ConnectionClosed{} ->
-        backoff = min(Dict.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
-      msg ->
+      msg = %RethinkDB.Feed{} ->
         mod = get_in(state, [:opts, :mod])
         feed_state = Dict.get(state, :feed_state)
         {:ok, feed_state} = mod.handle_data(msg.data, feed_state)
@@ -60,6 +57,9 @@ defmodule RethinkDB.Changefeed do
           |> Dict.put(:feed_state, feed_state)
           |> Dict.put(:state, :next)
         {:ok, new_state}
+      _ ->
+        backoff = min(Dict.get(state, :timeout, 1000), 64000)
+        {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
   end
 
