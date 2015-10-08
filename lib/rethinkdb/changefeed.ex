@@ -124,7 +124,7 @@ defmodule RethinkDB.Changefeed do
           |> Dict.put(:last, msg)
         {:noreply, new_state}
       _ ->
-        {:stop, :normal, state}
+        {:stop, :rethinkdb_error, state}
     end
   end
 
