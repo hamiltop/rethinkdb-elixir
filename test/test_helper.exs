@@ -1,1 +1,1 @@
-ExUnit.start(max_cases: 20)
+ExUnit.start(max_cases: 10)

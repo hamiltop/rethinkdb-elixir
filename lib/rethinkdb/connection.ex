@@ -32,7 +32,6 @@ defmodule RethinkDB.Connection do
 
       defdelegate next(query), to: RethinkDB.Connection
       defdelegate close(query), to: RethinkDB.Connection
-      defdelegate prepare_and_encode(query), to: RethinkDB.Connection
     end
   end
 
@@ -60,7 +59,7 @@ defmodule RethinkDB.Connection do
     RethinkDB.Response.parse(response, token, pid)
   end
 
-  def prepare_and_encode(query) do
+  defp prepare_and_encode(query) do
     query = RethinkDB.Prepare.prepare(query)
     Poison.encode!([1, query])      
   end
