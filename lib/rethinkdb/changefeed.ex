@@ -21,6 +21,10 @@ defmodule RethinkDB.Changefeed do
   # return {:stop, reason, state}
   defcallback handle_update(update :: any, state :: any) :: any
 
+  defdelegate call(server, request, timeout), to: Connection 
+  defdelegate call(server, request), to: Connection
+  defdelegate cast(server, request), to: Connection
+
   def start_link(mod, args, opts) do
     Connection.start_link(__MODULE__,
       [mod: mod, args: args],
@@ -63,6 +67,49 @@ defmodule RethinkDB.Changefeed do
     RethinkDB.Connection.close(msg)
     {:stop, :normal, state}
   end
+
+  def handle_call(msg, from, state) do
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    case mod.handle_call(msg, from, feed_state) do
+      {:reply, reply, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:reply, reply, new_state}
+      {:reply, reply, new_feed_state, timeout} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:reply, reply, new_state, timeout}
+      {:noreply, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state}
+      {:noreply, new_feed_state, timeout} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state, timeout}
+      {:stop, reason, reply, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:stop, reason, reply, new_state}
+      {:stop, reason, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:stop, reason, new_state}
+    end
+  end
+
+  def handle_cast(msg, state) do
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    case mod.handle_cast(msg, feed_state) do
+      {:noreply, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state}
+      {:noreply, new_feed_state, timeout} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state, timeout}
+      {:stop, reason, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:stop, reason, new_state}
+    end
+  end
+
+  # TODO: handle_info pass through to callback. Look at Connection to see how they deal with it.
 
   def handle_info({ref, msg}, state = %{state: :next, task: %Task{ref: ref}}) do
     Process.demonitor(ref, [:flush])

@@ -64,8 +64,11 @@ defmodule ChangesTest do
 
     require Logger
 
-    def init(pid) do
-      {:ok, pid}
+    def init({q, pid}) do
+      {:subscribe, q, ChangesTest, pid}
+    end
+    def init({q, pid, db}) do
+      {:subscribe, q, db, pid}
     end
 
     def handle_data(foo, pid) do
@@ -77,20 +80,22 @@ defmodule ChangesTest do
       send pid, {:update, foo}
       {:ok, pid}
     end
+
+    def handle_call(:ping, _from, pid) do
+      {:reply, {:pong, pid}, pid}
+    end
+
+    def handle_cast({:ping, p}, state) do
+      send p, :pong
+      {:noreply, state}
+    end
   end
 
   test "changefeed process" do
-    q = db_create(@db_name)
-    run(q)
-    q = table_create(@table_name)
-    run(q)
     q = table(@table_name) |> changes
-
     {:ok, _} = RethinkDB.Changefeed.start_link(
       TestChangefeed,
-      q,
-      TestConnection,
-      self,
+      {q, self},
       [])
     receive do
       {:ready, _} -> :ok
@@ -103,19 +108,12 @@ defmodule ChangesTest do
   end
 
   test "single document changefeed" do
-    q = db_create(@db_name)
-    run(q)
-    q = table_create(@table_name)
-    run(q)
     %RethinkDB.Record{data: %{"generated_keys" => [id]}} = table(@table_name)
                           |> insert(%{"test" => "value"}) |> run
     q = table(@table_name) |> get(id) |> changes
-
     {:ok, _} = RethinkDB.Changefeed.start_link(
       TestChangefeed,
-      q,
-      TestConnection,
-      self,
+      {q,self},
       [])
     receive do
       {:ready, data} ->
@@ -127,23 +125,68 @@ defmodule ChangesTest do
         assert data["new_val"]["test"] == "new_value"
     end
   end
-#
-#  test "broken connection changefeed" do
-#    f_conn = FlakyConnection.start('localhost', 28015)
-#    port = f_conn.port
-#    c = RethinkDB.connect(port: port)
-#    q = db_create(@db_name)
-#    run(q)
-#    q = table_create(@table_name)
-#    run(q)
-#    q = table(@table_name) |> changes
-#    FlakyConnection.stop(f_conn)
-#    {:ok, _} = RethinkDB.Changefeed.start_link(
-#      TestChangefeed,
-#      q,
-#      c,
-#      self,
-#      [])
-#    :timer.sleep(1000)
-#  end
+
+  test "broken connection changefeed" do
+    f_conn = FlakyConnection.start('localhost', 28015)
+    port = f_conn.port
+    c = RethinkDB.connect(port: port)
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q,self,c},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    ref = Process.monitor(pid)
+    FlakyConnection.stop(f_conn)
+    receive do
+      {:DOWN, ^ref, :process, ^pid, _} -> :ok
+    after
+      10 -> throw "Expected changefeed to stop on disconnect"
+    end
+  end
+
+  test "retry connection changefeed" do
+    port = 28000
+    c = RethinkDB.connect(port: port)
+    q = table(@table_name) |> changes
+    {:ok, _} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q,self,c},
+      [])
+    FlakyConnection.start('localhost', 28015, port)
+    receive do
+      {:ready, _} -> :ok
+    end
+  end
+
+  test "GenServer Call" do
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q, self},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    assert RethinkDB.Changefeed.call(pid, :ping) == {:pong, self}
+  end
+
+  test "GenServer Cast" do
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q, self},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    RethinkDB.Changefeed.cast(pid, {:ping, self})
+    receive do
+      :pong -> :ok
+    after
+      10 -> throw "should have received response"
+    end
+  end
 end
