@@ -139,6 +139,7 @@ defmodule ChangesTest do
       {:ready, _} -> :ok
     end
     ref = Process.monitor(pid)
+    Process.unlink(pid)
     FlakyConnection.stop(f_conn)
     receive do
       {:DOWN, ^ref, :process, ^pid, _} -> :ok

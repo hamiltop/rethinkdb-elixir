@@ -95,7 +95,7 @@ defmodule RethinkDB.Connection do
     case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
       {:ok, socket} ->
         case handshake(socket, auth_key) do
-          {:error, _} -> {:stop, :normal, state}
+          {:error, _} -> {:stop, :bad_handshake, state}
           :ok ->
             :ok = :inet.setopts(socket, [active: :once])
             # TODO: investigate timeout vs hibernate
@@ -107,7 +107,7 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def disconnect(_info, state = %{pending: pending}) do
+  def disconnect(info, state = %{pending: pending}) do
     pending |> Enum.each(fn {_token, pid} ->
       Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
@@ -116,7 +116,7 @@ defmodule RethinkDB.Connection do
       |> Map.put(:pending, %{})
       |> Map.put(:current, {:start, ""})
     # TODO: should we reconnect?
-    {:stop, :normal, new_state}
+    {:stop, info, new_state}
   end
 
   def handle_call({:query, query}, from, state = %{token: token}) do
@@ -136,7 +136,7 @@ defmodule RethinkDB.Connection do
   end
 
   def handle_cast(:stop, state) do
-    {:disconnect, :stop_called, state};
+    {:disconnect, :normal, state};
   end
 
   def handle_info({:tcp, _port, data}, state = %{socket: socket}) do
@@ -145,7 +145,7 @@ defmodule RethinkDB.Connection do
   end
 
   def handle_info({:tcp_closed, _port}, state) do
-    {:disconnect, :closed, state}
+    {:disconnect, :tcp_closed, state}
   end
 
   def handle_info(msg, state) do
