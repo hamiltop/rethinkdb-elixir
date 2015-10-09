@@ -89,6 +89,11 @@ defmodule ChangesTest do
       send p, :pong
       {:noreply, state}
     end
+
+    def handle_info({:ping, p}, state) do
+      send p, :pong
+      {:noreply, state}
+    end
   end
 
   test "changefeed process" do
@@ -140,11 +145,12 @@ defmodule ChangesTest do
     end
     ref = Process.monitor(pid)
     Process.unlink(pid)
+    Process.unlink(c)
     FlakyConnection.stop(f_conn)
     receive do
       {:DOWN, ^ref, :process, ^pid, _} -> :ok
     after
-      10 -> throw "Expected changefeed to stop on disconnect"
+      20 -> throw "Expected changefeed to stop on disconnect"
     end
   end
 
@@ -184,6 +190,23 @@ defmodule ChangesTest do
       {:ready, _} -> :ok
     end
     RethinkDB.Changefeed.cast(pid, {:ping, self})
+    receive do
+      :pong -> :ok
+    after
+      10 -> throw "should have received response"
+    end
+  end
+
+  test "GenServer Info" do
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q, self},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    send pid, {:ping, self}
     receive do
       :pong -> :ok
     after

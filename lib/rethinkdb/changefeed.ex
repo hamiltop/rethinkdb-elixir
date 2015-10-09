@@ -1,4 +1,119 @@
 defmodule RethinkDB.Changefeed do
+  @moduledoc """
+  A behaviour for implementing RethinkDB change feeds.
+
+  The `Changefeed` behaviour is a superset of the `GenServer` behaviour. It adds some return
+  values and some callbacks to make handling updates simple.
+
+  A very simple example Changefeed:
+
+    defmodule PersonFeed do
+      
+      use RethinkDB.Changefeed
+
+      def init(opts) do
+        id = Dict.get(opts, :id)
+        db = Dict.get(opts, :db)
+        query = RethinkDB.Query.table("people")
+          |> RethinkDB.Query.get(id)
+          |> RethinkDB.Query.changes
+        {:subscribe, query, db, nil}
+      end
+
+      def handle_data(%{"new_val" => data}, nil) do
+        {:ok, data}  
+      end
+
+      def handle_update(%{"new_val" => data}, _) do
+        {:ok, data}
+      end
+
+      def handle_call(:get, _from, data) do
+        {:reply, data, data}
+      end
+    end
+
+  The example shows one of many patterns. In this case, we are keeping a local
+  copy of the record and updating it whenever it changes in the database. Clients
+  in the application can access the data via `Changefeed.call(pid, :get)`.
+
+  The same pattern can be used on a sequence:
+
+    defmodule TeamFeed do
+      
+      use RethinkDB.Changefeed
+
+      def init(opts) do
+        name = Dict.get(opts, :name)
+        team = Dict.get(opts, :team) # team is a map of ids to maps
+        db = Dict.get(opts, :db)
+        query = RethinkDB.Query.table("people")
+          |> RethinkDB.Query.filter(%{team: name})
+          |> RethinkDB.Query.changes
+        {:subscribe, query, db, team}
+      end
+
+      # sequence feeds always return an empty list as inital data 
+      def handle_data([], team) do
+        {:ok, team}
+      end
+
+      def handle_update(data, team) do
+        team = Enum.reduce(data, team, fn ->
+          # no `old_val` means a new entry was created
+          %{"new_val" => val, "old_val" => nil}, acc -> 
+            Dict.put(acc, val["id"], val)
+          # no `new_val` means an entry was deleted
+          %{"new_val" => nil, "old_val" => val}, acc -> 
+            Dict.delete(acc, val["id"])
+          # otherwise, we have an update
+          %{"new_val" => val}, acc ->
+            Dict.put(acc, val["id"], val)
+        end)
+        {:ok, data}
+      end
+
+      def handle_call(:get, _from, data) do
+        {:reply, data, data}
+      end
+    end
+
+  A changefeed is designed to handle updates and to update any state associated with
+  the feed. If a publisher subscriber model is desired, a GenEvent can be used in
+  conjunction with a changefeed. Here's an example:
+
+    defmodule EventFeed do
+      
+      use RethinkDB.Changefeed
+      def init(opts) do
+        gen_event = Dict.get(opts, :gen_event)
+        db = Dict.get(opts, :db)
+        query = RethinkDB.Query.table("events")
+          |> RethinkDB.Query.changes
+        {:subscribe, query, db, gen_event}
+      end
+
+      def handle_data([], gen_event) do
+        {:ok, gen_event}
+      end
+
+      def handle_update(data, gen_event) do
+        Enum.each(data, fn
+          # no `old_val` means a new entry was created
+          %{"new_val" => val, "old_val" => nil}, acc -> 
+            GenEvent.notify(gen_event,{:create, val})
+          # no `new_val` means an entry was deleted
+          %{"new_val" => nil, "old_val" => val}, acc -> 
+            GenEvent.notify(gen_event,{:delete, val})
+          # otherwise, we have an update
+          %{"new_val" => val, "old_val" => old_val}, acc ->
+            GenEvent.notify(gen_event,{:update, old_val, val})
+        end)
+        {:ok, gen_event}
+      end
+    end
+
+  """
   use Behaviour
 
   use Connection
@@ -10,7 +125,12 @@ defmodule RethinkDB.Changefeed do
       @behaviour RethinkDB.Changefeed
     end
   end
+  
+  @doc """
 
+  TODO: remove handle_data
+  TODO: change handle_update to return :next instead of :ok
+  """
   # return {:subscribe, query, db, state}
   # return {:stop, reason}
   defcallback init(opts :: any) :: any
@@ -129,8 +249,19 @@ defmodule RethinkDB.Changefeed do
   end
 
   def handle_info(msg, state) do
-    Logger.debug("Unhandled info: #{inspect msg}")
-    {:noreply, state}
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    case mod.handle_info(msg, feed_state) do
+      {:noreply, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state}
+      {:noreply, new_feed_state, timeout} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:noreply, new_state, timeout}
+      {:stop, reason, new_feed_state} ->
+        new_state = Dict.put(state, :feed_state, new_feed_state)
+        {:stop, reason, new_state}
+    end
   end
 
   defp next(f = %RethinkDB.Feed{}) do
