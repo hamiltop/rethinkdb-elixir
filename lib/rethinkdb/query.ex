@@ -999,6 +999,7 @@ defmodule RethinkDB.Query do
   """
   @spec get_all(Q.t, Q.reql_array) :: Q.t
   operate_on_seq_and_list(:get_all, 78)
+  operate_on_two_args(:get_all, 78)
 
   @doc """
   Get all documents between two keys. Accepts three optional arguments: index, 

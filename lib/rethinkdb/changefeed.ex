@@ -7,31 +7,27 @@ defmodule RethinkDB.Changefeed do
 
   A very simple example Changefeed:
 
-    defmodule PersonFeed do
-      
-      use RethinkDB.Changefeed
+      defmodule PersonFeed do
+        
+        use RethinkDB.Changefeed
 
-      def init(opts) do
-        id = Dict.get(opts, :id)
-        db = Dict.get(opts, :db)
-        query = RethinkDB.Query.table("people")
-          |> RethinkDB.Query.get(id)
-          |> RethinkDB.Query.changes
-        {:subscribe, query, db, nil}
-      end
+        def init(opts) do
+          id = Dict.get(opts, :id)
+          db = Dict.get(opts, :db)
+          query = RethinkDB.Query.table("people")
+            |> RethinkDB.Query.get(id)
+            |> RethinkDB.Query.changes
+          {:subscribe, query, db, nil}
+        end
 
-      def handle_data(%{"new_val" => data}, nil) do
-        {:ok, data}  
-      end
+        def handle_update(%{"new_val" => data}, _) do
+          {:next, data}
+        end
 
-      def handle_update(%{"new_val" => data}, _) do
-        {:ok, data}
+        def handle_call(:get, _from, data) do
+          {:reply, data, data}
+        end
       end
-
-      def handle_call(:get, _from, data) do
-        {:reply, data, data}
-      end
-    end
 
   The example shows one of many patterns. In this case, we are keeping a local
   copy of the record and updating it whenever it changes in the database. Clients
@@ -39,79 +35,70 @@ defmodule RethinkDB.Changefeed do
 
   The same pattern can be used on a sequence:
 
-    defmodule TeamFeed do
-      
-      use RethinkDB.Changefeed
+      defmodule TeamFeed do
+        
+        use RethinkDB.Changefeed
 
-      def init(opts) do
-        name = Dict.get(opts, :name)
-        team = Dict.get(opts, :team) # team is a map of ids to maps
-        db = Dict.get(opts, :db)
-        query = RethinkDB.Query.table("people")
-          |> RethinkDB.Query.filter(%{team: name})
-          |> RethinkDB.Query.changes
-        {:subscribe, query, db, team}
-      end
+        def init(opts) do
+          name = Dict.get(opts, :name)
+          team = Dict.get(opts, :team) # team is a map of ids to maps
+          db = Dict.get(opts, :db)
+          query = RethinkDB.Query.table("people")
+            |> RethinkDB.Query.filter(%{team: name})
+            |> RethinkDB.Query.changes
+          {:subscribe, query, db, team}
+        end
 
-      # sequence feeds always return an empty list as inital data 
-      def handle_data([], team) do
-        {:ok, team}
-      end
+        def handle_update(data, team) do
+          team = Enum.reduce(data, team, fn ->
+            # no `old_val` means a new entry was created
+            %{"new_val" => val, "old_val" => nil}, acc -> 
+              Dict.put(acc, val["id"], val)
+            # no `new_val` means an entry was deleted
+            %{"new_val" => nil, "old_val" => val}, acc -> 
+              Dict.delete(acc, val["id"])
+            # otherwise, we have an update
+            %{"new_val" => val}, acc ->
+              Dict.put(acc, val["id"], val)
+          end)
+          {:next, team}
+        end
 
-      def handle_update(data, team) do
-        team = Enum.reduce(data, team, fn ->
-          # no `old_val` means a new entry was created
-          %{"new_val" => val, "old_val" => nil}, acc -> 
-            Dict.put(acc, val["id"], val)
-          # no `new_val` means an entry was deleted
-          %{"new_val" => nil, "old_val" => val}, acc -> 
-            Dict.delete(acc, val["id"])
-          # otherwise, we have an update
-          %{"new_val" => val}, acc ->
-            Dict.put(acc, val["id"], val)
-        end)
-        {:ok, data}
+        def handle_call(:get, _from, data) do
+          {:reply, data, data}
+        end
       end
-
-      def handle_call(:get, _from, data) do
-        {:reply, data, data}
-      end
-    end
 
   A changefeed is designed to handle updates and to update any state associated with
   the feed. If a publisher subscriber model is desired, a GenEvent can be used in
   conjunction with a changefeed. Here's an example:
 
-    defmodule EventFeed do
-      
-      use RethinkDB.Changefeed
-      def init(opts) do
-        gen_event = Dict.get(opts, :gen_event)
-        db = Dict.get(opts, :db)
-        query = RethinkDB.Query.table("events")
-          |> RethinkDB.Query.changes
-        {:subscribe, query, db, gen_event}
-      end
+      defmodule EventFeed do
+        
+        use RethinkDB.Changefeed
+        def init(opts) do
+          gen_event = Dict.get(opts, :gen_event)
+          db = Dict.get(opts, :db)
+          query = RethinkDB.Query.table("events")
+            |> RethinkDB.Query.changes
+          {:subscribe, query, db, gen_event}
+        end
 
-      def handle_data([], gen_event) do
-        {:ok, gen_event}
+        def handle_update(data, gen_event) do
+          Enum.each(data, fn
+            # no `old_val` means a new entry was created
+            %{"new_val" => val, "old_val" => nil}, acc -> 
+              GenEvent.notify(gen_event,{:create, val})
+            # no `new_val` means an entry was deleted
+            %{"new_val" => nil, "old_val" => val}, acc -> 
+              GenEvent.notify(gen_event,{:delete, val})
+            # otherwise, we have an update
+            %{"new_val" => val, "old_val" => old_val}, acc ->
+              GenEvent.notify(gen_event,{:update, old_val, val})
+          end)
+          {:next, gen_event}
+        end
       end
-
-      def handle_update(data, gen_event) do
-        Enum.each(data, fn
-          # no `old_val` means a new entry was created
-          %{"new_val" => val, "old_val" => nil}, acc -> 
-            GenEvent.notify(gen_event,{:create, val})
-          # no `new_val` means an entry was deleted
-          %{"new_val" => nil, "old_val" => val}, acc -> 
-            GenEvent.notify(gen_event,{:delete, val})
-          # otherwise, we have an update
-          %{"new_val" => val, "old_val" => old_val}, acc ->
-            GenEvent.notify(gen_event,{:update, old_val, val})
-        end)
-        {:ok, gen_event}
-      end
-    end
 
   """
   use Behaviour
@@ -127,16 +114,10 @@ defmodule RethinkDB.Changefeed do
   end
   
   @doc """
-
-  TODO: remove handle_data
-  TODO: change handle_update to return :next instead of :ok
   """
   # return {:subscribe, query, db, state}
   # return {:stop, reason}
   defcallback init(opts :: any) :: any
-  # return {:ok, state}
-  # return {:stop, reason, state}
-  defcallback handle_data(data :: any, state :: any) :: any
   # return {:ok, state}
   # return {:stop, reason, state}
   defcallback handle_update(update :: any, state :: any) :: any
@@ -170,14 +151,15 @@ defmodule RethinkDB.Changefeed do
       msg = %RethinkDB.Feed{} ->
         mod = get_in(state, [:opts, :mod])
         feed_state = Dict.get(state, :feed_state)
-        {:ok, feed_state} = mod.handle_data(msg.data, feed_state)
+        {:next, feed_state} = mod.handle_update(msg.data, feed_state)
         new_state = state
           |> Dict.put(:task, next(msg))
           |> Dict.put(:last, msg)
           |> Dict.put(:feed_state, feed_state)
           |> Dict.put(:state, :next)
         {:ok, new_state}
-      _ ->
+      x ->
+        Logger.debug(inspect x)
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
         {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
@@ -237,7 +219,7 @@ defmodule RethinkDB.Changefeed do
       %RethinkDB.Feed{data: data} ->
         mod = get_in(state, [:opts, :mod])
         feed_state = Dict.get(state, :feed_state)
-        {:ok, feed_state} = mod.handle_update(data, feed_state)
+        {:next, feed_state} = mod.handle_update(data, feed_state)
         new_state = state
           |> Dict.put(:task, next(msg))
           |> Dict.put(:feed_state, feed_state)

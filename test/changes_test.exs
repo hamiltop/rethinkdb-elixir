@@ -65,20 +65,20 @@ defmodule ChangesTest do
     require Logger
 
     def init({q, pid}) do
-      {:subscribe, q, ChangesTest, pid}
+      {:subscribe, q, ChangesTest, {:setup, pid}}
     end
     def init({q, pid, db}) do
-      {:subscribe, q, db, pid}
+      {:subscribe, q, db, {:setup, pid}}
     end
 
-    def handle_data(foo, pid) do
+    def handle_update(foo, {:setup, pid}) do
       send pid, {:ready, foo}
-      {:ok, pid}
+      {:next, pid}
     end
 
     def handle_update(foo, pid) do
       send pid, {:update, foo}
-      {:ok, pid}
+      {:next, pid}
     end
 
     def handle_call(:ping, _from, pid) do
