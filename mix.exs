@@ -25,7 +25,7 @@ defmodule RethinkDB.Mixfile do use Mix.Project
       :test -> [:flaky_connection]
       _ -> []
     end
-    [applications: [:logger, :poison | env_apps]]
+    [applications: [:logger, :poison, :connection | env_apps]]
   end
 
   # Dependencies can be Hex packages:
