@@ -4,6 +4,8 @@ defmodule ConnectionTest do
   use RethinkDB.Connection
   import RethinkDB.Query
 
+  require Logger
+
   test "Connections can be supervised" do
     children = [worker(RethinkDB.Connection, [])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
@@ -25,14 +27,17 @@ defmodule ConnectionTest do
     conn = FlakyConnection.start('localhost', 28015, 28014)
     :timer.sleep(1000)
     %RethinkDB.Record{} = RethinkDB.Query.table_list |> run
+    ref = Process.monitor(c)
     FlakyConnection.stop(conn)
+    receive do
+      {:DOWN, ^ref, _, _, _} -> :ok
+    end
   end
-
-  require Logger
 
   test "replies to pending queries on disconnect" do
     conn = FlakyConnection.start('localhost', 28015)
-    connect([port: conn.port])
+    c = connect([port: conn.port])
+    Process.unlink(c)
     table = "foo_flaky_test"
     RethinkDB.Query.table_create(table)|> run
     on_exit fn ->
@@ -47,8 +52,12 @@ defmodule ConnectionTest do
       next change_feed
     end
     :timer.sleep(100)
+    ref = Process.monitor(c)
     FlakyConnection.stop(conn)
     %RethinkDB.Exception.ConnectionClosed{} = Task.await(task)
+    receive do
+      {:DOWN, ^ref, _, _, _} -> :ok
+    end
   end
 
   test "supervised connection restarts on disconnect" do
