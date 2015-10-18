@@ -8,18 +8,19 @@ defmodule ConnectionTest do
     children = [worker(RethinkDB.Connection, [])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
-    Process.exit(sup, :normal)
+    Process.exit(sup, :kill)
   end
 
   test "using Connection works with supervision" do
     children = [worker(__MODULE__, [])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
-    Process.exit(sup, :normal)
+    Process.exit(sup, :kill)
   end
 
   test "reconnects if initial connect fails" do
-    connect([port: 28014])
+    c = connect([port: 28014])
+    Process.unlink(c)
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
     conn = FlakyConnection.start('localhost', 28015, 28014)
     :timer.sleep(1000)
@@ -36,6 +37,7 @@ defmodule ConnectionTest do
     RethinkDB.Query.table_create(table)|> run
     on_exit fn ->
       connect
+      :timer.sleep(100)
       RethinkDB.Query.table_drop(table) |> run
       GenServer.cast(__MODULE__, :stop)
     end
@@ -61,5 +63,13 @@ defmodule ConnectionTest do
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
 
     Process.exit(sup, :normal)
+  end
+
+  test "connection accepts default db" do
+    c = RethinkDB.connect([db: "new_test"])
+    db_create("new_test") |> RethinkDB.run(c)
+    db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
+    %{data: data} = table_list |> RethinkDB.run(c)
+    assert data == ["new_test_table"]
   end
 end

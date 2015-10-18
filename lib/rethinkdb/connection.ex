@@ -19,11 +19,11 @@ defmodule RethinkDB.Connection do
       end
 
       def connect(opts \\ []) do
-        RethinkDB.Connection.connect(Dict.put_new(opts, :name, __MODULE__))    
+        RethinkDB.Connection.connect(Dict.put_new(opts, :name, __MODULE__))
       end
 
-      def run(query) do
-        RethinkDB.Connection.run(query, __MODULE__)  
+      def run(query, timeout \\ 5000) do
+        RethinkDB.Connection.run(query, __MODULE__, timeout)
       end
 
       def stop do
@@ -35,9 +35,10 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def run(query, pid) do
-    query = prepare_and_encode(query)
-    case Connection.call(pid, {:query, query}) do
+  def run(query, pid, timeout \\ 5000) do
+    conn_opts = Connection.call(pid, :conn_opts)
+    query = prepare_and_encode(query, conn_opts)
+    case Connection.call(pid, {:query, query}, timeout) do
       {response, token} -> RethinkDB.Response.parse(response, token, pid)
       result -> result
     end
@@ -59,14 +60,22 @@ defmodule RethinkDB.Connection do
     RethinkDB.Response.parse(response, token, pid)
   end
 
-  defp prepare_and_encode(query) do
+  defp prepare_and_encode(query, opts) do
     query = RethinkDB.Prepare.prepare(query)
-    Poison.encode!([1, query])      
+    query = [1, query]
+    query = case opts do
+      %{db: nil} -> query
+      %{db: db} ->
+        db_query = RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))
+        query ++ [%{db: db_query}]
+      _ -> query
+    end
+    Poison.encode!(query)
   end
 
 
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key])
+    args = Dict.take(opts, [:host, :port, :auth_key, :db])
     Connection.start_link(__MODULE__, args, opts)
   end
 
@@ -77,21 +86,22 @@ defmodule RethinkDB.Connection do
     end
     port = Dict.get(opts, :port, 28015)
     auth_key = Dict.get(opts, :auth_key, "")
+    db = Dict.get(opts, :db)
     state = %{
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: {host, port, auth_key}
+      config: %{port: port, host: host, auth_key: auth_key, db: db}
     }
     {:connect, :init, state}
   end
 
   def connect(opts \\ []) do
-    {:ok, pid} = RethinkDB.Connection.start_link(opts)  
+    {:ok, pid} = RethinkDB.Connection.start_link(opts)
     pid
   end
 
-  def connect(_info, state = %{config: {host, port, auth_key}}) do
+  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key}}) do
     case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
       {:ok, socket} ->
         case handshake(socket, auth_key) do
@@ -122,7 +132,7 @@ defmodule RethinkDB.Connection do
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
-    Request.make_request(query, token, from, %{state | token: new_token}) 
+    Request.make_request(query, token, from, %{state | token: new_token})
   end
 
   def handle_call({:continue, token}, from, state) do
@@ -133,6 +143,10 @@ defmodule RethinkDB.Connection do
   def handle_call({:stop, token}, from, state) do
     query = "[3]"
     Request.make_request(query, token, from, state)
+  end
+
+  def handle_call(:conn_opts, _from, state = %{config: opts}) do
+    {:reply, opts, state}
   end
 
   def handle_cast(:stop, state) do

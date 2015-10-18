@@ -10,6 +10,7 @@ defmodule RethinkDB do
   defdelegate connect(), to: RethinkDB.Connection
   defdelegate connect(opts), to: RethinkDB.Connection
   defdelegate run(query, pid), to: RethinkDB.Connection
+  defdelegate run(query, pid, timeout), to: RethinkDB.Connection
   defdelegate next(collection), to: RethinkDB.Connection
 
 end
