@@ -1,4 +1,5 @@
 defmodule RethinkDB.Q do
+  @moduledoc false
   defstruct query: nil
 end
 defimpl Poison.Encoder, for: RethinkDB.Q do

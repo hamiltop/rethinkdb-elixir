@@ -1,6 +1,7 @@
 defmodule StringManipulationTest do
   use ExUnit.Case, async: true
-  use RethinkDB
+  import RethinkDB.Connection
+  import RethinkDB.Query
 
   alias RethinkDB.Record
   

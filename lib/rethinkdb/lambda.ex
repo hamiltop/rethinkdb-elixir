@@ -1,6 +1,29 @@
 defmodule RethinkDB.Lambda do
+  @moduledoc """
+  Macro for using native elixir functions in queries
+  """
   alias RethinkDB.Query
- 
+
+  @doc """
+  Macro for using native elixir functions in queries
+
+  Wrapping an anonymous function in `lambda` will cause it to be converted at compile time
+  into standard RethinkDB query syntax. Example:
+
+      lambda(fn (x) ->
+        x + 5 == x/2
+      end)
+
+  Becomes:
+
+      fn (x) ->
+        RethinkDB.Query.eq(
+          RethinkDB.Query.add(x, 5),
+          RethinkDB.Query.divide(x, 2)
+        )
+      end
+
+  """
   defmacro lambda(block) do
     build(block)
   end

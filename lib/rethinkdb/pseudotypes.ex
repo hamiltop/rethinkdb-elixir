@@ -1,5 +1,7 @@
 defmodule RethinkDB.Pseudotypes do
+  @moduledoc false
   defmodule Binary do
+    @moduledoc false
     defstruct data: nil
 
     def parse(%{"$reql_type$" => "BINARY", "data" => data}) do
@@ -8,15 +10,19 @@ defmodule RethinkDB.Pseudotypes do
   end
 
   defmodule Geometry do
+    @moduledoc false
     defmodule Point do
+      @moduledoc false
       defstruct coordinates: []
     end
 
     defmodule Line do
+      @moduledoc false
       defstruct coordinates: []
     end
 
     defmodule Polygon do
+      @moduledoc false
       defstruct outer_coordinates: [], inner_coordinates: []
     end
 
@@ -36,6 +42,7 @@ defmodule RethinkDB.Pseudotypes do
   end
 
   defmodule Time do
+    @moduledoc false
     defstruct epoch_time: nil, timezone: nil
 
     def parse(%{"$reql_type$" => "TIME", "epoch_time" => epoch_time, "timezone" => timezone}) do

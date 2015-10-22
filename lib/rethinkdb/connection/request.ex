@@ -1,4 +1,5 @@
 defmodule RethinkDB.Connection.Request do
+  @moduledoc false
 
   def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
     new_pending = Dict.put_new(pending, token, from)
