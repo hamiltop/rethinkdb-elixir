@@ -94,6 +94,19 @@ defmodule ChangesTest do
       send p, :pong
       {:noreply, state}
     end
+
+    def handle_info(:stop, state) do
+      {:stop, :normal, state}
+    end
+
+    def terminate(_, pid) do
+      send pid, :terminated
+    end
+
+    def code_change(_, pid, _) do
+      send pid, :change
+      {:ok, pid}
+    end
   end
 
   test "changefeed process" do
@@ -211,6 +224,42 @@ defmodule ChangesTest do
       :pong -> :ok
     after
       10 -> throw "should have received response"
+    end
+  end
+
+  test "GenServer code change" do
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q, self},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    :sys.suspend(pid)
+    :sys.change_code(pid, TestChangefeed, make_ref, nil)
+    :sys.resume(pid)
+    receive do
+      :change -> :ok
+    after
+      10 -> throw "should have received changes"
+    end
+  end
+
+  test "GenServer terminate" do
+    q = table(@table_name) |> changes
+    {:ok, pid} = RethinkDB.Changefeed.start_link(
+      TestChangefeed,
+      {q, self},
+      [])
+    receive do
+      {:ready, _} -> :ok
+    end
+    send pid, :stop
+    receive do
+      :terminated -> :ok
+    after
+      10 -> throw "should have received terminated"
     end
   end
 end

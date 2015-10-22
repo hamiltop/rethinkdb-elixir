@@ -155,6 +155,16 @@ defmodule RethinkDB.Changefeed do
   defcallback handle_info(msg :: any, state :: any) :: any
 
   @doc """
+    See `GenServer.code_change/3`
+  """
+  defcallback code_change(vsn :: any, state :: any, extra :: any) :: any
+
+  @doc """
+    See `GenServer.terminate/2`
+  """
+  defcallback terminate(reason :: any, state :: any) :: any
+
+  @doc """
     See `GenServer.call/3`
   """
   defdelegate call(server, request, timeout), to: Connection 
@@ -290,6 +300,21 @@ defmodule RethinkDB.Changefeed do
         new_state = Dict.put(state, :feed_state, new_feed_state)
         {:stop, reason, new_state}
     end
+  end
+
+  def code_change(old_vsn, state, extra) do
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    case mod.code_change(old_vsn, feed_state, extra) do
+      {:ok, new_feed_state} -> {:ok, %{state | :feed_state => new_feed_state}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def terminate(reason, state) do
+    mod = get_in(state, [:opts, :mod])
+    feed_state = Dict.get(state, :feed_state)
+    mod.terminate(reason, feed_state)
   end
 
   defp next(f = %RethinkDB.Feed{}) do
