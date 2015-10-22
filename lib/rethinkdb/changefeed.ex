@@ -114,18 +114,64 @@ defmodule RethinkDB.Changefeed do
   end
   
   @doc """
+    Called when process is first started. `start_link` blocks until init returns.
+
+    Expects return to be one of the following:
+
+    * `{:subscribe, query, db, state}` - Upon this returning, start_link will return
+    and immediately a connection will be made to the database and a feed established.
+    If a feed cannot be established then it will be retried with an exponential backoff.
+    * `{:stop, reason}` - This will cause start_link to return `{:error, reason}` and the
+    process will exit with reason `reason`
+
   """
-  # return {:subscribe, query, db, state}
-  # return {:stop, reason}
   defcallback init(opts :: any) :: any
-  # return {:ok, state}
-  # return {:stop, reason, state}
+
+  @doc """
+    Called when new data is received from a feed.
+
+    Expects return to be one of the following:
+
+    * `{:next, state}` - Request the next set of data for the feed from the database.
+    * `{:stop, reason, state}` - Stops the feed. `terminate/2` will be called with
+    `reason` and `state`
+
+  """
   defcallback handle_update(update :: any, state :: any) :: any
 
+  @doc """
+    See `GenServer.handle_call/3`
+  """
+  defcallback handle_call(request :: any, from :: any, state :: any) :: any
+
+  @doc """
+    See `GenServer.handle_cast/2`
+  """
+  defcallback handle_cast(request :: any, state :: any) :: any
+
+  @doc """
+    See `GenServer.handle_info/2`
+  """
+  defcallback handle_info(msg :: any, state :: any) :: any
+
+  @doc """
+    See `GenServer.call/3`
+  """
   defdelegate call(server, request, timeout), to: Connection 
+  @doc """
+    See `GenServer.call/2`
+  """
   defdelegate call(server, request), to: Connection
+  @doc """
+    See `GenServer.cast/2`
+  """
   defdelegate cast(server, request), to: Connection
 
+  @doc """
+    Start Changefeed process linked to current process.
+
+    `args` will be passed into `init`. `opts` are standard GenServer options.
+  """
   def start_link(mod, args, opts) do
     Connection.start_link(__MODULE__,
       [mod: mod, args: args],

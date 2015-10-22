@@ -595,8 +595,8 @@ defmodule RethinkDB.Query do
   exists in the specified index on the right-hand side.
 
   The result set of `eq_join` is a stream or array of objects. Each object in the
-  returned set will be an object of the form `{ left: <left-document>, right:
-  <right-document> }`, where the values of left and right will be the joined
+  returned set will be an object of the form `{ left: &lt;left-document&gt;, right:
+  &lt;right-document&gt; }`, where the values of left and right will be the joined
   documents. Use the zip command to merge the left and right fields together.
 
       iex> table("people") |> eq_join(
