@@ -1,16 +1,27 @@
 defmodule RethinkDB do
 
-  defmacro __using__(_opts) do
-    quote do
-      import RethinkDB.Query
-      import RethinkDB
-    end
-  end
+  @moduledoc """
+  Some convenience functions for interacting with RethinkDB.
+  """
 
-  defdelegate connect(), to: RethinkDB.Connection
-  defdelegate connect(opts), to: RethinkDB.Connection
+  @doc """
+  See `RethinkDB.Connection.run/2`
+  """
   defdelegate run(query, pid), to: RethinkDB.Connection
-  defdelegate run(query, pid, timeout), to: RethinkDB.Connection
+
+  @doc """
+  See `RethinkDB.Connection.run/3`
+  """
+  defdelegate run(query, pid, opts), to: RethinkDB.Connection
+
+  @doc """
+  See `RethinkDB.Connection.next/1`
+  """
   defdelegate next(collection), to: RethinkDB.Connection
+
+  @doc """
+  See `RethinkDB.Connection.close/1`
+  """
+  defdelegate close(collection), to: RethinkDB.Connection
 
 end

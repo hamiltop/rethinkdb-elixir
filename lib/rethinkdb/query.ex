@@ -1,4 +1,8 @@
 defmodule RethinkDB.Query do
+  @moduledoc """
+  Querying API for RethinkDB
+  """
+
   alias RethinkDB.Q
 
   require RethinkDB.Query.Macros
