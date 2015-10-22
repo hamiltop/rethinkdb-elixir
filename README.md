@@ -8,7 +8,11 @@ If you were expecting `Exrethinkdb` you are in the right place. We decided to ch
 ###Recent changes
 While under heavy development, I'll start the readme with recent breaking changes.
 
-* All query functions are under a single module. They were separate, but that caused confusion.
+####0.2.0
+* Pruned a lot of connection calls that were public.
+* Added exponential backoff to connection
+* Added supervised changefeeds
+* Pruned and polished docs
 
 ##Getting Started
 
