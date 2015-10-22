@@ -11,7 +11,7 @@ defmodule RethinkDB.Mixfile do use Mix.Project
 
   def package do
     [
-      contributors: ["Peter Hamilton"],
+      maintainers: ["Peter Hamilton"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/hamiltop/rethinkdb-elixir"}
     ]
