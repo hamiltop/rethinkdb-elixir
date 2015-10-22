@@ -21,7 +21,7 @@ defmodule ConnectionTest do
   end
 
   test "reconnects if initial connect fails" do
-    c = connect([port: 28014])
+    {:ok, c} = start_link([port: 28014])
     Process.unlink(c)
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
     conn = FlakyConnection.start('localhost', 28015, 28014)
@@ -36,12 +36,12 @@ defmodule ConnectionTest do
 
   test "replies to pending queries on disconnect" do
     conn = FlakyConnection.start('localhost', 28015)
-    c = connect([port: conn.port])
+    {:ok, c} = start_link([port: conn.port])
     Process.unlink(c)
     table = "foo_flaky_test"
     RethinkDB.Query.table_create(table)|> run
     on_exit fn ->
-      connect
+      start_link
       :timer.sleep(100)
       RethinkDB.Query.table_drop(table) |> run
       GenServer.cast(__MODULE__, :stop)
@@ -49,7 +49,7 @@ defmodule ConnectionTest do
     table(table) |> index_wait |> run
     change_feed = table(table) |> changes |> run
     task = Task.async fn ->
-      next change_feed
+      RethinkDB.Connection.next change_feed
     end
     :timer.sleep(100)
     ref = Process.monitor(c)
@@ -75,10 +75,18 @@ defmodule ConnectionTest do
   end
 
   test "connection accepts default db" do
-    c = RethinkDB.connect([db: "new_test"])
+    {:ok, c} = RethinkDB.Connection.start_link([db: "new_test"])
     db_create("new_test") |> RethinkDB.run(c)
     db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
     %{data: data} = table_list |> RethinkDB.run(c)
     assert data == ["new_test_table"]
+  end
+
+  test "sync connection" do
+    {:error, :econnrefused} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
+    conn = FlakyConnection.start('localhost', 28015, 28014)
+    {:ok, pid} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
+    FlakyConnection.stop(conn)
+    Process.exit(pid, :shutdown)
   end
 end

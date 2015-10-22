@@ -9,7 +9,7 @@ defmodule GeospatialTest do
   alias RethinkDB.Pseudotypes.Geometry.Polygon
 
   setup_all do
-    connect
+    start_link
     :ok
   end
 

@@ -7,7 +7,7 @@ defmodule ControlStructuresTest do
   alias RethinkDB.Response
 
   setup_all do
-    connect
+    start_link
     :ok
   end
 

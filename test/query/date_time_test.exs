@@ -7,7 +7,7 @@ defmodule DateTimeTest do
   alias RethinkDB.Pseudotypes.Time
 
   setup_all do
-    connect
+    start_link
     :ok
   end
 

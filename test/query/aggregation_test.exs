@@ -10,7 +10,7 @@ defmodule AggregationTest do
   import RethinkDB.Lambda
 
   setup_all do
-    connect
+    start_link
     :ok
   end
 

@@ -6,10 +6,10 @@ defmodule ChangesTest do
 
   @table_name "changes_test_table_1"
   setup_all do
-    connect
+    start_link
     table_create(@table_name) |> run
     on_exit fn ->
-      connect
+      start_link
       table_drop(@table_name) |> run
     end
     :ok
@@ -37,7 +37,7 @@ defmodule ChangesTest do
     q = table(@table_name) |> changes
     changes = %Feed{} = run(q)
     t = Task.async fn ->
-      next(changes)
+      RethinkDB.Connection.next(changes)
     end
     data = %{"test" => "data"}
     q = table(@table_name) |> insert(data)
@@ -134,7 +134,7 @@ defmodule ChangesTest do
   test "broken connection changefeed" do
     f_conn = FlakyConnection.start('localhost', 28015)
     port = f_conn.port
-    c = RethinkDB.connect(port: port)
+    {:ok, c} = RethinkDB.Connection.start_link([port: port])
     q = table(@table_name) |> changes
     {:ok, pid} = RethinkDB.Changefeed.start_link(
       TestChangefeed,
@@ -156,7 +156,7 @@ defmodule ChangesTest do
 
   test "retry connection changefeed" do
     port = 28000
-    c = RethinkDB.connect(port: port)
+    {:ok, c} = RethinkDB.Connection.start_link(port: port)
     q = table(@table_name) |> changes
     {:ok, _} = RethinkDB.Changefeed.start_link(
       TestChangefeed,

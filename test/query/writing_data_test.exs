@@ -8,10 +8,10 @@ defmodule WritingDataTest do
 
   @table_name "writing_data_test_table_1"
   setup_all do
-    connect
+    start_link
     table_create(@table_name) |> run
     on_exit fn ->
-      connect
+      start_link
       table_drop(@table_name) |> run
     end
     :ok
