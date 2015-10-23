@@ -29,12 +29,12 @@ conn = RethinkDB.connect
 
 ####Basic Remote Connection
 ```elixir
-conn = RethinkDB.connect([host: "10.0.0.17", port: 28015])
+{:ok, conn} = RethinkDB.Connection.start_link([host: "10.0.0.17", port: 28015])
 ```
 
 ####Named Connection
 ```elixir
-conn = RethinkDB.connect([name: :foo]})
+{:ok, conn} = RethinkDB.Connection.start_link([name: :foo]})
 ```
 
 ####Supervised Connection
@@ -128,17 +128,9 @@ first_change = RethinkDB.next results
 # get stream, chunked in groups of 5, Inspect
 results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
 ```
+###Supervised Changefeeds
 
-###Shortcuts
-
-Calling `use RethinkDB` will import all functions into the current scope. If you are using a custom connection, using that connection module will import all functions into the current scope. If you use both `RethinkDB` and your custom connection, you will have a namespace clash.
-
-###Questions
-
-####Why not use elixir-rethinkdb?
-The current state of elixir-rethinkdb (https://github.com/azukiapp/elixir-rethinkdb) is incompatible with rethinkdb 2.0. It also doesn't support pipelining (added in 2.0) for parallel queries. These changes are pretty central to the client, so rather than gutting it, I decided to start from scratch.
-
-A lot of the code from elixir-rethinkdb will probably be useful as we go forward.
+See documentation for Changefeeds for examples of supervised changefeeds.
 
 ###Roadmap
 Version 1.0.0 will be limited to individual connections and implement the entire documented ReQL (as of rethinkdb 2.0)
@@ -146,7 +138,6 @@ Version 1.0.0 will be limited to individual connections and implement the entire
 While not provided by this library, we will also include example code for:
 
 * Connection Pooling
-* Supervised Feeds
 
 The goal for 1.0.0 is to be stable. Issues have been filed for work that needs to be completed before 1.0.0 and tagged with the 1.0.0 milestone.
 
