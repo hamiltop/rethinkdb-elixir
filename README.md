@@ -146,9 +146,9 @@ While not provided by this library, we will also include example code for:
 
 The goal for 1.0.0 is to be stable. Issues have been filed for work that needs to be completed before 1.0.0 and tagged with the 1.0.0 milestone.
 
-###Example Apps
 
-- [AdamBrodzinski/phoenix-rethinkdb-example](https://github.com/AdamBrodzinski/phoenix-rethinkdb-example)
+###Example Apps
+Checkout the wiki page for various [example apps](https://github.com/hamiltop/rethinkdb-elixir/wiki/Example-Apps)
 
 
 ###Contributing
