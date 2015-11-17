@@ -114,6 +114,11 @@ defmodule DocumentManipulationTest do
     assert data == ["a", "b"]
   end
 
+  test "values" do
+    %Record{data: data} = %{a: 5, b: 6} |> values |> run
+    assert data == [5, 6]
+  end
+
   test "literal" do
     %Record{data: data} = %{
       a: 5,

@@ -128,7 +128,7 @@ defmodule ChangesTest do
   test "single document changefeed" do
     %RethinkDB.Record{data: %{"generated_keys" => [id]}} = table(@table_name)
                           |> insert(%{"test" => "value"}) |> run
-    q = table(@table_name) |> get(id) |> changes
+    q = table(@table_name) |> get(id) |> changes(%{include_initial: true})
     {:ok, _} = RethinkDB.Changefeed.start_link(
       TestChangefeed,
       {q,self},

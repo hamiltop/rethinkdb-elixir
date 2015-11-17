@@ -1790,7 +1790,7 @@ defmodule RethinkDB.Query do
 
   def make_array(array), do:  %Q{query: [2, array]}
 
-  def changes(selection), do: %Q{query: [152, [selection]]}
+  operate_on_single_arg(:changes, 152)
 
   def asc(key), do: %Q{query: [73, [key]]}
   def desc(key), do: %Q{query: [74, [key]]}
