@@ -1764,6 +1764,12 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:keys, 94)
 
   @doc """
+  Return an array containing all of the object’s values.
+  """
+  @spec values(Q.reql_obj) :: Q.t
+  operate_on_single_arg(:values, 186)
+
+  @doc """
   Replace an object in a field instead of merging it with an existing object in a 
   merge or update operation.
   """
