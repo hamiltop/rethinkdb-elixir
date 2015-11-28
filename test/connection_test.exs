@@ -20,6 +20,12 @@ defmodule ConnectionTest do
     Process.exit(sup, :kill)
   end
 
+  test "using Connection will raise if name is provided" do
+    assert_raise ArgumentError, fn ->
+      start_link(name: :test)
+    end
+  end
+
   test "reconnects if initial connect fails" do
     {:ok, c} = start_link([port: 28014])
     Process.unlink(c)

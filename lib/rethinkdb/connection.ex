@@ -45,10 +45,18 @@ defmodule RethinkDB.Connection do
   accept a connection. They will use the current module as the process name. `start_link` will
   start the connection under the module name.
 
+  If you attempt to provide a name to `start_link`, it will raise an `ArgumentError`.
   """
   defmacro __using__(_opts) do
-    quote do
+    quote location: :keep do
       def start_link(opts \\ []) do
+        if Dict.has_key?(opts, :name) && opts[:name] != __MODULE__ do
+          # The whole point of this macro is to provide an implicit process
+          # name, so subverting it is considered an error.
+          raise ArgumentError.exception(
+            "Process name #{inspect opts[:name]} conflicts with implicit name #{inspect __MODULE__} provided by `use RethinkDB.Connection`"
+          )
+        end
         RethinkDB.Connection.start_link(Dict.put_new(opts, :name, __MODULE__))
       end
 
