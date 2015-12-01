@@ -53,7 +53,7 @@ end
 ```
 This connection can be supervised without a name (it will assume the module as the name).
 ```elixir
-worker(FooConnection, [])
+worker(FooDatabase, [])
 ```
 Queries can be run without providing a connection (it will use the name connection).
 ```elixir
