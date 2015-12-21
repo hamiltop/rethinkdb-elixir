@@ -18,14 +18,7 @@ While under heavy development, I'll start the readme with recent breaking change
 
 ###Connection
 
-Connections are managed by a GenServer.
-
-####Basic Local Connection
-```elixir
-alias RethinkDB.Query
-
-conn = RethinkDB.connect
-```
+Connections are managed by a process. Start the process by calling `start_link/1`. See [documentation for `Connection.start_link/1`](http://hexdocs.pm/rethinkdb/RethinkDB.Connection.html#start_link/1) for supported options. 
 
 ####Basic Remote Connection
 ```elixir
