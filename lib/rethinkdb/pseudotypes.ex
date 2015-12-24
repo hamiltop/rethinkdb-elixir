@@ -69,7 +69,7 @@ defmodule RethinkDB.Pseudotypes do
   def convert_reql_pseudotypes(map) when is_map(map) do
     Enum.map(map, fn {k, v} ->
       {k, convert_reql_pseudotypes(v)}
-    end) |> Enum.into %{}
+    end) |> Enum.into(%{})
   end
   def convert_reql_pseudotypes(string), do: string
 
@@ -79,7 +79,7 @@ defmodule RethinkDB.Pseudotypes do
     end) |> Enum.into(%{})
   end
   def create_grouped_data(data) when is_map(data) do
-    data = data |> Enum.map fn {k,v} -> [k, v] end
+    data = data |> Enum.map(fn {k,v} -> [k, v] end)
     %{"$reql_type$" => "GROUPED_DATA", "data" => data}
   end
 end

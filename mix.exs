@@ -39,7 +39,7 @@ defmodule RethinkDB.Mixfile do use Mix.Project
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:poison, "~> 1.4"},
+      {:poison, "~> 1.5"},
       {:earmark, "~> 0.1", only: :dev},
       {:ex_doc, "~> 0.7", only: :dev},
       {:inch_ex, only: :dev},

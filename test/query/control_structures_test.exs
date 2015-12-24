@@ -31,7 +31,7 @@ defmodule ControlStructuresTest do
     q = do_r fn -> 5 end
     %Record{data: data} = run q
     assert data == 5
-    q = [1,2,3] |> do_r fn x -> x end
+    q = [1,2,3] |> do_r(fn x -> x end)
     %Record{data: data} = run q
     assert data == [1,2,3]
   end
@@ -52,10 +52,10 @@ defmodule ControlStructuresTest do
   end
 
   test "default" do
-    q = 1 |> default "test"
+    q = 1 |> default("test")
     %Record{data: data} = run q
     assert data == 1
-    q = nil |> default "test"
+    q = nil |> default("test")
     %Record{data: data} = run q
     assert data == "test"
   end
@@ -67,7 +67,7 @@ defmodule ControlStructuresTest do
   end
 
   test "coerce_to" do
-    q = "91" |> coerce_to "number"  
+    q = "91" |> coerce_to("number")
     %Record{data: data} = run q
     assert data == 91
   end

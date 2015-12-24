@@ -135,7 +135,7 @@ defmodule AggregationTest do
   end
 
   test "count with value" do
-    query = [1,2,2,3,4] |> count 2
+    query = [1,2,2,3,4] |> count(2)
     %Record{data: data} = run query
     assert data == 2
   end
@@ -155,7 +155,7 @@ defmodule AggregationTest do
   end
 
   test "sum with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> sum "a"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> sum("a")
     %Record{data: data} = run query
     assert data == 3
   end
@@ -179,7 +179,7 @@ defmodule AggregationTest do
   end
 
   test "avg with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> avg "a"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> avg("a")
     %Record{data: data} = run query
     assert data == 1.5
   end
@@ -203,7 +203,7 @@ defmodule AggregationTest do
   end
 
   test "min with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min "b"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min("b")
     %Record{data: data} = run query
     assert data == %{"b" => 3}
   end
@@ -228,7 +228,7 @@ defmodule AggregationTest do
   end
 
   test "max with field" do
-    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max "b"
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max("b")
     %Record{data: data} = run query
     assert data == %{"b" => 4}
   end
@@ -252,13 +252,13 @@ defmodule AggregationTest do
   end
 
   test "contains" do
-    query = [1,2,3,4] |> contains 4
+    query = [1,2,3,4] |> contains(4)
     %Record{data: data} = run query
     assert data == true
   end
 
   test "contains multiple values" do
-    query = [1,2,3,4] |> contains [4, 3]
+    query = [1,2,3,4] |> contains([4, 3])
     %Record{data: data} = run query
     assert data == true
   end
@@ -270,13 +270,13 @@ defmodule AggregationTest do
   end
 
   test "contains with multiple function" do
-    query = [1,2,3,4] |> contains [lambda(&(&1 == 3)), lambda(&(&1 == 5))]
+    query = [1,2,3,4] |> contains([lambda(&(&1 == 3)), lambda(&(&1 == 5))])
     %Record{data: data} = run query
     assert data == false
   end
 
   test "contains with multiple (mixed)" do
-    query = [1,2,3,4] |> contains [lambda(&(&1 == 3)), 2]
+    query = [1,2,3,4] |> contains([lambda(&(&1 == 3)), 2])
     %Record{data: data} = run query
     assert data == true
   end

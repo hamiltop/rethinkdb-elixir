@@ -50,10 +50,10 @@ defmodule ChangesTest do
     t = Task.async fn ->
       changes |> Enum.take(5)  
     end
-    1..6 |> Enum.each fn _ ->
+    1..6 |> Enum.each(fn _ ->
       q = table(@table_name) |> insert(data)
       run(q)
-    end
+    end)
     data = Task.await(t) 
     5 = Enum.count(data)
   end
