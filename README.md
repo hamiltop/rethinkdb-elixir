@@ -15,6 +15,8 @@ If you were expecting `Exrethinkdb` you are in the right place. We decided to ch
 
 ##Getting Started
 
+See [API documentation](http://hexdocs.pm/rethinkdb/) for more details.
+
 ###Connection
 
 Connections are managed by a process. Start the process by calling `start_link/1`. See [documentation for `Connection.start_link/1`](http://hexdocs.pm/rethinkdb/RethinkDB.Connection.html#start_link/1) for supported options. 
