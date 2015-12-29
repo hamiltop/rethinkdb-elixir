@@ -67,6 +67,8 @@ defmodule RethinkDB.Connection do
       def stop do
         RethinkDB.Connection.stop(__MODULE__)
       end
+
+      defoverridable [ start_link: 1, start_link: 0 ]
     end
   end
 
