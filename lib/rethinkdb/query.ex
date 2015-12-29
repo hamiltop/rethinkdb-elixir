@@ -203,7 +203,8 @@ defmodule RethinkDB.Query do
   """
   @spec binary(Q.reql_binary) :: Q.t
   def binary(%RethinkDB.Pseudotypes.Binary{data: data}), do: binary(data)
-  operate_on_single_arg(:binary, 155)
+  def binary(data), do: do_binary(%{"$reql_type$" => "BINARY", "data" => :base64.encode(data)})
+  def do_binary(data), do: %Q{query: [155, [data]]}
 
   @doc """
   Call an anonymous function using return values from other ReQL commands or 
