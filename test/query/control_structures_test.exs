@@ -18,7 +18,7 @@ defmodule ControlStructuresTest do
   end
 
   test "binary" do
-    d = << 1,2,3,4,5,6 >>
+    d = << 220, 2, 3, 4, 5, 192 >>
     q = binary d
     %Record{data: data} = run q
     assert data == %RethinkDB.Pseudotypes.Binary{data: d}
