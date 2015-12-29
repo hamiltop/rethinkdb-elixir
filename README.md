@@ -1,12 +1,11 @@
 RethinkDB [![Build Status](https://travis-ci.org/hamiltop/rethinkdb-elixir.svg?branch=master)](https://travis-ci.org/hamiltop/rethinkdb-elixir)
 ===========
-Pipeline enabled RethinkDB client in pure Elixir. Still a work in progress.
+Multiplexed RethinkDB client in pure Elixir.
 
 If you are coming here from elixir-rethinkdb, welcome!
 If you were expecting `Exrethinkdb` you are in the right place. We decided to change the name to just `RethinkDB` and the repo to `rethinkdb-elixir`. Sorry if it has caused confusion. Better now in the early stages than later!
 
 ###Recent changes
-While under heavy development, I'll start the readme with recent breaking changes.
 
 ####0.2.0
 * Pruned a lot of connection calls that were public.
