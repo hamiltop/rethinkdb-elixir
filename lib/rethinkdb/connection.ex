@@ -161,7 +161,6 @@ defmodule RethinkDB.Connection do
     auth_key = Dict.get(opts, :auth_key, "")
     db = Dict.get(opts, :db)
     sync_connect = Dict.get(opts, :sync_connect, false)
-    IO.inspect opts
     {transport, sock_opts} = case Dict.get(opts, :ssl) do
       nil -> {:gen_tcp, []}
       x -> {:ssl, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1}))}
@@ -196,18 +195,15 @@ defmodule RethinkDB.Connection do
                 :ok = :inet.setopts(socket, [active: :once])
             end
             # TODO: investigate timeout vs hibernate
-            IO.inspect socket
             {:ok, Dict.put(state, :socket, socket)}
         end
       {:error, :econnrefused} ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
-        IO.inspect "Backing off"
         {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
   end
 
   def disconnect(info, state = %{pending: pending}) do
-    IO.inspect :disconnect
     pending |> Enum.each(fn {_token, pid} ->
       Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
@@ -222,7 +218,6 @@ defmodule RethinkDB.Connection do
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
-    IO.inspect :query
     Request.make_request(query, token, from, %{state | token: new_token})
   end
 
@@ -255,12 +250,10 @@ defmodule RethinkDB.Connection do
   end
 
   def handle_info({:tcp_closed, _port}, state) do
-    IO.inspect :tcp_closed
     {:disconnect, :tcp_closed, state}
   end
 
   def handle_info({:ssl_closed, _port}, state) do
-    IO.inspect :ssl_closed
     {:disconnect, :ssl_closed, state}
   end
 
@@ -270,13 +263,11 @@ defmodule RethinkDB.Connection do
   end
 
   def terminate(reason, %{socket: socket, config: %{transport: transport}}) do
-    IO.inspect reason
     transport.close(socket)
     :ok
   end
 
   def terminate(reason, _state) do
-    IO.inspect reason
     :ok
   end
 

@@ -8,13 +8,11 @@ defmodule RethinkDB.Connection.Request do
     case transport.send(socket, payload) do
       :ok -> {:noreply, %{state | pending: new_pending}}
       {:error, :closed} ->
-        IO.inspect {transport, :closed}
         {:disconnect, :closed, %RethinkDB.Exception.ConnectionClosed{}, state}
     end
   end
 
   def make_request(_query, _token, _from, state) do
-    IO.inspect {:no_socket, state}
     {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
   end
 
