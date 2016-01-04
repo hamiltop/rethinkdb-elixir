@@ -1,18 +1,20 @@
 defmodule RethinkDB.Connection.Request do
   @moduledoc false
 
-  def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
+  def make_request(query, token, from, state = %{pending: pending, socket: socket, config: %{transport: transport}}) do
     new_pending = Dict.put_new(pending, token, from)
     bsize = :erlang.size(query)
     payload = token <> << bsize :: little-size(32) >> <> query
-    case :gen_tcp.send(socket, payload) do
+    case transport.send(socket, payload) do
       :ok -> {:noreply, %{state | pending: new_pending}}
       {:error, :closed} ->
+        IO.inspect {transport, :closed}
         {:disconnect, :closed, %RethinkDB.Exception.ConnectionClosed{}, state}
     end
   end
 
   def make_request(_query, _token, _from, state) do
+    IO.inspect {:no_socket, state}
     {:reply, %RethinkDB.Exception.ConnectionClosed{}, state}
   end
 

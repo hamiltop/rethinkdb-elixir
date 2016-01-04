@@ -148,7 +148,7 @@ defmodule RethinkDB.Connection do
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
   """
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect])
+    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl])
     Connection.start_link(__MODULE__, args, opts)
   end
 
@@ -161,11 +161,16 @@ defmodule RethinkDB.Connection do
     auth_key = Dict.get(opts, :auth_key, "")
     db = Dict.get(opts, :db)
     sync_connect = Dict.get(opts, :sync_connect, false)
+    IO.inspect opts
+    {transport, sock_opts} = case Dict.get(opts, :ssl) do
+      nil -> {:gen_tcp, []}
+      x -> {:ssl, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1}))}
+    end
     state = %{
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: %{port: port, host: host, auth_key: auth_key, db: db}
+      config: %{port: port, host: host, auth_key: auth_key, db: db, transport: transport, sock_opts: sock_opts}
     }
     case sync_connect do
       true -> 
@@ -178,23 +183,31 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key}}) do
-    case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
+  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key, transport: transport, sock_opts: sock_opts}}) do
+    case transport.connect(host, port, [active: false, mode: :binary] ++ sock_opts) do
       {:ok, socket} ->
-        case handshake(socket, auth_key) do
+        case handshake(socket, transport, auth_key) do
           {:error, _} -> {:stop, :bad_handshake, state}
           :ok ->
-            :ok = :inet.setopts(socket, [active: :once])
+            case transport do
+              :ssl ->
+                :ok = :ssl.setopts(socket, [active: :once])
+              _ ->
+                :ok = :inet.setopts(socket, [active: :once])
+            end
             # TODO: investigate timeout vs hibernate
+            IO.inspect socket
             {:ok, Dict.put(state, :socket, socket)}
         end
       {:error, :econnrefused} ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
+        IO.inspect "Backing off"
         {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
   end
 
   def disconnect(info, state = %{pending: pending}) do
+    IO.inspect :disconnect
     pending |> Enum.each(fn {_token, pid} ->
       Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
@@ -209,6 +222,7 @@ defmodule RethinkDB.Connection do
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
+    IO.inspect :query
     Request.make_request(query, token, from, %{state | token: new_token})
   end
 
@@ -230,13 +244,24 @@ defmodule RethinkDB.Connection do
     {:disconnect, :normal, state};
   end
 
-  def handle_info({:tcp, _port, data}, state = %{socket: socket}) do
+  def handle_info({:tcp, _port, data}, state = %{socket: socket, config: %{transport: :gen_tcp}}) do
     :ok = :inet.setopts(socket, [active: :once])
     Request.handle_recv(data, state)
   end
 
+  def handle_info({:ssl, _port, data}, state = %{socket: socket, config: %{transport: :ssl}}) do
+    :ok = :ssl.setopts(socket, [active: :once])
+    Request.handle_recv(data, state)
+  end
+
   def handle_info({:tcp_closed, _port}, state) do
+    IO.inspect :tcp_closed
     {:disconnect, :tcp_closed, state}
+  end
+
+  def handle_info({:ssl_closed, _port}, state) do
+    IO.inspect :ssl_closed
+    {:disconnect, :ssl_closed, state}
   end
 
   def handle_info(msg, state) do
@@ -244,30 +269,32 @@ defmodule RethinkDB.Connection do
     {:noreply, state}
   end
 
-  def terminate(_reason, %{socket: socket}) do
-    :gen_tcp.close(socket)
+  def terminate(reason, %{socket: socket, config: %{transport: transport}}) do
+    IO.inspect reason
+    transport.close(socket)
     :ok
   end
 
-  def terminate(_reason, _state) do
+  def terminate(reason, _state) do
+    IO.inspect reason
     :ok
   end
 
-  defp handshake(socket, auth_key) do
-    :ok = :gen_tcp.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, auth_key)
-    :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
-    case recv_until_null(socket, "") do
+  defp handshake(socket, transport, auth_key) do
+    :ok = transport.send(socket, << 0x400c2d20 :: little-size(32) >>)
+    :ok = transport.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
+    :ok = transport.send(socket, auth_key)
+    :ok = transport.send(socket, << 0x7e6970c7 :: little-size(32) >>)
+    case recv_until_null(socket, transport, "") do
       "SUCCESS" -> :ok
       error = {:error, _} -> error
     end
   end
 
-  defp recv_until_null(socket, acc) do
-    case :gen_tcp.recv(socket, 1) do
+  defp recv_until_null(socket, transport, acc) do
+    case transport.recv(socket, 1) do
       {:ok, "\0"} -> acc
-      {:ok, a}    -> recv_until_null(socket, acc <> a)
+      {:ok, a}    -> recv_until_null(socket, transport, acc <> a)
       x = {:error, _} -> x
     end
   end
