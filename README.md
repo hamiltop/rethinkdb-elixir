@@ -5,6 +5,8 @@ Multiplexed RethinkDB client in pure Elixir.
 If you are coming here from elixir-rethinkdb, welcome!
 If you were expecting `Exrethinkdb` you are in the right place. We decided to change the name to just `RethinkDB` and the repo to `rethinkdb-elixir`. Sorry if it has caused confusion. Better now in the early stages than later!
 
+I just set up a channel on the Elixir slack, so if you are on there join #rethinkdb.
+
 ###Recent changes
 
 ####0.2.0
