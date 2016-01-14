@@ -6,17 +6,6 @@ defmodule ConnectionTest do
 
   require Logger
 
-  @table_name "connection_test_table_1"
-  setup_all do
-    start_link
-    table_create(@table_name) |> run
-    on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
-    end
-    :ok
-  end
-
   test "Connections can be supervised" do
     children = [worker(RethinkDB.Connection, [])]
     {:ok, sup} = Supervisor.start_link(children, strategy: :one_for_one)
@@ -105,6 +94,18 @@ defmodule ConnectionTest do
     {:ok, pid} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
     FlakyConnection.stop(conn)
     Process.exit(pid, :shutdown)
+  end
+end
+
+defmodule ConnectionRunTest do
+  use ExUnit.Case, async: true
+  import Supervisor.Spec
+  use RethinkDB.Connection
+  import RethinkDB.Query
+
+  setup_all do
+    start_link
+    :ok
   end
 
   test "run(conn, opts) with :db option" do
