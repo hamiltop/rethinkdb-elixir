@@ -89,9 +89,10 @@ defmodule RethinkDB.Connection do
   """
   def run(query, conn, opts \\ []) do
     timeout = Dict.get(opts, :timeout, 5000)
-    conn_opts = Dict.take(opts, [:db])
+    conn_opts = Dict.take(opts, [:db, :durability])
     conn_opts = Connection.call(conn, :conn_opts)
-      |> Dict.merge(conn_opts)
+                |> Dict.take([:db])
+                |> Dict.merge(conn_opts)
     query = prepare_and_encode(query, conn_opts)
     case Connection.call(conn, {:query, query}, timeout) do
       {response, token} -> RethinkDB.Response.parse(response, token, conn)
@@ -111,7 +112,7 @@ defmodule RethinkDB.Connection do
       x -> x
     end
   end
-  
+
   @doc """
   Closes a feed.
 
@@ -125,16 +126,20 @@ defmodule RethinkDB.Connection do
 
   defp prepare_and_encode(query, opts) do
     query = RethinkDB.Prepare.prepare(query)
-    query = [1, query]
-    query = case opts do
-      %{db: nil} -> query
-      %{db: db} ->
-        db_query = RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))
-        query ++ [%{db: db_query}]
-      _ -> query
-    end
+
+    # Right now :db can still be nil so we need to remove it
+    opts = Enum.filter(opts, fn{_, v} -> v end)
+           |> Enum.into(%{}, fn
+              {:db, db} ->
+                {:db, RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))}
+              {k, v} ->
+                {k, v}
+              end)
+
+    query = [1, query, opts]
     Poison.encode!(query)
   end
+
 
   @doc """
   Start connection as a linked process
@@ -168,7 +173,7 @@ defmodule RethinkDB.Connection do
       config: %{port: port, host: host, auth_key: auth_key, db: db}
     }
     case sync_connect do
-      true -> 
+      true ->
         case connect(:sync, state) do
           {:backoff, _, _} -> {:stop, :econnrefused}
           x -> x

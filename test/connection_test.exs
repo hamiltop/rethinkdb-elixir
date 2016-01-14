@@ -74,7 +74,7 @@ defmodule ConnectionTest do
 
     FlakyConnection.stop(conn)
     :timer.sleep(100) # this is a band-aid for a race condition in this test
-   
+
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
 
     Process.exit(sup, :normal)
@@ -94,5 +94,40 @@ defmodule ConnectionTest do
     {:ok, pid} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
     FlakyConnection.stop(conn)
     Process.exit(pid, :shutdown)
+  end
+end
+
+defmodule ConnectionRunTest do
+  use ExUnit.Case, async: true
+  import Supervisor.Spec
+  use RethinkDB.Connection
+  import RethinkDB.Query
+
+  setup_all do
+    start_link
+    :ok
+  end
+
+  test "run(conn, opts) with :db option" do
+    db_create("db_option_test") |> run
+    table_create("db_option_test_table") |> run([db: "db_option_test"])
+
+    %{data: data} = db("db_option_test") |> table_list |> run
+
+    db_drop("db_option_test") |> run
+
+    assert data == ["db_option_test_table"]
+  end
+
+  test "run(conn, opts) with :durability option" do
+    response = table_create("durability_test_table") |> run([durability: "soft"])
+    durability = response.data["config_changes"]
+                 |> List.first
+                 |> Map.fetch!("new_val")
+                 |> Map.fetch!("durability")
+
+    table_drop("durability_test_table") |> run
+
+    assert durability == "soft"
   end
 end
