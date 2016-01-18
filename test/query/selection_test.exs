@@ -52,6 +52,11 @@ defmodule SelectionTest do
     ]
   end
 
+  test "get all should be able to accept an empty list" do
+    result = table(@table_name) |> get_all([]) |> run
+    assert result.data == []
+  end
+
   test "between" do
     table(@table_name) |> insert(%{id: "a", a: 5}) |> run
     table(@table_name) |> insert(%{id: "b", a: 5}) |> run
