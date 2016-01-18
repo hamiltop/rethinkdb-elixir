@@ -208,6 +208,12 @@ defmodule AggregationTest do
     assert data == %{"b" => 3}
   end
 
+  test "min with subquery field" do
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min(Query.downcase("B"))
+    %Record{data: data} = run query
+    assert data == %{"b" => 3}
+  end
+
   test "min with function" do
     query = [1,2,3,4] |> Query.min(lambda fn (x) ->
       if x == 1 do
@@ -229,6 +235,12 @@ defmodule AggregationTest do
 
   test "max with field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max("b")
+    %Record{data: data} = run query
+    assert data == %{"b" => 4}
+  end
+
+  test "max with subquery field" do
+    query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max(Query.downcase("B"))
     %Record{data: data} = run query
     assert data == %{"b" => 4}
   end

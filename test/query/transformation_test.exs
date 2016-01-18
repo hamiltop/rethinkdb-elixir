@@ -56,6 +56,16 @@ defmodule TransformationTest do
     ]
   end
 
+  test "order by descending attr" do
+    data = [%{"rank" => 1}, %{"rank" => 2}, %{"rank" => 3}]
+
+    %{data: result} = data
+                  |> order_by(desc("rank"))
+                  |> run
+
+    assert result == Enum.reverse(data)
+  end
+
   test "skip" do
     %Record{data: data} = [1,2,3,4] |> skip(2) |> run
     assert data == [3,4]

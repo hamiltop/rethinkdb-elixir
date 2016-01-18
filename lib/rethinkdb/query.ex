@@ -5,7 +5,6 @@ defmodule RethinkDB.Query do
 
   alias RethinkDB.Q
 
-  require RethinkDB.Query.Macros
   import RethinkDB.Query.Macros
 
   @type t :: %Q{}
@@ -132,9 +131,7 @@ defmodule RethinkDB.Query do
   handled using the `default` command.
   """
   @spec min(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
-  def min(seq, opts) when is_map(opts), do: %Q{query: [147, [wrap(seq)], opts]}
-  operate_on_single_arg(:min, 147)
-  operate_on_two_args(:min, 147)
+  operate_on_optional_second_arg(:min, 147)
 
   @doc """
   Finds the maximum element of a sequence. The max command can be called with:
@@ -151,9 +148,7 @@ defmodule RethinkDB.Query do
   handled using the `default` command.
   """
   @spec max(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
-  def max(seq, opts) when is_map(opts), do: %Q{query: [148, [wrap(seq)], opts]}
-  operate_on_single_arg(:max, 148)
-  operate_on_two_args(:max, 148)
+  operate_on_optional_second_arg(:max, 148)
 
   @doc """
   Removes duplicates from elements in a sequence.
@@ -1589,8 +1584,7 @@ defmodule RethinkDB.Query do
   after a between command using the same index.
   """
   @spec order_by(Q.reql_array, Q.reql_datum) :: Q.t
-  operate_on_single_arg(:order_by, 41)
-  operate_on_two_args(:order_by, 41)
+  operate_on_optional_second_arg(:order_by, 41)
 
   @doc """
   Skip a number of elements from the head of the sequence.

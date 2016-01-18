@@ -99,7 +99,6 @@ end
 
 defmodule ConnectionRunTest do
   use ExUnit.Case, async: true
-  import Supervisor.Spec
   use RethinkDB.Connection
   import RethinkDB.Query
 
