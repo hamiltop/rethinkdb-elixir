@@ -30,7 +30,7 @@ defmodule ConnectionTest do
     {:ok, c} = start_link([port: 28014])
     Process.unlink(c)
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
-    conn = FlakyConnection.start('localhost', 28015, 28014)
+    conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
     :timer.sleep(1000)
     %RethinkDB.Record{} = RethinkDB.Query.table_list |> run
     ref = Process.monitor(c)
@@ -90,10 +90,16 @@ defmodule ConnectionTest do
 
   test "sync connection" do
     {:error, :econnrefused} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
-    conn = FlakyConnection.start('localhost', 28015, 28014)
+    conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
     {:ok, pid} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
     FlakyConnection.stop(conn)
     Process.exit(pid, :shutdown)
+  end
+
+  test "ssl connection" do
+    conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
+    {:ok, c} = Connection.start(RethinkDB.Connection, [port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.crt"]], sync_connect: true])
+    %{data: _} = table_list |> RethinkDB.run(c)
   end
 end
 

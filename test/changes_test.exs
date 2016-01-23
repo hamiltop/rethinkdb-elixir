@@ -175,7 +175,7 @@ defmodule ChangesTest do
       TestChangefeed,
       {q,self,c},
       [])
-    FlakyConnection.start('localhost', 28015, port)
+    FlakyConnection.start('localhost', 28015, [local_port: port])
     receive do
       {:ready, _} -> :ok
     end

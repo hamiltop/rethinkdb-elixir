@@ -6,7 +6,7 @@ defmodule RethinkDB.Connection do
 
   It is recommended to start it as part of a supervision tree with a name:
 
-      worker(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_database]])
+      worker(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_connection]])
 
   Connections will by default connect asynchronously. If a connection fails, we retry with
   an exponential backoff. All queries will return `%RethinkDB.Exception.ConnectionClosed{}`
@@ -22,6 +22,7 @@ defmodule RethinkDB.Connection do
   require Logger
 
   alias RethinkDB.Connection.Request
+  alias RethinkDB.Connection.Transport
 
   @doc """
   A convenience macro for naming connections.
@@ -166,11 +167,15 @@ defmodule RethinkDB.Connection do
     auth_key = Dict.get(opts, :auth_key, "")
     db = Dict.get(opts, :db)
     sync_connect = Dict.get(opts, :sync_connect, false)
+    {transport, transport_opts} = case Dict.get(opts, :ssl) do
+      nil -> {%Transport.TCP{}, []}
+      x -> {%Transport.SSL{}, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
+    end
     state = %{
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: %{port: port, host: host, auth_key: auth_key, db: db}
+      config: %{port: port, host: host, auth_key: auth_key, db: db, transport: {transport, transport_opts}}
     }
     case sync_connect do
       true ->
@@ -183,13 +188,13 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key}}) do
-    case :gen_tcp.connect(host, port, [active: false, mode: :binary]) do
+  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key, transport: {transport, transport_opts}}}) do
+    case Transport.connect(transport, host, port, [active: false, mode: :binary] ++ transport_opts) do
       {:ok, socket} ->
         case handshake(socket, auth_key) do
           {:error, _} -> {:stop, :bad_handshake, state}
           :ok ->
-            :ok = :inet.setopts(socket, [active: :once])
+            :ok = Transport.setopts(socket, [active: :once])
             # TODO: investigate timeout vs hibernate
             {:ok, Dict.put(state, :socket, socket)}
         end
@@ -235,13 +240,13 @@ defmodule RethinkDB.Connection do
     {:disconnect, :normal, state};
   end
 
-  def handle_info({:tcp, _port, data}, state = %{socket: socket}) do
-    :ok = :inet.setopts(socket, [active: :once])
+  def handle_info({proto, _port, data}, state = %{socket: socket}) when proto in [:tcp, :ssl] do
+    :ok = Transport.setopts(socket, [active: :once])
     Request.handle_recv(data, state)
   end
 
-  def handle_info({:tcp_closed, _port}, state) do
-    {:disconnect, :tcp_closed, state}
+  def handle_info({closed_msg, _port}, state) when closed_msg in [:ssl_closed, :tcp_closed] do
+    {:disconnect, closed_msg, state}
   end
 
   def handle_info(msg, state) do
@@ -250,7 +255,7 @@ defmodule RethinkDB.Connection do
   end
 
   def terminate(_reason, %{socket: socket}) do
-    :gen_tcp.close(socket)
+    Transport.close(socket)
     :ok
   end
 
@@ -259,10 +264,10 @@ defmodule RethinkDB.Connection do
   end
 
   defp handshake(socket, auth_key) do
-    :ok = :gen_tcp.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
-    :ok = :gen_tcp.send(socket, auth_key)
-    :ok = :gen_tcp.send(socket, << 0x7e6970c7 :: little-size(32) >>)
+    :ok = Transport.send(socket, << 0x400c2d20 :: little-size(32) >>)
+    :ok = Transport.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
+    :ok = Transport.send(socket, auth_key)
+    :ok = Transport.send(socket, << 0x7e6970c7 :: little-size(32) >>)
     case recv_until_null(socket, "") do
       "SUCCESS" -> :ok
       error = {:error, _} -> error
@@ -270,7 +275,7 @@ defmodule RethinkDB.Connection do
   end
 
   defp recv_until_null(socket, acc) do
-    case :gen_tcp.recv(socket, 1) do
+    case Transport.recv(socket, 1) do
       {:ok, "\0"} -> acc
       {:ok, a}    -> recv_until_null(socket, acc <> a)
       x = {:error, _} -> x
