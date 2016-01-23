@@ -203,7 +203,7 @@ defmodule RethinkDB.Changefeed do
   end
 
   def connect(_info, state = %{query: query, conn: conn}) do
-    case RethinkDB.run(query, conn) do
+    case RethinkDB.run(query, conn, %{timeout: :infinity}) do
       msg = %RethinkDB.Feed{} ->
         mod = get_in(state, [:opts, :mod])
         feed_state = Dict.get(state, :feed_state)
