@@ -152,6 +152,8 @@ defmodule RethinkDB.Connection do
   * `:auth_key` - authorization key to use with database. Defaults to `nil`.
   * `:db` - default database to use with queries. Defaults to `nil`.
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
+  * `:ssl` - a dict of options. Support SSL options:
+    * `ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
     args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect])
