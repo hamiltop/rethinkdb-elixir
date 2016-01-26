@@ -2,7 +2,7 @@ defmodule RethinkDB.Mixfile do use Mix.Project
 
   def project do
     [app: :rethinkdb,
-     version: "0.2.2",
+     version: "0.3.0",
      elixir: "~> 1.0",
      description: "RethinkDB driver for Elixir",
      package: package,
