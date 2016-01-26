@@ -957,8 +957,7 @@ defmodule RethinkDB.Query do
     %Q{query: [151, [lower, upper], %{float: true}]}
   end
 
-  @doc
-  """
+  @doc """
   Rounds the given value to the nearest whole integer.
 
   For example, values of 1.0 up to but not including 1.5 will return 1.0, similar to floor; values of 1.5 up to 2.0 will return 2.0, similar to ceil.
@@ -966,15 +965,13 @@ defmodule RethinkDB.Query do
   @spec round_r(Q.reql_number) :: Q.t
   operate_on_single_arg(:round_r, 185)
 
-  @doc
-  """
+  @doc """
   Rounds the given value up, returning the smallest integer value greater than or equal to the given value (the value’s ceiling).
   """
   @spec ceil(Q.reql_number) :: Q.t
   operate_on_single_arg(:ceil, 184)
 
-  @doc
-  """
+  @doc """
   Rounds the given value down, returning the largest integer value less than or equal to the given value (the value’s floor).
   """
   @spec floor(Q.reql_number) :: Q.t
