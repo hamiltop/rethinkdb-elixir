@@ -200,4 +200,25 @@ defmodule MathLogicTest do
     %Record{data: data} = random(50, 100.0) |> run
     assert is_float(data) && data >= 50.0 && data <= 100.0
   end
+
+  test "round" do
+    %Record{data: data} = round_r(0.3) |> run
+    assert data == 0
+    %Record{data: data} = round_r(0.6) |> run
+    assert data == 1
+  end
+
+  test "ceil" do
+    %Record{data: data} = ceil(0.3) |> run
+    assert data == 1
+    %Record{data: data} = ceil(0.6) |> run
+    assert data == 1
+  end
+
+  test "floor" do
+    %Record{data: data} = floor(0.3) |> run
+    assert data == 0 
+    %Record{data: data} = floor(0.6) |> run
+    assert data == 0
+  end
 end
