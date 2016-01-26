@@ -137,7 +137,13 @@ defmodule ConnectionRunTest do
   end
 
   test "run with :noreply option" do
-    :ok = [1,2,3] |> run(%{noreply: true})
+    :ok = make_array([1,2,3]) |> run(%{noreply: true})
     noreply_wait 
+  end
+
+  test "run with :profile options" do
+    resp = make_array([1,2,3]) |> run(%{profile: true})
+    assert [%{"description" => _, "duration(ms)" => _,
+             "sub_tasks" => _}] = resp.profile
   end
 end
