@@ -88,6 +88,16 @@ defmodule ConnectionTest do
     assert data == ["new_test_table"]
   end
 
+  test "connection accepts max_pending" do
+    {:ok, c} = RethinkDB.Connection.start_link([max_pending: 1])
+    res = Enum.map(1..100, fn (_) ->
+      Task.async fn ->
+        now |> RethinkDB.run(c)
+      end
+    end) |> Enum.map(&Task.await/1)
+    assert Enum.any?(res, &(&1 == %RethinkDB.Exception.TooManyRequests{}))
+  end
+
   test "sync connection" do
     {:error, :econnrefused} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
     conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])

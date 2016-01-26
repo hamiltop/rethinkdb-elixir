@@ -172,11 +172,12 @@ defmodule RethinkDB.Connection do
   * `:auth_key` - authorization key to use with database. Defaults to `nil`.
   * `:db` - default database to use with queries. Defaults to `nil`.
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
+  * `:max_pending` - Hard cap on number of concurrent requests. Defaults to `10000`
   * `:ssl` - a dict of options. Support SSL options:
       * `:ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl])
+    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
     Connection.start_link(__MODULE__, args, opts)
   end
 
@@ -190,6 +191,7 @@ defmodule RethinkDB.Connection do
     opts = Dict.put(opts, :host, host)
       |> Dict.put_new(:port, 28015)
       |> Dict.put_new(:auth_key, "")
+      |> Dict.put_new(:max_pending, 10000)
       |> Dict.drop([:sync_connect])
       |> Enum.into(%{})
     {transport, transport_opts} = case ssl do
@@ -241,6 +243,15 @@ defmodule RethinkDB.Connection do
     {:stop, info, new_state}
   end
 
+  def handle_call(:conn_opts, _from, state = %{config: opts}) do
+    {:reply, opts, state}
+  end
+
+  def handle_call(_, _,
+    state = %{pending: pending, config: %{max_pending: max_pending}}) when map_size(pending) > max_pending do
+    {:reply, %RethinkDB.Exception.TooManyRequests{}, state}
+  end
+
   def handle_call({:query_noreply, query}, _from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
@@ -269,10 +280,6 @@ defmodule RethinkDB.Connection do
     new_token = token + 1
     token = << token :: little-size(64) >>
     Request.make_request(query, token, from, %{state | token: new_token})
-  end
-
-  def handle_call(:conn_opts, _from, state = %{config: opts}) do
-    {:reply, opts, state}
   end
 
   def handle_cast(:stop, state) do
