@@ -135,4 +135,9 @@ defmodule ConnectionRunTest do
 
     assert durability == "soft"
   end
+
+  test "run with :noreply option" do
+    :ok = [1,2,3] |> run(%{noreply: true})
+    noreply_wait 
+  end
 end

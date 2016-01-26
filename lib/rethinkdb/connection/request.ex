@@ -4,7 +4,10 @@ defmodule RethinkDB.Connection.Request do
   alias RethinkDB.Connection.Transport
 
   def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
-    new_pending = Dict.put_new(pending, token, from)
+    new_pending = case from do
+      :noreply -> pending
+      _ -> Dict.put_new(pending, token, from)
+    end
     bsize = :erlang.size(query)
     payload = token <> << bsize :: little-size(32) >> <> query
     case Transport.send(socket, payload) do

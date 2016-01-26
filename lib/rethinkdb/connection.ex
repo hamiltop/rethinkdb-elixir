@@ -65,6 +65,10 @@ defmodule RethinkDB.Connection do
         RethinkDB.Connection.run(query, __MODULE__, opts)
       end
 
+      def noreply_wait(timeout \\ 5000) do
+        RethinkDB.Connection.noreply_wait(__MODULE__, timeout)
+      end
+
       def stop do
         RethinkDB.Connection.stop(__MODULE__)
       end
@@ -90,13 +94,19 @@ defmodule RethinkDB.Connection do
   """
   def run(query, conn, opts \\ []) do
     timeout = Dict.get(opts, :timeout, 5000)
-    conn_opts = Dict.take(opts, [:db, :durability])
+    conn_opts = Dict.drop(opts, [:timeout])
+    noreply = Dict.get(opts, :noreply, false)
     conn_opts = Connection.call(conn, :conn_opts)
                 |> Dict.take([:db])
                 |> Dict.merge(conn_opts)
     query = prepare_and_encode(query, conn_opts)
-    case Connection.call(conn, {:query, query}, timeout) do
+    msg = case noreply do
+      true -> {:query_noreply, query}
+      false -> {:query, query}
+    end
+    case Connection.call(conn, msg, timeout) do
       {response, token} -> RethinkDB.Response.parse(response, token, conn)
+      :noreply -> :ok
       result -> result
     end
   end
@@ -125,17 +135,27 @@ defmodule RethinkDB.Connection do
     RethinkDB.Response.parse(response, token, pid)
   end
 
+  @doc """
+  `noreply_wait` ensures that previous queries with the noreply flag have been processed by the server. Note that this guarantee only applies to queries run on the given connection.
+  """
+  def noreply_wait(conn, timeout \\ 5000) do
+    {response, token} = Connection.call(conn, :noreply_wait, timeout)
+    case RethinkDB.Response.parse(response, token, conn) do
+      %RethinkDB.Response{data: %{"t" => 4}} -> :ok
+      r -> r
+    end
+  end
+
   defp prepare_and_encode(query, opts) do
     query = RethinkDB.Prepare.prepare(query)
 
     # Right now :db can still be nil so we need to remove it
-    opts = Enum.filter(opts, fn{_, v} -> v end)
-           |> Enum.into(%{}, fn
-              {:db, db} ->
-                {:db, RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))}
-              {k, v} ->
-                {k, v}
-              end)
+    opts = Enum.into(opts, %{}, fn
+            {:db, db} ->
+              {:db, RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))}
+            {k, v} ->
+              {k, v}
+          end)
 
     query = [1, query, opts]
     Poison.encode!(query)
@@ -153,7 +173,7 @@ defmodule RethinkDB.Connection do
   * `:db` - default database to use with queries. Defaults to `nil`.
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
   * `:ssl` - a dict of options. Support SSL options:
-    * `ca_certs` - a list of file paths to cacerts.
+      * `:ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
     args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl])
@@ -165,11 +185,14 @@ defmodule RethinkDB.Connection do
       x when is_binary(x) -> String.to_char_list x
       x -> x
     end
-    port = Dict.get(opts, :port, 28015)
-    auth_key = Dict.get(opts, :auth_key, "")
-    db = Dict.get(opts, :db)
     sync_connect = Dict.get(opts, :sync_connect, false)
-    {transport, transport_opts} = case Dict.get(opts, :ssl) do
+    ssl = Dict.get(opts, :ssl)
+    opts = Dict.put(opts, :host, host)
+      |> Dict.put_new(:port, 28015)
+      |> Dict.put_new(:auth_key, "")
+      |> Dict.drop([:sync_connect])
+      |> Enum.into(%{})
+    {transport, transport_opts} = case ssl do
       nil -> {%Transport.TCP{}, []}
       x -> {%Transport.SSL{}, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
     end
@@ -177,7 +200,7 @@ defmodule RethinkDB.Connection do
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: %{port: port, host: host, auth_key: auth_key, db: db, transport: {transport, transport_opts}}
+      config: Map.put(opts, :transport, {transport, transport_opts})
     }
     case sync_connect do
       true ->
@@ -218,6 +241,13 @@ defmodule RethinkDB.Connection do
     {:stop, info, new_state}
   end
 
+  def handle_call({:query_noreply, query}, _from, state = %{token: token}) do
+    new_token = token + 1
+    token = << token :: little-size(64) >>
+    {:noreply, state} = Request.make_request(query, token, :noreply, %{state | token: new_token})
+    {:reply, :noreply, state}
+  end
+
   def handle_call({:query, query}, from, state = %{token: token}) do
     new_token = token + 1
     token = << token :: little-size(64) >>
@@ -232,6 +262,13 @@ defmodule RethinkDB.Connection do
   def handle_call({:stop, token}, from, state) do
     query = "[3]"
     Request.make_request(query, token, from, state)
+  end
+
+  def handle_call(:noreply_wait, from, state = %{token: token}) do
+    query = "[4]"
+    new_token = token + 1
+    token = << token :: little-size(64) >>
+    Request.make_request(query, token, from, %{state | token: new_token})
   end
 
   def handle_call(:conn_opts, _from, state = %{config: opts}) do
