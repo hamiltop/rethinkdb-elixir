@@ -156,7 +156,7 @@ defmodule RethinkDB.Connection do
     * `ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect])
+    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl])
     Connection.start_link(__MODULE__, args, opts)
   end
 
