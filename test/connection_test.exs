@@ -27,7 +27,7 @@ defmodule ConnectionTest do
   end
 
   test "reconnects if initial connect fails" do
-    {:ok, c} = start_link([port: 28014])
+    {:ok, c} = start_link(port: 28014)
     Process.unlink(c)
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
     conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
@@ -42,7 +42,7 @@ defmodule ConnectionTest do
 
   test "replies to pending queries on disconnect" do
     conn = FlakyConnection.start('localhost', 28015)
-    {:ok, c} = start_link([port: conn.port])
+    {:ok, c} = start_link(port: conn.port)
     Process.unlink(c)
     table = "foo_flaky_test"
     RethinkDB.Query.table_create(table)|> run
@@ -81,7 +81,7 @@ defmodule ConnectionTest do
   end
 
   test "connection accepts default db" do
-    {:ok, c} = RethinkDB.Connection.start_link([db: "new_test"])
+    {:ok, c} = RethinkDB.Connection.start_link(db: "new_test")
     db_create("new_test") |> RethinkDB.run(c)
     db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
     %{data: data} = table_list |> RethinkDB.run(c)
@@ -89,7 +89,7 @@ defmodule ConnectionTest do
   end
 
   test "connection accepts max_pending" do
-    {:ok, c} = RethinkDB.Connection.start_link([max_pending: 1])
+    {:ok, c} = RethinkDB.Connection.start_link(max_pending: 1)
     res = Enum.map(1..100, fn (_) ->
       Task.async fn ->
         now |> RethinkDB.run(c)
@@ -108,7 +108,7 @@ defmodule ConnectionTest do
 
   test "ssl connection" do
     conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
-    {:ok, c} = RethinkDB.Connection.start_link([port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.crt"]], sync_connect: true])
+    {:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.crt"]], sync_connect: true)
     %{data: _} = table_list |> RethinkDB.run(c)
   end
 end
@@ -125,7 +125,7 @@ defmodule ConnectionRunTest do
 
   test "run(conn, opts) with :db option" do
     db_create("db_option_test") |> run
-    table_create("db_option_test_table") |> run([db: "db_option_test"])
+    table_create("db_option_test_table") |> run(db: "db_option_test")
 
     %{data: data} = db("db_option_test") |> table_list |> run
 
@@ -135,7 +135,7 @@ defmodule ConnectionRunTest do
   end
 
   test "run(conn, opts) with :durability option" do
-    response = table_create("durability_test_table") |> run([durability: "soft"])
+    response = table_create("durability_test_table") |> run(durability: "soft")
     durability = response.data["config_changes"]
                  |> List.first
                  |> Map.fetch!("new_val")
@@ -147,12 +147,12 @@ defmodule ConnectionRunTest do
   end
 
   test "run with :noreply option" do
-    :ok = make_array([1,2,3]) |> run(%{noreply: true})
+    :ok = make_array([1,2,3]) |> run(noreply: true)
     noreply_wait 
   end
 
   test "run with :profile options" do
-    resp = make_array([1,2,3]) |> run(%{profile: true})
+    resp = make_array([1,2,3]) |> run(profile: true)
     assert [%{"description" => _, "duration(ms)" => _,
              "sub_tasks" => _}] = resp.profile
   end

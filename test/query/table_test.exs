@@ -30,7 +30,7 @@ defmodule TableTest do
     %Record{data: tables} = run q
     assert !Enum.member?(tables, @table_name)
 
-    q = table_create(@table_name, %{primary_key: "not_id"})
+    q = table_create(@table_name, primary_key: "not_id")
     %Record{data: result} = run q
     %{"config_changes" => [%{"new_val" => %{"primary_key" => primary_key}}]} = result
     assert primary_key == "not_id"

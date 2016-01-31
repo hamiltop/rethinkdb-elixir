@@ -21,12 +21,12 @@ defmodule TableIndexTest do
   test "indexes" do
     %Record{data: data} = table(@table_name) |> index_create("hello") |> run
     assert data == %{"created" => 1}
-    %Record{data: data} = table(@table_name) |> index_wait(["hello"]) |> run
+    %Record{data: data} = table(@table_name) |> index_wait("hello") |> run
     assert [
       %{"function" => _, "geo" => false, "index" => "hello",
         "multi" => false, "outdated" => false,"ready" => true}
       ] = data
-    %Record{data: data} = table(@table_name) |> index_status(["hello"]) |> run
+    %Record{data: data} = table(@table_name) |> index_status("hello") |> run
     assert [
       %{"function" => _, "geo" => false, "index" => "hello",
         "multi" => false, "outdated" => false,"ready" => true}
