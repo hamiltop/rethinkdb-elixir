@@ -63,6 +63,8 @@ defmodule SelectionTest do
     table(@table_name) |> insert(%{id: "c", a: 5}) |> run
     %RethinkDB.Collection{data: data} = table(@table_name) |> between("b", "d") |> run
     assert Enum.count(data) == 2
+    %RethinkDB.Collection{data: data} = table(@table_name) |> between(minval, maxval) |> run
+    assert Enum.count(data) == 3
   end
 
   test "filter" do

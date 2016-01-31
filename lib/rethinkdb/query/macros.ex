@@ -4,7 +4,7 @@ defmodule RethinkDB.Query.Macros do
   @moduledoc false
 
   defmacro operate_on_two_args(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(left, right) do
         %Q{query: [unquote(opcode), [wrap(left), wrap(right)]]}
@@ -17,7 +17,7 @@ defmodule RethinkDB.Query.Macros do
     end
   end
   defmacro operate_on_three_args(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(arg1, arg2, arg3) do
         %Q{query: [unquote(opcode), [wrap(arg1), wrap(arg2), wrap(arg3)]]}
@@ -30,7 +30,7 @@ defmodule RethinkDB.Query.Macros do
     end
   end
   defmacro operate_on_list(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(args) when is_list(args) do
         %Q{query: [unquote(opcode), Enum.map(args, &wrap/1)]}
@@ -43,7 +43,7 @@ defmodule RethinkDB.Query.Macros do
     end
   end
   defmacro operate_on_seq_and_list(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(seq, args) when is_list(args) and args != [] do
         %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)]]}
@@ -56,7 +56,7 @@ defmodule RethinkDB.Query.Macros do
     end
   end
   defmacro operate_on_single_arg(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(arg) do
         %Q{query: [unquote(opcode), [wrap(arg)]]}
@@ -89,7 +89,7 @@ defmodule RethinkDB.Query.Macros do
   end
 
   defmacro operate_on_zero_args(op, opcode, options \\ []) do
-    opt_support = Keyword.get(options, :opts, true)
+    opt_support = Keyword.get(options, :opts, false)
     quote do
       def unquote(op)(), do: %Q{query: [unquote(opcode)]}
       if unquote(opt_support) do
