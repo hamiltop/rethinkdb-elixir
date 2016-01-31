@@ -263,6 +263,11 @@ defmodule AggregationTest do
     assert data == [1,2,3,4,5]
   end
 
+  test "distinct with opts" do
+    query = [1,2,3,4] |> distinct(index: "stuff")
+    assert %RethinkDB.Q{query: [_, _, %{index: "stuff"}]} = query
+  end
+
   test "contains" do
     query = [1,2,3,4] |> contains(4)
     %Record{data: data} = run query

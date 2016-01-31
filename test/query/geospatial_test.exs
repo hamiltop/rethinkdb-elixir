@@ -18,6 +18,11 @@ defmodule GeospatialTest do
     assert %Polygon{outer_coordinates: [_h | _t], inner_coordinates: []} = data
   end
 
+  test "circle with opts" do
+    %Record{data: data} = circle({1,1}, 5, num_vertices: 100, fill: true) |> run
+    assert %Polygon{outer_coordinates: [_h | _t], inner_coordinates: []} = data
+  end
+
   test "distance" do
     %Record{data: data} = distance(point({1,1}), point({2,2})) |> run
     assert data == 156876.14940188665

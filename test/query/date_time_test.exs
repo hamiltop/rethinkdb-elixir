@@ -33,7 +33,7 @@ defmodule DateTimeTest do
     %Record{data: data} = iso8601("1970-01-01T00:00:00+00:00") |> run
     assert data.epoch_time == 0
     assert data.timezone == "+00:00"
-    %Record{data: data} = iso8601("1970-01-01T00:00:00", %{"default_timezone" => "+01:00"}) |> run
+    %Record{data: data} = iso8601("1970-01-01T00:00:00", default_timezone: "+01:00") |> run
     assert data.epoch_time == -3600
     assert data.timezone == "+01:00"
   end

@@ -59,9 +59,8 @@ defmodule TransformationTest do
   test "order by descending attr" do
     data = [%{"rank" => 1}, %{"rank" => 2}, %{"rank" => 3}]
 
-    %{data: result} = data
-                  |> order_by(desc("rank"))
-                  |> run
+    q = data |> order_by(desc("rank"))
+    %{data: result} = run(q)
 
     assert result == Enum.reverse(data)
   end
