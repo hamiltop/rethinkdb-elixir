@@ -56,7 +56,7 @@ defmodule JoinsTest do
     table_create("test_2") |> run
     table("test_1") |> insert([%{id: 3, a: 1, b: 2}, %{id: 2, a: 2, b: 3}]) |> run
     table("test_2") |> insert([%{id: 1, c: 4}]) |> run
-    q = eq_join(table("test_1"), :a, table("test_2"), %{index: :id})
+    q = eq_join(table("test_1"), :a, table("test_2"), index: :id)
     %Collection{data: data} = run q
     %Collection{data: data2} = q |> zip |> run
     table_drop("test_1") |> run

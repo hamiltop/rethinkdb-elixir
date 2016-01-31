@@ -3,57 +3,68 @@ defmodule RethinkDB.Query.Macros do
   alias RethinkDB.Query
   @moduledoc false
 
-  defmacro operate_on_two_args(op, opcode) do
+  defmacro operate_on_two_args(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
-      def unquote(op)(left, right, opts) when is_map(opts) do
-        %Q{query: [unquote(opcode), [wrap(left), wrap(right)], opts]}
-      end
       def unquote(op)(left, right) do
         %Q{query: [unquote(opcode), [wrap(left), wrap(right)]]}
       end
+      if unquote(opt_support) do
+        def unquote(op)(left, right, opts) when is_map(opts) or is_list(opts) do
+          %Q{query: [unquote(opcode), [wrap(left), wrap(right)], make_opts(opts)]}
+        end
+      end
     end
   end
-  defmacro operate_on_three_args(op, opcode) do
+  defmacro operate_on_three_args(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
-      def unquote(op)(arg1, arg2, arg3, opts) when is_map(opts) do
-        %Q{query: [unquote(opcode), [wrap(arg1), wrap(arg2), wrap(arg3)], opts]}
-      end
       def unquote(op)(arg1, arg2, arg3) do
         %Q{query: [unquote(opcode), [wrap(arg1), wrap(arg2), wrap(arg3)]]}
       end
+      if unquote(opt_support) do
+        def unquote(op)(arg1, arg2, arg3, opts) when is_map(opts) or is_list(opts) do
+          %Q{query: [unquote(opcode), [wrap(arg1), wrap(arg2), wrap(arg3)], make_opts(opts)]}
+        end
+      end
     end
   end
-  defmacro operate_on_list(op, opcode) do
+  defmacro operate_on_list(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
       def unquote(op)(args) when is_list(args) do
         %Q{query: [unquote(opcode), Enum.map(args, &wrap/1)]}
       end
-    end
-  end
-  defmacro operate_on_list_with_opts(op, opcode) do
-    quote do
-      def unquote(op)(args, opts) when is_list(args) and is_map(opts) do
-        %Q{query: [unquote(opcode), Enum.map(args, &wrap/1), opts]}
+      if unquote(opt_support) do
+        def unquote(op)(args, opts) when is_list(args) and (is_map(opts) or is_list(opts)) do
+          %Q{query: [unquote(opcode), Enum.map(args, &wrap/1), make_opts(opts)]}
+        end
       end
     end
   end
-  defmacro operate_on_seq_and_list(op, opcode) do
+  defmacro operate_on_seq_and_list(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
-      def unquote(op)(seq, args, opts) when is_list(args) and is_map(opts) and args != [] do
-        %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)], opts]}
-      end
       def unquote(op)(seq, args) when is_list(args) and args != [] do
         %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)]]}
       end
+      if unquote(opt_support) do
+        def unquote(op)(seq, args, opts) when is_list(args) and args != [] and (is_map(opts) or is_list(opts)) do
+          %Q{query: [unquote(opcode), [wrap(seq) | Enum.map(args, &wrap/1)], make_opts(opts)]}
+        end
+      end
     end
   end
-  defmacro operate_on_single_arg(op, opcode) do
+  defmacro operate_on_single_arg(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
-      def unquote(op)(arg, opts) when is_map(opts) do
-        %Q{query: [unquote(opcode), [wrap(arg)], opts]}
-      end
       def unquote(op)(arg) do
         %Q{query: [unquote(opcode), [wrap(arg)]]}
+      end
+      if unquote(opt_support) do
+        def unquote(op)(arg, opts) when is_map(opts) or is_list(opts) do
+          %Q{query: [unquote(opcode), [wrap(arg)], make_opts(opts)]}
+        end
       end
     end
   end
@@ -76,10 +87,16 @@ defmodule RethinkDB.Query.Macros do
       end
     end
   end
-  
-  defmacro operate_on_zero_args(op, opcode) do
+
+  defmacro operate_on_zero_args(op, opcode, options \\ []) do
+    opt_support = Keyword.get(options, :opts, true)
     quote do
       def unquote(op)(), do: %Q{query: [unquote(opcode)]}
+      if unquote(opt_support) do
+        def unquote(op)(opts) when is_map(opts) or is_list(opts) do
+          %Q{query: [unquote(opcode), make_opts(opts)]}
+        end
+      end
     end
   end
 
@@ -97,4 +114,7 @@ defmodule RethinkDB.Query.Macros do
   def wrap(f) when is_function(f), do: Query.func(f)
   def wrap(t) when is_tuple(t), do: wrap(Tuple.to_list(t))
   def wrap(data), do: data
+
+  def make_opts(opts) when is_map(opts), do: opts
+  def make_opts(opts) when is_list(opts), do: Enum.into(opts, %{})
 end

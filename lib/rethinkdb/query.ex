@@ -301,8 +301,8 @@ defmodule RethinkDB.Query do
   the result_format option, which checks the Content-Type of the response by 
   default.
   """
-  @spec http(Q.reql_string, Q.reql_obj) :: Q.t
-  def http(url, opts \\ %{}), do: %Q{query: [153, [url], opts]}
+  @spec http(Q.reql_string, Q.reql_opts) :: Q.t
+  operate_on_single_arg(:http, 153)
 
   @doc """
   Return a UUID (universally unique identifier), a string that can be used as a unique ID.
@@ -646,7 +646,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec add([(Q.reql_number | Q.reql_string | Q.reql_array)]) :: Q.t
-  operate_on_list(:add, 24)
+  operate_on_list(:add, 24, opts: false)
 
   @doc """
   Subtract two numbers.
@@ -666,7 +666,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec sub([Q.reql_number]) :: Q.t
-  operate_on_list(:sub, 25)
+  operate_on_list(:sub, 25, opts: false)
 
   @doc """
   Multiply two numbers, or make a periodic array.
@@ -688,7 +688,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec mul([(Q.reql_number | Q.reql_array)]) :: Q.t
-  operate_on_list(:mul, 26)
+  operate_on_list(:mul, 26, opts: false)
 
   @doc """
   Divide two numbers.
@@ -707,7 +707,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec divide([Q.reql_number]) :: Q.t
-  operate_on_list(:divide, 27)
+  operate_on_list(:divide, 27, opts: false)
 
   @doc """
   Find the remainder when dividing two numbers.
@@ -740,7 +740,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
   """
   @spec and_r([Q.reql_bool]) :: Q.t
-  operate_on_list(:and_r, 67)
+  operate_on_list(:and_r, 67, opts: false)
 
   @doc """
   Compute the logical “or” of two values.
@@ -765,7 +765,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec or_r([Q.reql_bool]) :: Q.t
-  operate_on_list(:or_r, 66)
+  operate_on_list(:or_r, 66, opts: false)
 
   @doc """
   Test if two values are equal.
@@ -788,7 +788,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
   """
   @spec eq([Q.reql_datum]) :: Q.t
-  operate_on_list(:eq, 17)
+  operate_on_list(:eq, 17, opts: false)
     
   @doc """
   Test if two values are not equal.
@@ -811,7 +811,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec ne([Q.reql_datum]) :: Q.t
-  operate_on_list(:ne, 18)
+  operate_on_list(:ne, 18, opts: false)
 
   @doc """
   Test if one value is less than the other.
@@ -834,7 +834,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec lt([Q.reql_datum]) :: Q.t
-  operate_on_list(:lt, 19)
+  operate_on_list(:lt, 19, opts: false)
 
   @doc """
   Test if one value is less than or equal to the other.
@@ -857,7 +857,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec le([Q.reql_datum]) :: Q.t
-  operate_on_list(:le, 20)
+  operate_on_list(:le, 20, opts: false)
 
   @doc """
   Test if one value is greater than the other.
@@ -880,7 +880,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec gt([Q.reql_datum]) :: Q.t
-  operate_on_list(:gt, 21)
+  operate_on_list(:gt, 21, opts: false)
 
   @doc """
   Test if one value is greater than or equal to the other.
@@ -903,7 +903,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: true}
   """
   @spec ge([Q.reql_datum]) :: Q.t
-  operate_on_list(:ge, 22)
+  operate_on_list(:ge, 22, opts: false)
 
   @doc """
   Compute the logical inverse (not) of an expression.
@@ -913,7 +913,7 @@ defmodule RethinkDB.Query do
 
   """
   @spec not_r(Q.reql_bool) :: Q.t
-  operate_on_single_arg(:not_r, 23)
+  operate_on_single_arg(:not_r, 23, opts: false)
 
   @doc """
   Generate a random float between 0 and 1.
@@ -923,10 +923,10 @@ defmodule RethinkDB.Query do
 
   """
   @spec random :: Q.t
-  def random, do: %Q{query: [151, []]}
+  operate_on_zero_args(:random, 151, opts: false)
   @doc """
   Generate a random value in the range [0,upper). If upper is an integer then the
-  random value will be an interger. If upper is a float it will be a float.
+  random value will be an integer. If upper is a float it will be a float.
 
       iex> random(5) |> run conn
       %RethinkDB.Record{data: 3}
@@ -936,8 +936,9 @@ defmodule RethinkDB.Query do
 
   """
   @spec random(Q.reql_number) :: Q.t
-  def random(upper) when is_integer(upper), do: %Q{query: [151, [upper]]}
-  def random(upper) when is_float(upper), do: %Q{query: [151, [upper], %{float: true}]}
+  def random(upper) when is_float(upper), do: random(upper, float: true)
+  operate_on_single_arg(:random, 151)
+
   @doc """
   Generate a random value in the range [lower,upper). If either arg is an integer then the
   random value will be an interger. If one of them is a float it will be a float.
@@ -950,12 +951,10 @@ defmodule RethinkDB.Query do
 
   """
   @spec random(Q.reql_number, Q.reql_number) :: Q.t
-  def random(lower, upper) when is_integer(lower) and is_integer(upper) do
-    %Q{query: [151, [lower, upper]]}
-  end
   def random(lower, upper) when is_float(lower) or is_float(upper) do
-    %Q{query: [151, [lower, upper], %{float: true}]}
+    random(lower, upper, float: true)
   end
+  operate_on_two_args(:random, 151)
 
   @doc """
   Rounds the given value to the nearest whole integer.
@@ -963,19 +962,20 @@ defmodule RethinkDB.Query do
   For example, values of 1.0 up to but not including 1.5 will return 1.0, similar to floor; values of 1.5 up to 2.0 will return 2.0, similar to ceil.
   """
   @spec round_r(Q.reql_number) :: Q.t
-  operate_on_single_arg(:round_r, 185)
+  operate_on_single_arg(:round_r, 185, opts: false)
 
   @doc """
   Rounds the given value up, returning the smallest integer value greater than or equal to the given value (the value’s ceiling).
   """
   @spec ceil(Q.reql_number) :: Q.t
-  operate_on_single_arg(:ceil, 184)
+  operate_on_single_arg(:ceil, 184, opts: false)
 
   @doc """
   Rounds the given value down, returning the largest integer value less than or equal to the given value (the value’s floor).
   """
   @spec floor(Q.reql_number) :: Q.t
-  operate_on_single_arg(:floor, 183)
+  operate_on_single_arg(:floor, 183, opts: false)
+
   #
   #Selection Queries
   #
@@ -1154,9 +1154,7 @@ defmodule RethinkDB.Query do
   """
   @spec table_create(Q.t, Q.reql_string, Q.reql_opts) :: Q.t
   operate_on_single_arg(:table_create, 60)
-  def table_create(name, opt) when is_map(opt), do: %Q{query: [60, [wrap(name)], opt]}
   operate_on_two_args(:table_create, 60)
-  def table_create(db, name, opt) when is_map(opt), do: %Q{query: [60, [wrap(db), wrap(name)], opt]}
 
   @doc """
   Drop a table. The table and all its data will be deleted.
@@ -1171,15 +1169,15 @@ defmodule RethinkDB.Query do
   If the given table does not exist in the database, the command throws RqlRuntimeError.
   """
   @spec table_drop(Q.t, Q.reql_string) :: Q.t
-  operate_on_single_arg(:table_drop, 61)
-  operate_on_two_args(:table_drop, 61)
+  operate_on_single_arg(:table_drop, 61, opts: false)
+  operate_on_two_args(:table_drop, 61, opts: false)
 
   @doc """
   List all table names in a database. The result is a list of strings.
   """
   @spec table_list(Q.t) :: Q.t
-  operate_on_zero_args(:table_list, 62)
-  operate_on_single_arg(:table_list, 62)
+  operate_on_zero_args(:table_list, 62, opts: false)
+  operate_on_single_arg(:table_list, 62, opts: false)
 
   @doc """
   Create a new secondary index on a table. Secondary indexes improve the speed of 
@@ -1240,21 +1238,22 @@ defmodule RethinkDB.Query do
   indexes on this table if no indexes are specified.
   """
   @spec index_status(Q.t, Q.reql_string|Q.reql_array) :: Q.t
-  operate_on_single_arg(:index_status, 139)
+  operate_on_single_arg(:index_status, 139, opts: false)
   def index_status(table, indexes) when is_list(indexes) do
     %Q{query: [139, [wrap(table) | Enum.map(indexes, &wrap/1)]]}
   end
+  operate_on_two_args(:index_status, 139, opts: false)
 
   @doc """
   Wait for the specified indexes on this table to be ready, or for all indexes on 
   this table to be ready if no indexes are specified.
   """
   @spec index_wait(Q.t, Q.reql_string|Q.reql_array) :: Q.t
-  operate_on_single_arg(:index_wait, 140)
+  operate_on_single_arg(:index_wait, 140, opts: false)
   def index_wait(table, indexes) when is_list(indexes) do
     %Q{query: [140, [wrap(table) | Enum.map(indexes, &wrap/1)]]}
   end
-  operate_on_two_args(:index_wait, 140)
+  operate_on_two_args(:index_wait, 140, opts: false)
 
   #
   #Writing Data Queries

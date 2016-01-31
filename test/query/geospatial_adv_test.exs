@@ -9,7 +9,7 @@ defmodule GeospatialAdvTest do
   setup_all do
     start_link
     table_create(@table_name) |> run
-    table(@table_name) |> index_create("location", %{geo: true}) |> run
+    table(@table_name) |> index_create("location", geo: true) |> run
     table(@table_name) |> index_wait("location") |> run
     on_exit fn ->
       start_link
@@ -31,8 +31,7 @@ defmodule GeospatialAdvTest do
       %{location: point(0.001,0)}
     ) |> run
     %{data: data} = table(@table_name) |> get_intersecting(
-      circle({0,0}, 5000),
-      %{index: "location"}
+      circle({0,0}, 5000), index: "location"
     ) |> run
     points = for x <- data, do: x["location"].coordinates
     assert Enum.sort(points) == [{0.001, 0}, {0.001,0.001}]
@@ -46,8 +45,7 @@ defmodule GeospatialAdvTest do
       %{location: point(0.001,0)}
     ) |> run
     %Record{data: data} = table(@table_name) |> get_nearest(
-      point({0,0}),
-      %{index: "location", max_dist: 5000000}
+      point({0,0}), index: "location", max_dist: 5000000
     ) |> run
     assert Enum.count(data) == 2
   end
