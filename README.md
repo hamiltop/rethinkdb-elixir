@@ -126,7 +126,8 @@ results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
 ```
 ###Supervised Changefeeds
 
-See documentation for Changefeeds for examples of supervised changefeeds.
+Changefeeds have been moved to their own repo to enable independent release
+cycles. See https://github.com/hamiltop/rethinkdb_changefeed
 
 ###Roadmap
 Version 1.0.0 will be limited to individual connections and implement the entire documented ReQL (as of rethinkdb 2.0)
