@@ -23,7 +23,6 @@ defmodule QueryTest do
     :ok
   end
 
-
   test "make_array" do
     array = [%{"name" => "hello"}, %{"name:" => "world"}]
     q = Query.make_array(array)

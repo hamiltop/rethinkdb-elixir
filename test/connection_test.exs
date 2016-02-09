@@ -156,4 +156,12 @@ defmodule ConnectionRunTest do
     assert [%{"description" => _, "duration(ms)" => _,
              "sub_tasks" => _}] = resp.profile
   end
+
+  test "run with response: tuple" do
+    resp = 10 |> run(response: :tuple)
+    assert {:ok, _} = resp
+    resp = 10 |> changes |> run(response: :tuple)
+    assert {:error, _} = resp
+  end
+
 end

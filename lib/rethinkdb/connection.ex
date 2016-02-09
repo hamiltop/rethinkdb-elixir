@@ -93,11 +93,17 @@ defmodule RethinkDB.Connection do
 
   * `timeout` - How long to wait for a response
   * `db` - Default database to use for query. Can also be specified as part of the query.
+  * `profile` - Request a profile of the query.
+  * `noreply` - Don't wait for a reply.
+  * `response` - Specify the desired format of the response (not applicable if `noreply` is `true`). Options are:
+      * `struct` - Return one of `%RethinkDB.Response{}`, `%RethinkDB.Collection{}`, `%RethinkDB.Feed{}`, `%RethinkDB.Record{}`
+      * `tuple` - Return either `{:ok, response}` or `{:error, response}`
   """
   def run(query, conn, opts \\ []) do
     timeout = Dict.get(opts, :timeout, 5000)
-    conn_opts = Dict.drop(opts, [:timeout])
     noreply = Dict.get(opts, :noreply, false)
+    response_format = Dict.get(opts, :response, :struct)
+    conn_opts = Dict.drop(opts, [:timeout, :response])
     conn_opts = Connection.call(conn, :conn_opts)
                 |> Dict.take([:db])
                 |> Dict.merge(conn_opts)
@@ -107,9 +113,22 @@ defmodule RethinkDB.Connection do
       false -> {:query, query}
     end
     case Connection.call(conn, msg, timeout) do
-      {response, token} -> RethinkDB.Response.parse(response, token, conn)
+      {response, token} ->
+        RethinkDB.Response.parse(response, token, conn)
+        |> process_result(response_format)
       :noreply -> :ok
-      result -> result
+      result ->
+        result
+        |> process_result(response_format)
+    end
+  end
+
+  defp process_result(response, :struct), do: response
+  defp process_result(response, :tuple) do
+    case response do
+      %RethinkDB.Response{data: data = %{"e" => _error_code}} -> {:error, data}
+      %RethinkDB.Feed{} -> {:ok, response}
+      %{data: data} -> {:ok, data}
     end
   end
 
