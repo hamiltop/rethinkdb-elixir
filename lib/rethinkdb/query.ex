@@ -1709,6 +1709,8 @@ defmodule RethinkDB.Query do
   """
   @spec merge(Q.reql_array, Q.reql_object|Q.reql_func1) :: Q.t
   operate_on_two_args(:merge, 35)
+  operate_on_list(:merge, 35)
+  operate_on_single_arg(:merge, 35)
 
   @doc """
   Append a value to an array.

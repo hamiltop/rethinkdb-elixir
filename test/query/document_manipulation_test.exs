@@ -37,6 +37,11 @@ defmodule DocumentManipulationTest do
     assert data == %{"a" => 4, "b" => 5}
   end
 
+  test "merge list" do
+    %Record{data: data} = args([%{a: 4}, %{b: 5}]) |> merge |> run
+    assert data == %{"a" => 4, "b" => 5}
+  end
+
   test "append" do
     %Record{data: data} = [1,2] |> append(3) |> run
     assert data == [1,2,3]
