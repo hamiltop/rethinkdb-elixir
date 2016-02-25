@@ -135,6 +135,7 @@ defmodule ConnectionRunTest do
   end
 
   test "run(conn, opts) with :durability option" do
+    table_drop("durability_test_table") |> run
     response = table_create("durability_test_table") |> run(durability: "soft")
     durability = response.data["config_changes"]
                  |> List.first
