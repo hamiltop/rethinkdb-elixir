@@ -9,11 +9,9 @@ I just set up a channel on the Elixir slack, so if you are on there join #rethin
 
 ###Recent changes
 
-####0.2.0
-* Pruned a lot of connection calls that were public.
-* Added exponential backoff to connection
-* Added supervised changefeeds
-* Pruned and polished docs
+####0.4.0
+* Extract Changefeed out into separate [package](https://github.com/hamiltop/rethinkdb_changefeed)
+* Accept keyword options with queries
 
 ##Getting Started
 
