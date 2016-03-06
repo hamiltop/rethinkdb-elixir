@@ -113,7 +113,7 @@ See [query.ex](lib/rethinkdb/query.ex) for more basic queries. If you don't see 
 Change feeds can be consumed either incrementally (by calling `RethinkDB.next/1`) or via the Enumerable Protocol.
 
 ```elixir
-q = Query.table("people")
+results = Query.table("people")
   |> Query.filter(%{last_name: "Smith"})
   |> Query.changes
   |> RethinkDB.run conn
