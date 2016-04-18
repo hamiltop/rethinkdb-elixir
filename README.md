@@ -55,6 +55,29 @@ import RethinkDB.Query
 table("people") |> FooDatabase.run
 ```
 
+####Connection Pooling
+To use a connection pool, add Poolboy to your dependencies:
+
+```elixir
+{:poolboy, "~> 1.5"}
+```
+
+Then, in your supervision tree, add:
+
+```elixir
+worker(:poolboy, [[name: {:local, :rethinkdb_pool}, worker_module: RethinkDB.Connection, size: 10, max_overflow: 0], [])
+```
+
+NOTE: If you want to use changefeeds or any persistent queries, `max_overflow: 0` is required.
+
+Then use it in your code:
+
+```elixir
+db = :poolboy.checkout(:rethinkdb_pool)
+table("people") |> db
+:poolboy.checkin(:rethinkdb_pool, db)
+```
+
 ###Query
 `RethinkDB.run/2` accepts a process as the second argument (to facilitate piping).
 
@@ -124,8 +147,7 @@ results |> Stream.chunk(5) |> Enum.each &IO.inspect/1
 ```
 ###Supervised Changefeeds
 
-Changefeeds have been moved to their own repo to enable independent release
-cycles. See https://github.com/hamiltop/rethinkdb_changefeed
+Supervised Changefeeds (an OTP behavior for running a changefeed as a process) have been moved to their own repo to enable independent release cycles. See https://github.com/hamiltop/rethinkdb_changefeed
 
 ###Roadmap
 Version 1.0.0 will be limited to individual connections and implement the entire documented ReQL (as of rethinkdb 2.0)
