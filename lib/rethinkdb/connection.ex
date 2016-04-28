@@ -6,7 +6,7 @@ defmodule RethinkDB.Connection do
 
   It is recommended to start it as part of a supervision tree with a name:
 
-      worker(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_connection]])
+      supervisor(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_connection]])
 
   Connections will by default connect asynchronously. If a connection fails, we retry with
   an exponential backoff. All queries will return `%RethinkDB.Exception.ConnectionClosed{}`
@@ -17,15 +17,11 @@ defmodule RethinkDB.Connection do
   require Logger
 
   alias RethinkDB.Q
+  alias RethinkDB.Connection.Multiplexer
 
-  import DBConnection.Query, only: [describe: 2]
-  import DBConnection.Error, only: [exception: 1]
+  import DBConnection.Query, only: [decode: 3, describe: 2]
 
-  @transport :gen_tcp
-
-  defmodule State do
-    defstruct sock: nil, token: 1, options: []
-  end
+  defstruct pid: nil, options: []
 
   @doc """
   A convenience macro for naming connections.
@@ -42,8 +38,9 @@ defmodule RethinkDB.Connection do
   When `use RethinkDB.Connection` is called, it will define:
 
   * `start_link`
-  * `stop`
   * `run`
+  * `norepy_wait`
+  * `stop`
 
   All of these only differ from the normal `RethinkDB.Connection` functions in that they don't
   accept a connection. They will use the current module as the process name. `start_link` will
@@ -83,7 +80,7 @@ defmodule RethinkDB.Connection do
   @doc """
   Start connection as a linked process
 
-  Accepts a `Dict` of options. Supported options:
+  Accepts a `Keyword` of options. Supported options:
 
   * `:host` - Hostname to use to connect to database. Defaults to `"localhost"`.
   * `:port` - Port on which to connect to database. Defaults to `28015`.
@@ -102,7 +99,7 @@ defmodule RethinkDB.Connection do
   Supports the following options:
 
   * `:timeout`  - How long to wait for a response.
-  * `:profile`  - Query profiling. Defaults to `false`.
+  * `:profile`  - Query profiling.
   * `:database` - Database to use for query.
   """
   def run(query, conn, options \\ []) do
@@ -115,8 +112,12 @@ defmodule RethinkDB.Connection do
   Since a feed is tied to a particular connection, no connection is needed when calling
   `next`.
   """
-  def next(%{token: token, pid: conn}) do
-    DBConnection.execute!(conn, %Q{message: "[2]"}, [], token: token, timeout: :infinity)
+  def next(%{token: token, pid: pid}) do
+    query = %Q{message: "[2]"}
+    case Multiplexer.send_recv(pid, query.message, token: token, timeout: :infinity) do
+      {:ok, {token, data}} ->
+        decode(query, {token, data, pid}, [])
+    end
   end
 
   @doc """
@@ -150,55 +151,26 @@ defmodule RethinkDB.Connection do
   #
 
   def connect(options) do
-    host = Keyword.get(options, :hostname, "localhost")
-    port = Keyword.get(options, :port, 28015)
-    user = Keyword.get(options, :user, "admin")
-    pass = Keyword.get(options, :password, "")
-
-    # Following options are stored into the state
-    # and are used as default options when calling run/3.
-    conn_opts = Keyword.take(options, ~w(database timeout))
-
-    # Connects to the server and perform a handshake
-    sock_opts = [packet: :raw, mode: :binary, active: :false]
-    case @transport.connect(String.to_char_list(host), port, sock_opts, Keyword.get(options, :timeout, 15_000)) do
-      {:ok, sock} ->
-        handshake(user, pass, %State{sock: sock, options: conn_opts})
-      {:error, :econnrefused} ->
-        {:error, exception("Connection refused")}
-    end
+    # Starts the multiplexer process and stores its pid and some default options to the state.
+    {:ok, pid} = Multiplexer.start_link(options)
+    {:ok, %__MODULE__{pid: pid, options: Keyword.take(options, ~w(database timeout)a)}}
   end
 
-  def disconnect(_err, %State{sock: sock}) do
-    @transport.close(sock)
+  def disconnect(_err, _state) do
+    # TODO
   end
 
-  def checkin(%State{sock: sock} = state) do
-    # Socket is back with the owning process, activate it
-    # to handle error/closed messages via handle_info/2.
-    case :inet.setopts(sock, active: true) do
-      :ok ->
-        {:ok, state}
-      {:error, _err} ->
-        {:disconnect, exception("Failed to checkin socket"), state}
-    end
+  def checkin(state) do
+    {:ok, state}
   end
 
-  def checkout(%State{sock: sock} = state) do
-    # Socket is going to be used by another process,
-    # deactive message forwarding to handle_info/2.
-    case :inet.setopts(sock, active: false) do
-      :ok ->
-        {:ok, state}
-      {:error, _err} ->
-        {:disconnect, exception("Failed to checkout socket"), state}
-    end
+  def checkout(state) do
+    {:ok, state}
   end
 
-  def handle_execute(%Q{message: message} = query, _params, options, %State{sock: sock, token: token} = state) do
+  def handle_execute(%Q{message: message} = query, _params, options, %__MODULE__{pid: pid} = state) do
     # Overrides default options with specified ones.
     options = Keyword.merge(state.options, options)
-    timeout = Keyword.get(options, :timeout, 15_000)
 
     unless message do
       # This only applies when called with run/3 and is used
@@ -207,139 +179,11 @@ defmodule RethinkDB.Connection do
       |> Map.fetch!(:message)
     end
 
-    # This is used to retrieve more data for the cursor
-    # on the same connection with the same token.
-    token = Keyword.get(options, :token, token)
-
-    # Assigns the query to the given token.
-    payload = << token :: little-size(64), byte_size(message) :: little-size(32) >> <> message
-
-    if Keyword.get(options, :noreply, false) do
-      # If :noreply mode is enabled, we do not wait for the server
-      # acknowledgement of the query before moving on to the next query.
-      @transport.send(sock, payload)
-      {:ok, nil, state}
-    else
-      # 1) Sends the query.
-      # 2) Reads the response header.
-      # 3) Reads the response body.
-      # 5) Increments the token.
-      with :ok <- @transport.send(sock, payload),
-          {:ok, << ^token :: little-size(64), data_size :: little-size(32) >>} <- @transport.recv(sock, 12, timeout),
-          {:ok, data} <- @transport.recv(sock, data_size, timeout),
-      do: {:ok, {data, token, sock}, %{state | token: token + 1}}
-    end
+    {:ok, {token, data}} = Multiplexer.send_recv(pid, message, options)
+    {:ok, {token, data, pid}, state}
   end
 
   def handle_close(_query, _options, state) do
     {:ok, nil, state}
-  end
-
-  def handle_info({:tcp, _sock, message}, state) do
-    Logger.warn "Unhandled message: #{inspect message}"
-    {:ok, state}
-  end
-
-  def handle_info({:tcp_closed, _sock}, state) do
-    {:disconnect, exception("Connection closed"), state}
-  end
-
-  def handle_info({:tcp_error, _sock, _err}, state) do
-    {:disconnect, exception("Connection error"), state}
-  end
-
-  def handle_info(message, state) do
-    Logger.debug "Unhandled message: #{inspect message}"
-    {:ok, state}
-  end
-
-  #
-  # Handshake V1_0
-  #
-
-  defp handshake(user, pass, %State{sock: sock} = state) do
-    # Sends the “magic number” for the protocol version.
-    case handshake_message(<< 0x34c2bdc3:: little-size(32) >>, sock) do
-      {:ok, %{"success" => true}} ->
-        # Generates the client nonce.
-        client_nonce = :crypto.strong_rand_bytes(20)
-        |> Base.encode64
-
-        client_first_message = "n=#{user},r=#{client_nonce}"
-
-        scram = Poison.encode!(%{
-          protocol_version: 0,
-          authentication_method: "SCRAM-SHA-256",
-          authentication: "n,,#{client_first_message}"
-        })
-
-        # Sends the “client-first-message”
-        case handshake_message(scram <> "\0", sock) do
-          {:ok, %{"success" => true, "authentication" => server_first_message}} ->
-            auth = server_first_message
-            |> String.split(",")
-            |> Enum.map(&(String.split(&1, "=", parts: 2)))
-            |> Enum.into(%{}, &List.to_tuple/1)
-
-            # Verify server nonce.
-            server_nonce = auth["r"]
-            if String.starts_with?(server_nonce, client_nonce) do
-              iter = auth["i"]
-              |> String.to_integer
-
-              salt = auth["s"]
-              |> Base.decode64!
-
-              salted_pass = __MODULE__.PBKDF2.generate(pass, salt, iterations: iter)
-
-              client_final_message = "c=biws,r=#{server_nonce}"
-
-              auth_msg = Enum.join([
-                client_first_message,
-                server_first_message,
-                client_final_message
-              ], ",")
-
-              client_key = :crypto.hmac(:sha256, salted_pass, "Client Key")
-              server_key = :crypto.hmac(:sha256, salted_pass, "Server Key")
-              stored_key = :crypto.hash(:sha256, client_key)
-              client_sig = :crypto.hmac(:sha256, stored_key, auth_msg)
-              server_sig = :crypto.hmac(:sha256, server_key, auth_msg)
-
-              proof = :crypto.exor(client_key, client_sig)
-              |> Base.encode64
-
-              scram = Poison.encode!(%{authentication: "#{client_final_message},p=#{proof}"})
-
-              # Sends the “client-last-message”
-              case handshake_message(scram <> "\0", sock) do
-                {:ok, %{"success" => true, "authentication" => server_final_message}} ->
-                  auth = server_final_message
-                  |> String.split(",")
-                  |> Enum.map(&(String.split(&1, "=", parts: 2)))
-                  |> Enum.into(%{}, &List.to_tuple/1)
-
-                  # Verifies server signature.
-                  if server_sig == Base.decode64!(auth["v"]) do
-                    {:ok, state}
-                  else
-                    {:error, exception("Invalid server signature")}
-                  end
-                {:ok, %{"success" => false, "error" => reason}} ->
-                  {:error, exception(reason)}
-              end
-            else
-              {:error, exception("Invalid server nonce")}
-            end
-          {:ok, %{"success" => false, "error" => reason}} ->
-            {:error, exception(reason)}
-        end
-    end
-  end
-
-  defp handshake_message(data, sock) do
-    with :ok <- @transport.send(sock, data),
-        {:ok, data} <- @transport.recv(sock, 0),
-    do: String.replace_suffix(data, "\0", "") |> Poison.decode
   end
 end

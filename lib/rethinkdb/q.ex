@@ -12,6 +12,7 @@ defmodule RethinkDB.Q do
     def parse(query, _options), do: query
 
     def describe(query, options) do
+      # Prepares the query with the given options.
       options = Keyword.take(options, ~w(database timeout durability profile noreply)a)
       options = Enum.into(options, %{}, fn
         {:database, db} ->
@@ -20,6 +21,7 @@ defmodule RethinkDB.Q do
           {k, v}
       end)
 
+      # Formats the query and serializes it to JSON.
       message = [1, prepare(query), options]
       |> Poison.encode!()
 
@@ -30,8 +32,8 @@ defmodule RethinkDB.Q do
 
     def decode(_query, _result, noreply: true), do: :ok
 
-    def decode(_query, {data, token, sock}, _options) do
-      parse(data, token, Port.info(sock)[:connected])
+    def decode(_query, {token, data, pid}, _options) do
+      parse(data, token, pid)
     end
 
     def decode(_query, _result, _options) do
