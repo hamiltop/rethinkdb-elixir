@@ -22,10 +22,8 @@ defmodule RethinkDB.Connection.Multiplexer do
 
   import DBConnection.Error, only: [exception: 1]
 
-  @transport :gen_tcp
-
   @doc false
-  defstruct sock: nil, token: 1, ets: nil, ref: nil
+  defstruct conn: {nil, nil}, token: 1, ets: nil, ref: nil
 
   @doc """
   Starts a `Connection` process linked to the current process.
@@ -63,28 +61,36 @@ defmodule RethinkDB.Connection.Multiplexer do
     user = Keyword.get(options, :user, "admin")
     pass = Keyword.get(options, :password, "")
 
+    {transport, sock_opts} =
+      if ssl_opts = Keyword.get(options, :ssl) do
+        {:ssl, Enum.map(Keyword.fetch!(ssl_opts, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
+      else
+        {:gen_tcp, []}
+      end
+
     # Connects to the server and perform a handshake
-    sock_opts = [packet: :raw, mode: :binary, active: :false]
-    with {:ok, sock} <- @transport.connect(String.to_char_list(host), port, sock_opts),
-         {:ok, _nil} <- handshake(sock, user, pass),
-         {_pid, ref} <- spawn_monitor(__MODULE__, :recv_loop, [self, sock]),
-    do:  {:ok, %__MODULE__{sock: sock, ets: :ets.new(__MODULE__, [:set, :private]), ref: ref}}
+    sock_opts = [packet: :raw, mode: :binary, active: :false] ++ sock_opts
+    with {:ok, sock} <- transport.connect(String.to_char_list(host), port, sock_opts),
+         {:ok, conn} <- init_connection(transport, sock),
+         {:ok, _nil} <- handshake(conn, user, pass),
+         {_pid, ref} <- spawn_monitor(__MODULE__, :recv_loop, [self, conn]),
+    do:  {:ok, %__MODULE__{conn: conn, ets: :ets.new(__MODULE__, [:set, :private]), ref: ref}}
   end
 
-  def handle_call({:send, nil, msg}, from, %__MODULE__{sock: sock, token: token, ets: table} = state) do
-    :ok = send_payload(sock, token, msg)
+  def handle_call({:send, nil, msg}, from, %__MODULE__{conn: conn, token: token, ets: table} = state) do
+    :ok = send_payload(conn, token, msg)
     :ets.insert(table, {token, from})
     {:noreply, %__MODULE__{state | token: token + 1}}
   end
 
-  def handle_call({:send, token, msg}, from, %__MODULE__{sock: sock, ets: table} = state) do
-    :ok = send_payload(sock, token, msg)
+  def handle_call({:send, token, msg}, from, %__MODULE__{conn: conn, ets: table} = state) do
+    :ok = send_payload(conn, token, msg)
     :ets.insert(table, {token, from})
     {:noreply, state}
   end
 
-  def handle_cast({:send, msg}, %__MODULE__{sock: sock, token: token} = state) do
-    :ok = send_payload(sock, token, msg)
+  def handle_cast({:send, msg}, %__MODULE__{conn: conn, token: token} = state) do
+    :ok = send_payload(conn, token, msg)
     {:noreply, %__MODULE__{state | token: token + 1}}
   end
 
@@ -101,20 +107,25 @@ defmodule RethinkDB.Connection.Multiplexer do
   end
 
   @doc false
-  def recv_loop(pid, sock) do
-    with {:ok, << token :: little-size(64), msg_size :: little-size(32) >>} <- @transport.recv(sock, 12),
-         {:ok, msg} <- @transport.recv(sock, msg_size),
+  def recv_loop(pid, {transport, sock} = conn) do
+    with {:ok, << token :: little-size(64), msg_size :: little-size(32) >>} <- transport.recv(sock, 12),
+         {:ok, msg} <- transport.recv(sock, msg_size),
           :ok <- GenServer.cast(pid, {:reply, token, msg}),
-    do: recv_loop(pid, sock)
+    do: recv_loop(pid, conn)
   end
+
+  defp init_connection(transport, sock) do
+    {:ok, {transport, sock}}
+  end
+
 
   #
   # Handshake V1_0
   #
 
-  defp handshake(sock, user, pass) do
+  defp handshake(conn, user, pass) do
     # Sends the “magic number” for the protocol version.
-    case handshake_message(sock, << 0x34c2bdc3:: little-size(32) >>) do
+    case handshake_message(conn, << 0x34c2bdc3:: little-size(32) >>) do
       {:ok, %{"success" => true}} ->
         # Generates the client nonce.
         client_nonce = :crypto.strong_rand_bytes(20)
@@ -129,7 +140,7 @@ defmodule RethinkDB.Connection.Multiplexer do
         })
 
         # Sends the “client-first-message”
-        case handshake_message(sock, scram <> "\0") do
+        case handshake_message(conn, scram <> "\0") do
           {:ok, %{"success" => true, "authentication" => server_first_message}} ->
             auth = server_first_message
             |> String.split(",")
@@ -167,7 +178,7 @@ defmodule RethinkDB.Connection.Multiplexer do
               scram = Poison.encode!(%{authentication: "#{client_final_message},p=#{proof}"})
 
               # Sends the “client-last-message”
-              case handshake_message(sock, scram <> "\0") do
+              case handshake_message(conn, scram <> "\0") do
                 {:ok, %{"success" => true, "authentication" => server_final_message}} ->
                   auth = server_final_message
                   |> String.split(",")
@@ -192,13 +203,13 @@ defmodule RethinkDB.Connection.Multiplexer do
     end
   end
 
-  defp handshake_message(sock, data) do
-    with :ok <- @transport.send(sock, data),
-        {:ok, data} <- @transport.recv(sock, 0),
+  defp handshake_message({transport, sock}, data) do
+    with :ok <- transport.send(sock, data),
+        {:ok, data} <- transport.recv(sock, 0),
     do: String.replace_suffix(data, "\0", "") |> Poison.decode
   end
 
-  defp send_payload(sock, token, msg) do
-    @transport.send(sock, << token :: little-size(64), byte_size(msg) :: little-size(32) >> <> msg)
+  defp send_payload({transport, sock}, token, msg) do
+    transport.send(sock, << token :: little-size(64), byte_size(msg) :: little-size(32) >> <> msg)
   end
 end
