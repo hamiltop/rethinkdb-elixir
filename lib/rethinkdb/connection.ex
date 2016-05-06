@@ -153,7 +153,7 @@ defmodule RethinkDB.Connection do
   def connect(options) do
     # Starts the multiplexer process and stores its pid and some default options to the state.
     {:ok, pid} = Multiplexer.start_link(options)
-    {:ok, %__MODULE__{pid: pid, options: Keyword.take(options, ~w(database timeout)a)}}
+    {:ok, %__MODULE__{pid: pid, options: Keyword.take(options, ~w(db database timeout)a)}}
   end
 
   def disconnect(_err, _state) do

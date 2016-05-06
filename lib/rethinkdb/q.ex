@@ -13,9 +13,9 @@ defmodule RethinkDB.Q do
 
     def describe(query, options) do
       # Prepares the query with the given options.
-      options = Keyword.take(options, ~w(database timeout durability profile noreply)a)
+      options = Keyword.take(options, ~w(db database timeout durability profile noreply)a)
       options = Enum.into(options, %{}, fn
-        {:database, db} ->
+        {k, db} when k in [:db, :database] ->
           {:db, prepare(RethinkDB.Query.db(db))}
         {k, v} ->
           {k, v}
