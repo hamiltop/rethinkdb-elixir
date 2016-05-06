@@ -44,7 +44,7 @@ defmodule RethinkDB.Connection.Multiplexer do
     noreply = Keyword.get(options, :noreply, false)
     timeout = Keyword.get(options, :timeout, 5_000)
     if noreply do
-      {:ok, GenServer.cast(pid, {:send, message})}
+      GenServer.cast(pid, {:send, message})
     else
       token = Keyword.get(options, :token)
       {:ok, GenServer.call(pid, {:send, token, message}, timeout)}

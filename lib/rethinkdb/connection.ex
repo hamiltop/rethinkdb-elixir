@@ -179,8 +179,12 @@ defmodule RethinkDB.Connection do
       |> Map.fetch!(:message)
     end
 
-    {:ok, {token, data}} = Multiplexer.send_recv(pid, message, options)
-    {:ok, {token, data, pid}, state}
+    case Multiplexer.send_recv(pid, message, options) do
+      :ok ->
+        {:ok, nil, state}
+      {:ok, {token, data}} ->
+        {:ok, {token, data, pid}, state}
+    end
   end
 
   def handle_close(_query, _options, state) do
