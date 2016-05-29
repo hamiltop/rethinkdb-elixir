@@ -115,6 +115,6 @@ defmodule RethinkDB.Query.Macros do
   def wrap(t) when is_tuple(t), do: wrap(Tuple.to_list(t))
   def wrap(data), do: data
 
-  def make_opts(opts) when is_map(opts), do: opts
+  def make_opts(opts) when is_map(opts), do: wrap(opts)
   def make_opts(opts) when is_list(opts), do: Enum.into(opts, %{})
 end

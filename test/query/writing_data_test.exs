@@ -40,6 +40,29 @@ defmodule WritingDataTest do
     assert Enum.map(data, &(&1["name"])) |> Enum.sort == ["Hello", "World"]
   end
 
+  test "insert conflict options" do
+    table_query = table(@table_name)
+
+    q = insert(table_query, [%{name: "Hello", value: 1}])   
+    %Record{data: %{"generated_keys"=> [id], "inserted" => 1}} = run(q)
+    
+    q = insert(table_query, [%{name: "Hello", id: id, value: 2}])
+    %Record{data: %{"errors" => 1}} = run(q)
+
+    q = insert(table_query, [%{name: "World", id: id, value: 2}], %{conflict: "replace"})
+    %Record{data: %{"replaced" => 1}} = run(q)
+    %Collection{data: [%{"id" => ^id, "name" => "World", "value" => 2}]} = run(table_query)
+
+    q = insert(table_query, [%{id: id, value: 3}], %{conflict: "update"})
+    %Record{data: %{"replaced" => 1}} = run(q)
+    %Collection{data: [%{"id" => ^id, "name" => "World", "value" => 3}]} = run(table_query)
+
+    q = insert(table_query, [%{id: id, value: 3}], %{conflict: fn(_id, old, new) -> 
+      merge(old, %{value: add(get_field(old, "value"), get_field(new, "value"))}) end})
+    %Record{data: %{"replaced" => 1}} = run(q)
+    %Collection{data: [%{"id" => ^id, "name" => "World", "value" => 6}]} = run(table_query)
+  end  
+
   test "update" do
     table_query = table(@table_name)
     q = insert(table_query, %{name: "Hello", attr: "World"})
