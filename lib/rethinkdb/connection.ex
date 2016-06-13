@@ -93,6 +93,9 @@ defmodule RethinkDB.Connection do
 
   * `timeout` - How long to wait for a response
   * `db` - Default database to use for query. Can also be specified as part of the query.
+  * `durability` - possible values are 'hard' and 'soft'. In soft durability mode RethinkDB will acknowledge the write immediately after receiving it, but before the write has been committed to disk.
+  * `noreply` - set to true to not receive the result object or cursor and return immediately.
+  * `profile` - whether or not to return a profile of the query’s execution (default: false).
   """
   def run(query, conn, opts \\ []) do
     timeout = Dict.get(opts, :timeout, 5000)
