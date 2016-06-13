@@ -27,7 +27,7 @@ defmodule QueryTest do
   test "make_array" do
     array = [%{"name" => "hello"}, %{"name:" => "world"}]
     q = Query.make_array(array)
-    %Record{data: data} = run(q)
+    {:ok, %Record{data: data}} = run(q)
     assert Enum.sort(data) == Enum.sort(array)
   end
 
@@ -36,7 +36,7 @@ defmodule QueryTest do
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
-    %Collection{data: data} = table(@table_name)
+    {:ok, %Collection{data: data}} = table(@table_name)
       |> map( RethinkDB.Lambda.lambda fn (el) ->
         el[:name] + " " + "with map"
       end) |> run
@@ -48,7 +48,7 @@ defmodule QueryTest do
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
-    %Collection{data: data} = table(@table_name)
+    {:ok, %Collection{data: data}} = table(@table_name)
     |> filter(%{name: "Hello"})
     |> run
     assert Enum.map(data, &(&1["name"])) == ["Hello"]
@@ -59,7 +59,7 @@ defmodule QueryTest do
 
     insert(table_query, [%{name: "Hello"}, %{name: "World"}]) |> run
 
-    %Collection{data: data} = table(@table_name)
+    {:ok, %Collection{data: data}} = table(@table_name)
     |> filter(RethinkDB.Lambda.lambda fn (el) ->
       el[:name] == "Hello"
     end)
@@ -73,7 +73,7 @@ defmodule QueryTest do
         [x, y]
       end)
     end)
-    %{data: data} = run(a)
+    {:ok, %{data: data}} = run(a)
     assert data == [
       [[1,4], [1,5], [1,6]],
       [[2,4], [2,5], [2,6]],

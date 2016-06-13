@@ -30,7 +30,7 @@ defmodule GeospatialAdvTest do
     table(@table_name) |> insert(
       %{location: point(0.001,0)}
     ) |> run
-    %{data: data} = table(@table_name) |> get_intersecting(
+    {:ok, %{data: data}} = table(@table_name) |> get_intersecting(
       circle({0,0}, 5000), index: "location"
     ) |> run
     points = for x <- data, do: x["location"].coordinates
@@ -44,7 +44,7 @@ defmodule GeospatialAdvTest do
     table(@table_name) |> insert(
       %{location: point(0.001,0)}
     ) |> run
-    %Record{data: data} = table(@table_name) |> get_nearest(
+    {:ok, %Record{data: data}} = table(@table_name) |> get_nearest(
       point({0,0}), index: "location", max_dist: 5000000
     ) |> run
     assert Enum.count(data) == 2

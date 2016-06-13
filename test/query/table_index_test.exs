@@ -19,25 +19,25 @@ defmodule TableIndexTest do
   end
 
   test "indexes" do
-    %Record{data: data} = table(@table_name) |> index_create("hello") |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_create("hello") |> run
     assert data == %{"created" => 1}
-    %Record{data: data} = table(@table_name) |> index_wait("hello") |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_wait("hello") |> run
     assert [
       %{"function" => _, "geo" => false, "index" => "hello",
         "multi" => false, "outdated" => false,"ready" => true}
       ] = data
-    %Record{data: data} = table(@table_name) |> index_status("hello") |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_status("hello") |> run
     assert [
       %{"function" => _, "geo" => false, "index" => "hello",
         "multi" => false, "outdated" => false,"ready" => true}
       ] = data
-    %Record{data: data} = table(@table_name) |> index_list |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_list |> run
     assert data == ["hello"]
     table(@table_name) |> index_rename("hello", "goodbye") |> run
-    %Record{data: data} = table(@table_name) |> index_list |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_list |> run
     assert data == ["goodbye"]
     table(@table_name) |> index_drop("goodbye") |> run
-    %Record{data: data} = table(@table_name) |> index_list |> run
+    {:ok, %Record{data: data}} = table(@table_name) |> index_list |> run
     assert data == []
   end
 end

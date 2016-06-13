@@ -21,7 +21,7 @@ defmodule AggregationTest do
         %{a: "bye"}
       ]
       |> group("a")
-    %Record{data: data} = query |> run
+    {:ok, %Record{data: data}} = query |> run
     assert data == %{
       "bye" => [
         %{"a" => "bye"}
@@ -43,7 +43,7 @@ defmodule AggregationTest do
       |> group(lambda fn (x) ->
         (x["a"] == "hi") || (x["a"] == "hello")
       end)
-    %Record{data: data} = query |> run
+    {:ok, %Record{data: data}} = query |> run
     assert data == %{
       false: [
         %{"a" => "bye"},
@@ -67,7 +67,7 @@ defmodule AggregationTest do
       |> group([lambda(fn (x) ->
         (x["a"] == "hi") || (x["a"] == "hello")
       end), "b"])
-    %Record{data: data} = query |> run
+    {:ok, %Record{data: data}} = query |> run
     assert data == %{
       [false, nil] => [
         %{"a" => "bye"},
@@ -95,7 +95,7 @@ defmodule AggregationTest do
         (x["a"] == "hi") || (x["a"] == "hello")
       end), "b"])
       |> ungroup
-    %Record{data: data} = query |> run
+    {:ok, %Record{data: data}} = query |> run
     assert data == [
       %{
         "group" => [false, nil],
@@ -124,19 +124,19 @@ defmodule AggregationTest do
     query = [1,2,3,4] |> reduce(lambda fn(el, acc) ->
       el + acc
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 10
   end
 
   test "count" do
     query = [1,2,3,4] |> count
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 4
   end
 
   test "count with value" do
     query = [1,2,2,3,4] |> count(2)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 2
   end
 
@@ -144,19 +144,19 @@ defmodule AggregationTest do
     query = [1,2,2,3,4] |> count(lambda fn(x) ->
       rem(x, 2) == 0
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 3
   end
 
   test "sum" do
     query = [1,2,3,4] |> sum
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 10
   end
 
   test "sum with field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> sum("a")
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 3
   end
 
@@ -168,19 +168,19 @@ defmodule AggregationTest do
         x * 2
       end
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 18
   end
 
   test "avg" do
     query = [1,2,3,4] |> avg
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 2.5
   end
 
   test "avg with field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> avg("a")
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 1.5
   end
 
@@ -192,25 +192,25 @@ defmodule AggregationTest do
         x * 2
       end
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 6
   end
 
   test "min" do
     query = [1,2,3,4] |> Query.min
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 1
   end
 
   test "min with field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min("b")
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == %{"b" => 3}
   end
 
   test "min with subquery field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.min(Query.downcase("B"))
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == %{"b" => 3}
   end
 
@@ -223,25 +223,25 @@ defmodule AggregationTest do
         x * 2
       end
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 2  
   end
 
   test "max" do
     query = [1,2,3,4] |> Query.max
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 4
   end
 
   test "max with field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max("b")
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == %{"b" => 4}
   end
 
   test "max with subquery field" do
     query = [%{a: 1},%{a: 2},%{b: 3},%{b: 4}] |> Query.max(Query.downcase("B"))
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == %{"b" => 4}
   end
 
@@ -253,13 +253,13 @@ defmodule AggregationTest do
         x * 2
       end
     end)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == 3
   end
 
   test "distinct" do
     query = [1,2,3,3,4,4,5] |> distinct
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == [1,2,3,4,5]
   end
 
@@ -270,31 +270,31 @@ defmodule AggregationTest do
 
   test "contains" do
     query = [1,2,3,4] |> contains(4)
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == true
   end
 
   test "contains multiple values" do
     query = [1,2,3,4] |> contains([4, 3])
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == true
   end
 
   test "contains with function" do
     query = [1,2,3,4] |> contains(lambda &(&1 == 3))
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == true
   end
 
   test "contains with multiple function" do
     query = [1,2,3,4] |> contains([lambda(&(&1 == 3)), lambda(&(&1 == 5))])
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == false
   end
 
   test "contains with multiple (mixed)" do
     query = [1,2,3,4] |> contains([lambda(&(&1 == 3)), 2])
-    %Record{data: data} = run query
+    {:ok, %Record{data: data}} = run query
     assert data == true
   end
 end

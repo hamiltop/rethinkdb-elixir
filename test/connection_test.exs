@@ -32,7 +32,7 @@ defmodule ConnectionTest do
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
     conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
     :timer.sleep(1000)
-    %RethinkDB.Record{} = RethinkDB.Query.table_list |> run
+    {:ok, %RethinkDB.Record{}} = RethinkDB.Query.table_list |> run
     ref = Process.monitor(c)
     FlakyConnection.stop(conn)
     receive do
@@ -53,7 +53,7 @@ defmodule ConnectionTest do
       GenServer.cast(__MODULE__, :stop)
     end
     table(table) |> index_wait |> run
-    change_feed = table(table) |> changes |> run
+    {:ok, change_feed} = table(table) |> changes |> run
     task = Task.async fn ->
       RethinkDB.Connection.next change_feed
     end
@@ -84,7 +84,7 @@ defmodule ConnectionTest do
     {:ok, c} = RethinkDB.Connection.start_link(db: "new_test")
     db_create("new_test") |> RethinkDB.run(c)
     db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
-    %{data: data} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: data}} = table_list |> RethinkDB.run(c)
     assert data == ["new_test_table"]
   end
 
@@ -109,7 +109,7 @@ defmodule ConnectionTest do
   test "ssl connection" do
     conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
     {:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.crt"]], sync_connect: true)
-    %{data: _} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: _}} = table_list |> RethinkDB.run(c)
   end
 end
 
@@ -127,7 +127,7 @@ defmodule ConnectionRunTest do
     db_create("db_option_test") |> run
     table_create("db_option_test_table") |> run(db: "db_option_test")
 
-    %{data: data} = db("db_option_test") |> table_list |> run
+    {:ok, %{data: data}} = db("db_option_test") |> table_list |> run
 
     db_drop("db_option_test") |> run
 
@@ -136,7 +136,7 @@ defmodule ConnectionRunTest do
 
   test "run(conn, opts) with :durability option" do
     table_drop("durability_test_table") |> run
-    response = table_create("durability_test_table") |> run(durability: "soft")
+    {:ok, response} = table_create("durability_test_table") |> run(durability: "soft")
     durability = response.data["config_changes"]
                  |> List.first
                  |> Map.fetch!("new_val")
@@ -153,7 +153,7 @@ defmodule ConnectionRunTest do
   end
 
   test "run with :profile options" do
-    resp = make_array([1,2,3]) |> run(profile: true)
+    {:ok, resp} = make_array([1,2,3]) |> run(profile: true)
     assert [%{"description" => _, "duration(ms)" => _,
              "sub_tasks" => _}] = resp.profile
   end
