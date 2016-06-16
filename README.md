@@ -19,7 +19,7 @@ See [API documentation](http://hexdocs.pm/rethinkdb/) for more details.
 
 ###Connection
 
-Connections are managed by a process. Start the process by calling `start_link/1`. See [documentation for `Connection.start_link/1`](http://hexdocs.pm/rethinkdb/RethinkDB.Connection.html#start_link/1) for supported options. 
+Connections are managed by a process. Start the process by calling `start_link/1`. See [documentation for `Connection.start_link/1`](http://hexdocs.pm/rethinkdb/RethinkDB.Connection.html#start_link/1) for supported options.
 
 ####Basic Remote Connection
 ```elixir
@@ -130,6 +130,33 @@ table("people")
 ```
 
 See [query.ex](lib/rethinkdb/query.ex) for more basic queries. If you don't see something supported, please open an issue. We're moving fast and any guidance on desired features is helpful.
+
+#### Indexes
+```elixir
+# Simple indexes
+# create
+result = Query.table("people")
+  |> Query.index_create("first_name", Lambda.lambda fn(row) -> row["first_name"] end)
+  |> RethinkDB.run conn
+
+# retrieve
+result = Query.table("people")
+  |> Query.get_all(["Will"], index: "first_name")
+  |> RethinkDB.run conn
+
+
+# Compound indexes
+# create
+result = Query.table("people")
+  |> Query.index_create("full_name", Lambda.lambda fn(row) -> [row["first_name"], row["last_name"]] end)
+  |> RethinkDB.run conn
+
+# retrieve
+result = Query.table("people")
+  |> Query.get_all([["Will", "Smith"], ["James", "Bond"]], index: "full_name")
+  |> RethinkDB.run conn
+```
+One limitation we have in Elixir is that we don't support varargs. So in JavaScript you would do `getAll(key1, key2, {index: "uniqueness"})`. In Elixir we have to do `get_all([key1, key2], index: "uniqueness")`. With a single key it becomes `get_all([key1], index: "uniqueness")` and when `key1` is `[partA, partB]` you have to do `get_all([[partA, partB]], index: "uniqueness")`
 
 ###Changes
 
