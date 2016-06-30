@@ -44,7 +44,7 @@ defmodule RethinkDB.Mixfile do use Mix.Project
       {:earmark, "~> 0.1", only: :dev},
       {:ex_doc, "~> 0.7", only: :dev},
       {:flaky_connection, github: "hamiltop/flaky_connection", only: :test},
-      {:db_connection, "~> 0.2.5"},
+      {:db_connection, "~> 1.0-rc.3"},
       {:excoveralls, "~> 0.3.11", only: :test},
       {:dialyze, "~> 0.2.0", only: :test}
     ]

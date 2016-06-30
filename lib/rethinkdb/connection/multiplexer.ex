@@ -19,7 +19,7 @@ defmodule RethinkDB.Connection.Multiplexer do
   """
   use GenServer
 
-  import DBConnection.Error, only: [exception: 1]
+  import DBConnection.ConnectionError, only: [exception: 1]
 
   @doc false
   defstruct conn: {nil, nil}, token: 1, ets: nil, ref: nil
