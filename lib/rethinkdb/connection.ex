@@ -1,5 +1,5 @@
 defmodule RethinkDB.Connection do
-  @moduledoc  """
+  @moduledoc """
   A module for managing connections.
 
   A `Connection` object is a process that can be started in various ways.

@@ -1,6 +1,4 @@
 defmodule RethinkDB.Connection.Multiplexer do
-  use GenServer
-
   @moduledoc """
   This module provides functions to multiplex messages over a single `:gen_tcp`
   connection.
@@ -19,6 +17,7 @@ defmodule RethinkDB.Connection.Multiplexer do
   multiple requests in parallel on the same connection. For the client, this
   means that replies can arrive in any order.
   """
+  use GenServer
 
   import DBConnection.Error, only: [exception: 1]
 

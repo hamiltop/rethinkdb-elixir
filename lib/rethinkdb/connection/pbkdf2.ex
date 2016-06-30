@@ -7,8 +7,8 @@ defmodule RethinkDB.Connection.PBKDF2 do
   that key in multiple incompatible contexts.
   see http://tools.ietf.org/html/rfc2898#section-5.2
   """
-
   use Bitwise
+
   @max_length bsl(1, 32) - 1
 
   @doc """
