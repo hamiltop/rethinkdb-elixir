@@ -172,12 +172,15 @@ defmodule RethinkDB.Connection do
     # Overrides default options with specified ones.
     options = Keyword.merge(state.options, options)
 
-    unless message do
-      # This only applies when called with run/3 and is used
-      # to support default options when encoding the query.
-      message = describe(query, options)
-      |> Map.fetch!(:message)
-    end
+    message =
+      unless message do
+        # This only applies when called with run/3 and is used
+        # to support default options when encoding the query.
+        message = describe(query, options)
+        |> Map.fetch!(:message)
+      else
+        message
+      end
 
     case Multiplexer.send_recv(pid, message, options) do
       :ok ->
