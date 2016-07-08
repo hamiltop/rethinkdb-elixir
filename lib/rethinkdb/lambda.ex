@@ -53,6 +53,8 @@ defmodule RethinkDB.Lambda do
         quote do
           Query.branch(unquote(expr), unquote(truthy), unquote(falsy))
         end
+      {:if, _, _} ->
+        raise "You must include an else condition when using if in a ReQL Lambda"
       x -> x
     end
   end

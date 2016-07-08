@@ -31,10 +31,10 @@ defmodule JoinsTest do
     q = inner_join(left, right,lambda fn l, r ->
       l[:a] == r[:a]
     end)
-    %Record{data: data} = run q
+    {:ok, %Record{data: data}} = run q
     assert data == [%{"left" => %{"a" => 1, "b" => 2}, "right" => %{"a" => 1, "c" => 4}},
                 %{"left" => %{"a" => 2, "b" => 3}, "right" => %{"a" => 2, "c" => 6}}]
-    %Record{data: data} = q |> zip |> run
+    {:ok, %Record{data: data}} = q |> zip |> run
     assert data == [%{"a" => 1, "b" => 2, "c" => 4}, %{"a" => 2, "b" => 3, "c" => 6}]
   end
 
@@ -44,10 +44,10 @@ defmodule JoinsTest do
     q = outer_join(left, right, lambda fn l, r ->
       l[:a] == r[:a]
     end)
-    %Record{data: data} = run q
+    {:ok, %Record{data: data}} = run q
     assert data == [%{"left" => %{"a" => 1, "b" => 2}, "right" => %{"a" => 1, "c" => 4}},
                 %{"left" => %{"a" => 2, "b" => 3}}]
-    %Record{data: data} = q |> zip |> run
+    {:ok, %Record{data: data}} = q |> zip |> run
     assert data == [%{"a" => 1, "b" => 2, "c" => 4}, %{"a" => 2, "b" => 3}]
   end
 
@@ -57,8 +57,8 @@ defmodule JoinsTest do
     table("test_1") |> insert([%{id: 3, a: 1, b: 2}, %{id: 2, a: 2, b: 3}]) |> run
     table("test_2") |> insert([%{id: 1, c: 4}]) |> run
     q = eq_join(table("test_1"), :a, table("test_2"), index: :id)
-    %Collection{data: data} = run q
-    %Collection{data: data2} = q |> zip |> run
+    {:ok, %Collection{data: data}} = run q
+    {:ok, %Collection{data: data2}} = q |> zip |> run
     table_drop("test_1") |> run
     table_drop("test_2") |> run
     assert data == [

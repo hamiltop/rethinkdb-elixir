@@ -28,7 +28,7 @@ defmodule ControlStructuresAdvTest do
       table_query |> insert(%{a: x})
     end)
     run q
-    %Collection{data: data} = run table_query
+    {:ok, %Collection{data: data}} = run table_query
     assert Enum.count(data) == 3
   end
 end

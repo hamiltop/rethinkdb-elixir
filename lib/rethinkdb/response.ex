@@ -25,7 +25,7 @@ defmodule RethinkDB.Feed do
     def reduce(changes, acc, fun) do
       stream = Stream.unfold(changes, fn
         x = %RethinkDB.Feed{data: []} ->
-          r = RethinkDB.next(x)
+          {:ok, r} = RethinkDB.next(x)
           {r, struct(r, data: [])}
         x = %RethinkDB.Feed{} ->
           {x, struct(x, data: [])}
@@ -48,19 +48,19 @@ defmodule RethinkDB.Response do
   def parse(raw_data, token, pid) do
     d = Poison.decode!(raw_data)
     data = RethinkDB.Pseudotypes.convert_reql_pseudotypes(d["r"])
-    resp = case d["t"] do
-      1  -> %RethinkDB.Record{data: hd(data)}
-      2  -> %RethinkDB.Collection{data: data}
+    {code, resp} = case d["t"] do
+      1  -> {:ok, %RethinkDB.Record{data: hd(data)}}
+      2  -> {:ok, %RethinkDB.Collection{data: data}}
       3  -> case d["n"] do
-          [2] -> %RethinkDB.Feed{token: token, data: hd(data), pid: pid, note: d["n"]}
-           _  -> %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}
+          [2] -> {:ok, %RethinkDB.Feed{token: token, data: hd(data), pid: pid, note: d["n"]}}
+           _  -> {:ok, %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}}
         end
-      4  -> %RethinkDB.Response{token: token, data: d}
-      16  -> %RethinkDB.Response{token: token, data: d}
-      17  -> %RethinkDB.Response{token: token, data: d}
-      18  -> %RethinkDB.Response{token: token, data: d}
+      4  ->  {:ok, %RethinkDB.Response{token: token, data: d}}
+      16  -> {:error, %RethinkDB.Response{token: token, data: d}}
+      17  -> {:error, %RethinkDB.Response{token: token, data: d}}
+      18  -> {:error, %RethinkDB.Response{token: token, data: d}}
     end
-    %{resp | :profile => d["p"]}
+    {code, %{resp | :profile => d["p"]}}
   end
 end
 

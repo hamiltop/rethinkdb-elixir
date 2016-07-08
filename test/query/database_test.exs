@@ -27,17 +27,17 @@ defmodule DatabaseTest do
 
   test "databases" do
     q = db_create(@db_name)
-    %Record{data: %{"dbs_created" => 1}} = run(q)
+    {:ok, %Record{data: %{"dbs_created" => 1}}} = run(q)
 
     q = db_list
-    %Record{data: dbs} = run(q)
+    {:ok, %Record{data: dbs}} = run(q)
     assert Enum.member?(dbs, @db_name)
 
     q = db_drop(@db_name)
-    %Record{data: %{"dbs_dropped" => 1}} = run(q)
+    {:ok, %Record{data: %{"dbs_dropped" => 1}}} = run(q)
 
     q = db_list
-    %Record{data: dbs} = run(q)
+    {:ok, %Record{data: dbs}} = run(q)
     assert !Enum.member?(dbs, @db_name)
   end
 end

@@ -1301,7 +1301,9 @@ defmodule RethinkDB.Query do
       This is the default.
     * "replace": Replace the old document in its entirety with the new one.
     * "update": Update fields of the old document with fields from the new one.
-
+    * `lambda(id, old_doc, new_doc) :: resolved_doc`: a function that receives the
+      id, old and new documents as arguments and returns a document which will be
+      inserted in place of the conflicted one.
   Insert returns an object that contains the following attributes:
 
   * inserted: the number of documents successfully inserted.
