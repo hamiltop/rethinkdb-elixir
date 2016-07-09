@@ -33,7 +33,7 @@ defmodule RethinkDB.Connection do
 
   Then in the supervision tree:
 
-      worker(FooDatabase, [[port: 28015, host: 'localhost']])
+      supervisor(FooDatabase, [[port: 28015, host: "localhost"]])
 
   When `use RethinkDB.Connection` is called, it will define:
 
