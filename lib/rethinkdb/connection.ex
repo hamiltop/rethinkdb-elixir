@@ -62,7 +62,12 @@ defmodule RethinkDB.Connection do
       end
 
       def run(query, opts \\ []) do
-        RethinkDB.Connection.run(query, __MODULE__, opts)
+        resp = RethinkDB.Connection.run(query, __MODULE__, opts)
+        if {:noreply, true} in opts do
+          :ok
+        else
+          resp
+        end
       end
 
       def noreply_wait(timeout \\ 15_000) do
