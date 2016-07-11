@@ -6,7 +6,7 @@ defmodule RethinkDB.Connection do
 
   It is recommended to start it as part of a supervision tree with a name:
 
-      supervisor(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_connection]])
+      supervisor(RethinkDB.Connection, [[port: 28015, host: "localhost", name: :rethinkdb_connection]])
 
   Connections will by default connect asynchronously. If a connection fails, we retry with
   an exponential backoff. All queries will return `%RethinkDB.Exception.ConnectionClosed{}`
@@ -103,6 +103,7 @@ defmodule RethinkDB.Connection do
   * `:database` - Database to use for query.
   """
   def run(query, conn, options \\ []) do
+    options = Keyword.put_new(options, :pool, __pool__(conn))
     DBConnection.execute!(conn, query, [], options)
   end
 
@@ -136,14 +137,14 @@ defmodule RethinkDB.Connection do
   `close`.
   """
   def close(%{token: token, pid: conn}) do
-    DBConnection.execute!(conn, %Q{message: "[3]"}, [], token: token)
+    DBConnection.execute!(conn, %Q{message: "[3]"}, [], token: token, pool: __pool__(conn))
   end
 
   @doc """
   `noreply_wait` ensures that previous queries with the noreply flag have been processed by the server. Note that this guarantee only applies to queries run on the given connection.
   """
   def noreply_wait(conn, timeout \\ 15_000) do
-    DBConnection.execute!(conn, %Q{message: "[3]"}, [], timeout: timeout)
+    DBConnection.execute!(conn, %Q{message: "[3]"}, [], timeout: timeout, pool: __pool__(conn))
   end
 
   #
@@ -192,5 +193,22 @@ defmodule RethinkDB.Connection do
 
   def handle_close(_query, _options, state) do
     {:ok, nil, state}
+  end
+
+  def __pool__(conn) do
+    info =
+      unless is_pid(conn) do
+        Process.whereis(conn)
+      else
+        conn
+      end
+      |> Process.info(:dictionary)
+    {pool, _, _} = elem(info, 1)[:"$initial_call"]
+    case pool do
+      :poolboy ->
+        DBConnection.Poolboy
+      _ ->
+        DBConnection.Connection
+    end
   end
 end
