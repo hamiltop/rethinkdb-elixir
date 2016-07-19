@@ -22,7 +22,7 @@ defmodule RethinkDB.Connection.Multiplexer do
   import DBConnection.ConnectionError, only: [exception: 1]
 
   @doc false
-  defstruct conn: {nil, nil}, token: 1, ets: nil, ref: nil
+  defstruct conn: {nil, nil}, token: 1, pending: %{}, ref: nil
 
   @doc """
   Starts a `Connection` process linked to the current process.
@@ -73,19 +73,19 @@ defmodule RethinkDB.Connection.Multiplexer do
          {:ok, conn} <- init_connection(transport, sock),
          {:ok, _nil} <- handshake(conn, user, pass),
          {_pid, ref} <- spawn_monitor(__MODULE__, :recv_loop, [self, conn]),
-    do:  {:ok, %__MODULE__{conn: conn, ets: :ets.new(__MODULE__, [:set, :private]), ref: ref}}
+    do:  {:ok, %__MODULE__{conn: conn, ref: ref}}
   end
 
-  def handle_call({:send, nil, msg}, from, %__MODULE__{conn: conn, token: token, ets: table} = state) do
+  def handle_call({:send, nil, msg}, from, %__MODULE__{conn: conn, token: token, pending: pending} = state) do
     :ok = send_payload(conn, token, msg)
-    :ets.insert(table, {token, from})
-    {:noreply, %__MODULE__{state | token: token + 1}}
+    pending = Map.put(pending, token, from)
+    {:noreply, %__MODULE__{state | token: token + 1, pending: pending}}
   end
 
-  def handle_call({:send, token, msg}, from, %__MODULE__{conn: conn, ets: table} = state) do
+  def handle_call({:send, token, msg}, from, %__MODULE__{conn: conn, pending: pending} = state) do
     :ok = send_payload(conn, token, msg)
-    :ets.insert(table, {token, from})
-    {:noreply, state}
+    pending = Map.put(pending, token, from)
+    {:noreply, %__MODULE__{state | pending: pending}}
   end
 
   def handle_cast({:send, msg}, %__MODULE__{conn: conn, token: token} = state) do
@@ -93,12 +93,10 @@ defmodule RethinkDB.Connection.Multiplexer do
     {:noreply, %__MODULE__{state | token: token + 1}}
   end
 
-  def handle_cast({:reply, token, msg}, %__MODULE__{ets: table} = state) do
-    :ets.take(table, token)
-    |> List.first
-    |> elem(1)
-    |> GenServer.reply({token, msg})
-    {:noreply, state}
+  def handle_cast({:reply, token, msg}, %__MODULE__{pending: pending} = state) do
+    {from, pending} = Map.pop(pending, token)
+    if from, do: GenServer.reply(from, {token, msg})
+    {:noreply, %__MODULE__{state | pending: pending}}
   end
 
   def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
