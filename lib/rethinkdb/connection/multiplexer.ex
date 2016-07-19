@@ -22,7 +22,7 @@ defmodule RethinkDB.Connection.Multiplexer do
   import DBConnection.ConnectionError, only: [exception: 1]
 
   @doc false
-  defstruct conn: {nil, nil}, token: 1, pending: %{}, ref: nil
+  defstruct conn: {nil, nil}, token: 1, pending: %{}, current: {:start, ""}
 
   @doc """
   Starts a `Connection` process linked to the current process.
@@ -72,8 +72,8 @@ defmodule RethinkDB.Connection.Multiplexer do
     with {:ok, sock} <- transport.connect(String.to_char_list(host), port, sock_opts),
          {:ok, conn} <- init_connection(transport, sock),
          {:ok, _nil} <- handshake(conn, user, pass),
-         {_pid, ref} <- spawn_monitor(__MODULE__, :recv_loop, [self, conn]),
-    do:  {:ok, %__MODULE__{conn: conn, ref: ref}}
+         {:ok, conn} <- init_connection(transport, sock, active: :once),
+    do:  {:ok, %__MODULE__{conn: conn}}
   end
 
   def handle_call({:send, nil, msg}, from, %__MODULE__{conn: conn, token: token, pending: pending} = state) do
@@ -93,25 +93,24 @@ defmodule RethinkDB.Connection.Multiplexer do
     {:noreply, %__MODULE__{state | token: token + 1}}
   end
 
-  def handle_cast({:reply, token, msg}, %__MODULE__{pending: pending} = state) do
-    {from, pending} = Map.pop(pending, token)
-    if from, do: GenServer.reply(from, {token, msg})
-    {:noreply, %__MODULE__{state | pending: pending}}
+  def handle_info({protocol, port, data}, %__MODULE__{conn: {transport, sock}} = state) when protocol in [:tcp, :ssl] and sock == port do
+    init_connection(transport, sock, active: true)
+    {:noreply, recv_payload(data, state)}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
-    {:stop, reason, state}
+  def handle_info({closed_msg, port}, %__MODULE__{conn: {_transport, sock}} = state) when closed_msg in [:ssl_closed, :tcp_closed] and sock == port do
+    {:stop, closed_msg, state}
   end
 
-  @doc false
-  def recv_loop(pid, {transport, sock} = conn) do
-    with {:ok, << token :: little-size(64), msg_size :: little-size(32) >>} <- transport.recv(sock, 12),
-         {:ok, msg} <- transport.recv(sock, msg_size),
-          :ok <- GenServer.cast(pid, {:reply, token, msg}),
-    do: recv_loop(pid, conn)
-  end
-
-  defp init_connection(transport, sock) do
+  defp init_connection(transport, sock, options \\ []) do
+    unless options == [] do
+      case transport do
+        :gen_tcp ->
+          :inet.setopts(sock, options)
+        :ssl ->
+          :ssl.setopts(sock, options)
+      end
+    end
     {:ok, {transport, sock}}
   end
 
@@ -206,7 +205,40 @@ defmodule RethinkDB.Connection.Multiplexer do
     do: String.replace_suffix(data, "\0", "") |> Poison.decode
   end
 
+  #
+  # TCP/SSL request-reply
+  #
+
   defp send_payload({transport, sock}, token, msg) do
     transport.send(sock, << token :: little-size(64), byte_size(msg) :: little-size(32) >> <> msg)
   end
+
+  def recv_payload(data, %__MODULE__{current: {:start, leftover}} = state) do
+   case leftover <> data do
+     << token :: little-size(64), leftover :: binary >> ->
+       recv_payload("", %__MODULE__{state | current: {:token, token, leftover}})
+     new_data ->
+       %__MODULE__{state | current: {:start, new_data}}
+   end
+ end
+
+ def recv_payload(data, state = %__MODULE__{current: {:token, token, leftover}}) do
+   case leftover <> data do
+     << length :: little-size(32), leftover :: binary >> ->
+       recv_payload("", %__MODULE__{state | current: {:length, length, token, leftover}})
+     new_data ->
+       %__MODULE__{state | current: {:token, token, new_data}}
+   end
+ end
+
+ def recv_payload(data, state = %{current: {:length, length, token, leftover}, pending: pending}) do
+   case leftover <> data do
+     << reply :: binary-size(length), leftover :: binary >> ->
+      {from, pending} = Map.pop(pending, token)
+      if from, do: GenServer.reply(from, {token, reply})
+      recv_payload("", %__MODULE__{state | current: {:start, leftover}, pending: pending})
+     new_data ->
+       %__MODULE__{state | current: {:length, length, token, new_data}}
+   end
+ end
 end
