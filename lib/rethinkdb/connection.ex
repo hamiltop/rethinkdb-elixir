@@ -201,14 +201,28 @@ defmodule RethinkDB.Connection do
   end
 
   def __pool__(conn) do
-    info =
+    # converts connection to a pid if nessessary
+    pid =
       unless is_pid(conn) do
         Process.whereis(conn)
       else
         conn
       end
-      |> Process.info(:dictionary)
-    {pool, _, _} = elem(info, 1)[:"$initial_call"]
+
+    # extracts process $initial_call
+    pool =
+      cond do
+        pid ->
+          Process.info(pid, :dictionary)
+          |> elem(1)
+          |> Access.fetch(:"$initial_call")
+          |> elem(0)
+        true ->
+          nil
+      end
+
+    # depending on $initial_call,
+    # use the right pool implementation
     case pool do
       :poolboy ->
         DBConnection.Poolboy
