@@ -1,28 +1,27 @@
 defmodule RethinkDB.Connection do
-  @moduledoc  """
+  @moduledoc """
   A module for managing connections.
 
   A `Connection` object is a process that can be started in various ways.
 
   It is recommended to start it as part of a supervision tree with a name:
 
-      worker(RethinkDB.Connection, [[port: 28015, host: 'localhost', name: :rethinkdb_connection]])
+      supervisor(RethinkDB.Connection, [[port: 28015, host: "localhost", name: :rethinkdb_connection]])
 
   Connections will by default connect asynchronously. If a connection fails, we retry with
   an exponential backoff. All queries will return `%RethinkDB.Exception.ConnectionClosed{}`
   until the connection is established.
-
-  If `:sync_connect` is set to `true` then the process will crash if we fail to connect. It's
-  recommended to only use this if the database is on the same host or if a rethinkdb proxy
-  is running on the same host. If there's any chance of a network partition, it's recommended
-  to stick with the default behavior.
   """
-  use Connection
+  use DBConnection
 
   require Logger
 
-  alias RethinkDB.Connection.Request
-  alias RethinkDB.Connection.Transport
+  alias RethinkDB.Q
+  alias RethinkDB.Connection.Multiplexer
+
+  import DBConnection.Query, only: [decode: 3, describe: 2]
+
+  defstruct pid: nil, options: []
 
   @doc """
   A convenience macro for naming connections.
@@ -34,13 +33,14 @@ defmodule RethinkDB.Connection do
 
   Then in the supervision tree:
 
-      worker(FooDatabase, [[port: 28015, host: 'localhost']])
+      supervisor(FooDatabase, [[port: 28015, host: "localhost"]])
 
   When `use RethinkDB.Connection` is called, it will define:
 
   * `start_link`
-  * `stop`
   * `run`
+  * `norepy_wait`
+  * `stop`
 
   All of these only differ from the normal `RethinkDB.Connection` functions in that they don't
   accept a connection. They will use the current module as the process name. `start_link` will
@@ -62,10 +62,15 @@ defmodule RethinkDB.Connection do
       end
 
       def run(query, opts \\ []) do
-        RethinkDB.Connection.run(query, __MODULE__, opts)
+        resp = RethinkDB.Connection.run(query, __MODULE__, opts)
+        if {:noreply, true} in opts do
+          :ok
+        else
+          resp
+        end
       end
 
-      def noreply_wait(timeout \\ 5000) do
+      def noreply_wait(timeout \\ 15_000) do
         RethinkDB.Connection.noreply_wait(__MODULE__, timeout)
       end
 
@@ -78,12 +83,19 @@ defmodule RethinkDB.Connection do
   end
 
   @doc """
-  Stop the connection.
+  Start connection as a linked process
 
-  Stops the given connection.
+  Accepts a `Keyword` of options. Supported options:
+
+  * `:host` - Hostname to use to connect to database. Defaults to `"localhost"`.
+  * `:port` - Port on which to connect to database. Defaults to `28015`.
+  * `:database` - Default database to use for query.
+  * `:user` - User to use for authentication. Defaults to `"admin"`.
+  * `:pass` - Password to use for authentication. Defaults to `""`.
+  * `:timeout`  - How long to wait for a response.
   """
-  def stop(pid) do
-    Connection.cast(pid, :stop)
+  def start_link(options \\ []) do
+    DBConnection.start_link(__MODULE__, options)
   end
 
   @doc """
@@ -91,29 +103,13 @@ defmodule RethinkDB.Connection do
 
   Supports the following options:
 
-  * `timeout` - How long to wait for a response
-  * `db` - Default database to use for query. Can also be specified as part of the query.
-  * `durability` - possible values are 'hard' and 'soft'. In soft durability mode RethinkDB will acknowledge the write immediately after receiving it, but before the write has been committed to disk.
-  * `noreply` - set to true to not receive the result object or cursor and return immediately.
-  * `profile` - whether or not to return a profile of the query’s execution (default: false).
+  * `:timeout`  - How long to wait for a response.
+  * `:profile`  - Query profiling.
+  * `:database` - Database to use for query.
   """
-  def run(query, conn, opts \\ []) do
-    timeout = Dict.get(opts, :timeout, 5000)
-    conn_opts = Dict.drop(opts, [:timeout])
-    noreply = Dict.get(opts, :noreply, false)
-    conn_opts = Connection.call(conn, :conn_opts)
-                |> Dict.take([:db])
-                |> Dict.merge(conn_opts)
-    query = prepare_and_encode(query, conn_opts)
-    msg = case noreply do
-      true -> {:query_noreply, query}
-      false -> {:query, query}
-    end
-    case Connection.call(conn, msg, timeout) do
-      {response, token} -> RethinkDB.Response.parse(response, token, conn)
-      :noreply -> :ok
-      result -> result
-    end
+  def run(query, conn, options \\ []) do
+    options = Keyword.put_new(options, :pool, __pool__(conn))
+    DBConnection.execute!(conn, query, [], options)
   end
 
   @doc """
@@ -123,10 +119,20 @@ defmodule RethinkDB.Connection do
   `next`.
   """
   def next(%{token: token, pid: pid}) do
-    case Connection.call(pid, {:continue, token}, :infinity) do
-      {response, token} -> RethinkDB.Response.parse(response, token, pid)
-      x -> x
+    query = %Q{message: "[2]"}
+    case Multiplexer.send_recv(pid, query.message, token: token, timeout: :infinity) do
+      {:ok, {token, data}} ->
+        decode(query, {token, data, pid}, [])
     end
+  end
+
+  @doc """
+  Stop the connection.
+
+  Stops the given connection.
+  """
+  def stop(_conn) do
+    :ok # TODO
   end
 
   @doc """
@@ -135,201 +141,93 @@ defmodule RethinkDB.Connection do
   Since a feed is tied to a particular connection, no connection is needed when calling
   `close`.
   """
-  def close(%{token: token, pid: pid}) do
-    {response, token} = Connection.call(pid, {:stop, token}, :infinity)
-    RethinkDB.Response.parse(response, token, pid)
+  def close(%{token: token, pid: conn}) do
+    DBConnection.execute!(conn, %Q{message: "[3]"}, [], token: token, pool: __pool__(conn))
   end
 
   @doc """
   `noreply_wait` ensures that previous queries with the noreply flag have been processed by the server. Note that this guarantee only applies to queries run on the given connection.
   """
-  def noreply_wait(conn, timeout \\ 5000) do
-    {response, token} = Connection.call(conn, :noreply_wait, timeout)
-    case RethinkDB.Response.parse(response, token, conn) do
-      %RethinkDB.Response{data: %{"t" => 4}} -> :ok
-      r -> r
+  def noreply_wait(conn, timeout \\ 15_000) do
+    DBConnection.execute!(conn, %Q{message: "[3]"}, [], timeout: timeout, pool: __pool__(conn))
+  end
+
+  #
+  # DBConnection API
+  #
+
+  def connect(options) do
+    # Starts the multiplexer process and stores its pid and some default options to the state.
+    {:ok, pid} = Multiplexer.start_link(options)
+    {:ok, %__MODULE__{pid: pid, options: Keyword.take(options, ~w(db database timeout)a)}}
+  end
+
+  def disconnect(_err, _state) do
+    # TODO
+  end
+
+  def checkin(state) do
+    {:ok, state}
+  end
+
+  def checkout(state) do
+    {:ok, state}
+  end
+
+  def handle_execute(%Q{message: message} = query, _params, options, %__MODULE__{pid: pid} = state) do
+    # Overrides default options with specified ones.
+    options = Keyword.merge(state.options, options)
+
+    message =
+      unless message do
+        # This only applies when called with run/3 and is used
+        # to support default options when encoding the query.
+        message = describe(query, options)
+        |> Map.fetch!(:message)
+      else
+        message
+      end
+
+    case Multiplexer.send_recv(pid, message, options) do
+      :ok ->
+        {:ok, nil, state}
+      {:ok, {token, data}} ->
+        {:ok, {token, data, pid}, state}
     end
   end
 
-  defp prepare_and_encode(query, opts) do
-    query = RethinkDB.Prepare.prepare(query)
-
-    # Right now :db can still be nil so we need to remove it
-    opts = Enum.into(opts, %{}, fn
-            {:db, db} ->
-              {:db, RethinkDB.Prepare.prepare(RethinkDB.Query.db(db))}
-            {k, v} ->
-              {k, v}
-          end)
-
-    query = [1, query, opts]
-    Poison.encode!(query)
+  def handle_close(_query, _options, state) do
+    {:ok, nil, state}
   end
 
+  def __pool__(conn) do
+    # converts connection to a pid if nessessary
+    pid =
+      unless is_pid(conn) do
+        Process.whereis(conn)
+      else
+        conn
+      end
 
-  @doc """
-  Start connection as a linked process
+    # extracts process $initial_call
+    pool =
+      cond do
+        pid ->
+          Process.info(pid, :dictionary)
+          |> elem(1)
+          |> Access.fetch(:"$initial_call")
+          |> elem(0)
+        true ->
+          nil
+      end
 
-  Accepts a `Dict` of options. Supported options:
-
-  * `:host` - hostname to use to connect to database. Defaults to `'localhost'`.
-  * `:port` - port on which to connect to database. Defaults to `28015`.
-  * `:auth_key` - authorization key to use with database. Defaults to `nil`.
-  * `:db` - default database to use with queries. Defaults to `nil`.
-  * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
-  * `:max_pending` - Hard cap on number of concurrent requests. Defaults to `10000`
-  * `:ssl` - a dict of options. Support SSL options:
-      * `:ca_certs` - a list of file paths to cacerts.
-  """
-  def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
-    Connection.start_link(__MODULE__, args, opts)
-  end
-
-  def init(opts) do
-    host = case Dict.get(opts, :host, 'localhost') do
-      x when is_binary(x) -> String.to_char_list x
-      x -> x
-    end
-    sync_connect = Dict.get(opts, :sync_connect, false)
-    ssl = Dict.get(opts, :ssl)
-    opts = Dict.put(opts, :host, host)
-      |> Dict.put_new(:port, 28015)
-      |> Dict.put_new(:auth_key, "")
-      |> Dict.put_new(:max_pending, 10000)
-      |> Dict.drop([:sync_connect])
-      |> Enum.into(%{})
-    {transport, transport_opts} = case ssl do
-      nil -> {%Transport.TCP{}, []}
-      x -> {%Transport.SSL{}, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
-    end
-    state = %{
-      pending: %{},
-      current: {:start, ""},
-      token: 0,
-      config: Map.put(opts, :transport, {transport, transport_opts})
-    }
-    case sync_connect do
-      true ->
-        case connect(:sync, state) do
-          {:backoff, _, _} -> {:stop, :econnrefused}
-          x -> x
-        end
-      false ->
-        {:connect, :init, state}
-    end
-  end
-
-  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key, transport: {transport, transport_opts}}}) do
-    case Transport.connect(transport, host, port, [active: false, mode: :binary] ++ transport_opts) do
-      {:ok, socket} ->
-        case handshake(socket, auth_key) do
-          {:error, _} -> {:stop, :bad_handshake, state}
-          :ok ->
-            :ok = Transport.setopts(socket, [active: :once])
-            # TODO: investigate timeout vs hibernate
-            {:ok, Dict.put(state, :socket, socket)}
-        end
-      {:error, :econnrefused} ->
-        backoff = min(Dict.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
-    end
-  end
-
-  def disconnect(info, state = %{pending: pending}) do
-    pending |> Enum.each(fn {_token, pid} ->
-      Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
-    end)
-    new_state = state
-      |> Map.delete(:socket)
-      |> Map.put(:pending, %{})
-      |> Map.put(:current, {:start, ""})
-    # TODO: should we reconnect?
-    {:stop, info, new_state}
-  end
-
-  def handle_call(:conn_opts, _from, state = %{config: opts}) do
-    {:reply, opts, state}
-  end
-
-  def handle_call(_, _,
-    state = %{pending: pending, config: %{max_pending: max_pending}}) when map_size(pending) > max_pending do
-    {:reply, %RethinkDB.Exception.TooManyRequests{}, state}
-  end
-
-  def handle_call({:query_noreply, query}, _from, state = %{token: token}) do
-    new_token = token + 1
-    token = << token :: little-size(64) >>
-    {:noreply, state} = Request.make_request(query, token, :noreply, %{state | token: new_token})
-    {:reply, :noreply, state}
-  end
-
-  def handle_call({:query, query}, from, state = %{token: token}) do
-    new_token = token + 1
-    token = << token :: little-size(64) >>
-    Request.make_request(query, token, from, %{state | token: new_token})
-  end
-
-  def handle_call({:continue, token}, from, state) do
-    query = "[2]"
-    Request.make_request(query, token, from, state)
-  end
-
-  def handle_call({:stop, token}, from, state) do
-    query = "[3]"
-    Request.make_request(query, token, from, state)
-  end
-
-  def handle_call(:noreply_wait, from, state = %{token: token}) do
-    query = "[4]"
-    new_token = token + 1
-    token = << token :: little-size(64) >>
-    Request.make_request(query, token, from, %{state | token: new_token})
-  end
-
-  def handle_cast(:stop, state) do
-    {:disconnect, :normal, state};
-  end
-
-  def handle_info({proto, _port, data}, state = %{socket: socket}) when proto in [:tcp, :ssl] do
-    :ok = Transport.setopts(socket, [active: :once])
-    Request.handle_recv(data, state)
-  end
-
-  def handle_info({closed_msg, _port}, state) when closed_msg in [:ssl_closed, :tcp_closed] do
-    {:disconnect, closed_msg, state}
-  end
-
-  def handle_info(msg, state) do
-    Logger.debug("Received unhandled info: #{inspect(msg)} with state #{inspect state}")
-    {:noreply, state}
-  end
-
-  def terminate(_reason, %{socket: socket}) do
-    Transport.close(socket)
-    :ok
-  end
-
-  def terminate(_reason, _state) do
-    :ok
-  end
-
-  defp handshake(socket, auth_key) do
-    :ok = Transport.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = Transport.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
-    :ok = Transport.send(socket, auth_key)
-    :ok = Transport.send(socket, << 0x7e6970c7 :: little-size(32) >>)
-    case recv_until_null(socket, "") do
-      "SUCCESS" -> :ok
-      error = {:error, _} -> error
-    end
-  end
-
-  defp recv_until_null(socket, acc) do
-    case Transport.recv(socket, 1) do
-      {:ok, "\0"} -> acc
-      {:ok, a}    -> recv_until_null(socket, acc <> a)
-      x = {:error, _} -> x
+    # depending on $initial_call,
+    # use the right pool implementation
+    case pool do
+      :poolboy ->
+        DBConnection.Poolboy
+      _ ->
+        DBConnection.Connection
     end
   end
 end
