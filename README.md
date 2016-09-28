@@ -28,7 +28,7 @@ Connections are managed by a process. Start the process by calling `start_link/1
 
 ####Named Connection
 ```elixir
-{:ok, conn} = RethinkDB.Connection.start_link([name: :foo]})
+{:ok, conn} = RethinkDB.Connection.start_link([name: :foo])
 ```
 
 ####Supervised Connection
