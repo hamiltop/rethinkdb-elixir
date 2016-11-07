@@ -13,9 +13,10 @@ end
 defimpl Inspect, for: RethinkDB.Q do
   @external_resource term_info = Path.join([__DIR__, "query", "term_info.json"])
 
-  @apidef File.read!(term_info)
+  @apidef term_info
+          |> File.read!()
           |> Poison.decode!()
-          |> Enum.into(%{}, fn {key, val} -> {val["id"], String.downcase(key)} end)
+          |> Enum.into(%{}, fn {key, val} -> {val, key} end)
 
   def inspect(%RethinkDB.Q{query: [index, params]}, _) do
     query =
