@@ -7,8 +7,6 @@ otp_release:
   - 18.3
   - 19.1
 
-sudo: required
-
 install:
   - mix local.rebar --force
   - mix local.hex --force
