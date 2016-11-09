@@ -88,6 +88,25 @@ defmodule ConnectionTest do
     assert data == ["new_test_table"]
   end
 
+  test "connection authenticates with admin" do
+    {:ok, c} = RethinkDB.Connection.start_link(user: "admin", pass: "")
+    {:ok, _} =  table_list() |> RethinkDB.run(c)
+  end
+
+  test "connection fails to authenticate with invalid user" do
+    {:ok, c} = RethinkDB.Connection.start_link(user: "bob", pass: "bobpwd")
+    Process.flag(:trap_exit, true)
+    assert {:bad_handshake, _} = catch_exit(table_list() |> RethinkDB.run(c))
+  end
+
+  test "connection authenticates with newly created user" do
+    {:ok, c} = RethinkDB.Connection.start_link()
+    assert {:ok, %{data: %{"inserted" => 1}}} = db("rethinkdb") |> table("users") |> insert(%{id: "bob", password: "bobpwd"}) |> RethinkDB.run(c)
+    {:ok, d} = RethinkDB.Connection.start_link(user: "bob", pass: "bobpwd")
+    assert {:ok, _} = table_list() |> RethinkDB.run(d)
+    assert {:ok, %{data: %{"deleted"  => 1}}} =  db("rethinkdb") |> table("users") |> get("bob") |> delete() |> RethinkDB.run(c)
+  end
+
   test "connection accepts max_pending" do
     {:ok, c} = RethinkDB.Connection.start_link(max_pending: 1)
     res = Enum.map(1..100, fn (_) ->
@@ -149,7 +168,7 @@ defmodule ConnectionRunTest do
 
   test "run with :noreply option" do
     :ok = make_array([1,2,3]) |> run(noreply: true)
-    noreply_wait 
+    noreply_wait
   end
 
   test "run with :profile options" do
