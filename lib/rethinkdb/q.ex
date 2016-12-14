@@ -18,28 +18,22 @@ defimpl Inspect, for: RethinkDB.Q do
           |> Poison.decode!()
           |> Enum.into(%{}, fn {key, val} -> {val, key} end)
 
-  def inspect(%RethinkDB.Q{query: [index, params]}, _) do
-    query =
-      # Replaces references with a-z variable names,
-      # using the same ref between fn head and body.
-      params
-      |> Enum.map_reduce(97, &resolve_param/2)
-      |> elem(0)
-      |> Enum.join(", ")
-    "#{Map.get(@apidef, index, index)}(#{query})"
+  def inspect(%RethinkDB.Q{query: [69, [[2, refs], lambda]]}, _) do
+    # Replaces references within lambda functions
+    # with capture syntax arguments (&1, &2, etc).
+    refs
+    |> Enum.map_reduce(1, &{{&1, "&#{&2}"}, &2 + 1})
+    |> elem(0)
+    |> Enum.reduce("&(#{inspect lambda})", fn {ref, var}, lambda -> String.replace(lambda, "var(#{inspect ref})", var) end)
   end
 
-  defp resolve_param([2, [ref]], acc) when is_reference(ref) do
-    # function head reference
-    {to_string([acc]), acc + 1}
+  def inspect(%RethinkDB.Q{query: [index, args, opts]}, _) do
+    # Converts function options (map) to keyword list.
+    Kernel.inspect(%RethinkDB.Q{query: [index, args ++ [Map.to_list(opts)]]})
   end
 
-  defp resolve_param(ref, acc) when is_reference(ref) do
-    # function body reference
-    {to_string([acc]), acc + 1}
-  end
-
-  defp resolve_param(val, acc) do
-    {Kernel.inspect(val), acc}
+  def inspect(%RethinkDB.Q{query: [index, args]}, _options) do
+    # Resolve index & args and return them as string.
+    Map.get(@apidef, index) <> "(#{Enum.join(Enum.map(args, &Kernel.inspect/1), ", ")})"
   end
 end
