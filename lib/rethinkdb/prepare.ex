@@ -28,15 +28,15 @@ defmodule RethinkDB.Prepare do
     {Enum.into(map, %{}), state}
   end
   defp prepare(ref, state = {max, map}) when is_reference(ref) do
-    case Dict.get(map,ref) do
-      nil -> {max + 1, {max + 1, Dict.put_new(map, ref, max + 1)}}
+    case Map.get(map, ref) do
+      nil -> {max + 1, {max + 1, Map.put_new(map, ref, max + 1)}}
       x   -> {x, state}
     end
   end
-  defp prepare({k,v}, state) do
+  defp prepare({k, v}, state) do
     {k, state} = prepare(k, state)
     {v, state} = prepare(v, state)
-    {[k,v], state}
+    {[k, v], state}
   end
   defp prepare(el, state) do
     {el, state}

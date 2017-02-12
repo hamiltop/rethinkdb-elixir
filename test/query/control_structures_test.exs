@@ -7,7 +7,7 @@ defmodule ControlStructuresTest do
   alias RethinkDB.Response
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
@@ -39,10 +39,10 @@ defmodule ControlStructuresTest do
   test "branch" do
     q = branch(true, 1, 2)
     {:ok, %Record{data: data}} = run q
-    assert data == 1 
+    assert data == 1
     q = branch(false, 1, 2)
     {:ok, %Record{data: data}} = run q
-    assert data == 2 
+    assert data == 2
   end
 
   test "error" do
@@ -105,7 +105,7 @@ defmodule ControlStructuresTest do
   end
 
   test "uuid" do
-    q = uuid  
+    q = uuid()
     {:ok, %Record{data: data}} = run q
     assert String.length(String.replace(data, "-", ""))  == 32
   end

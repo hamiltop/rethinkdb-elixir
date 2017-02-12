@@ -4,9 +4,9 @@ defmodule StringManipulationTest do
   import RethinkDB.Query
 
   alias RethinkDB.Record
-  
+
   setup_all do
-    {:ok, pid} = RethinkDB.Connection.start_link
+    {:ok, pid} = RethinkDB.Connection.start_link()
     {:ok, %{conn: pid}}
   end
 

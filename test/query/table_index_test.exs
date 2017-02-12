@@ -5,10 +5,10 @@ defmodule TableIndexTest do
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
-  
+
   @table_name "table_index_test_table_1"
   setup do
     table_create(@table_name) |> run

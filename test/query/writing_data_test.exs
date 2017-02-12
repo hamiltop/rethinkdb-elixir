@@ -8,10 +8,10 @@ defmodule WritingDataTest do
 
   @table_name "writing_data_test_table_1"
   setup_all do
-    start_link
+    start_link()
     table_create(@table_name) |> run
     on_exit fn ->
-      start_link
+      start_link()
       table_drop(@table_name) |> run
     end
     :ok
@@ -43,9 +43,9 @@ defmodule WritingDataTest do
   test "insert conflict options" do
     table_query = table(@table_name)
 
-    q = insert(table_query, [%{name: "Hello", value: 1}])   
+    q = insert(table_query, [%{name: "Hello", value: 1}])
     {:ok, %Record{data: %{"generated_keys"=> [id], "inserted" => 1}}} = run(q)
-    
+
     q = insert(table_query, [%{name: "Hello", id: id, value: 2}])
     {:ok, %Record{data: %{"errors" => 1}}} = run(q)
 
@@ -57,11 +57,11 @@ defmodule WritingDataTest do
     {:ok, %Record{data: %{"replaced" => 1}}} = run(q)
     {:ok, %Collection{data: [%{"id" => ^id, "name" => "World", "value" => 3}]}} = run(table_query)
 
-    q = insert(table_query, [%{id: id, value: 3}], %{conflict: fn(_id, old, new) -> 
+    q = insert(table_query, [%{id: id, value: 3}], %{conflict: fn(_id, old, new) ->
       merge(old, %{value: add(get_field(old, "value"), get_field(new, "value"))}) end})
     {:ok, %Record{data: %{"replaced" => 1}}} = run(q)
     {:ok, %Collection{data: [%{"id" => ^id, "name" => "World", "value" => 6}]}} = run(table_query)
-  end  
+  end
 
   test "update" do
     table_query = table(@table_name)
