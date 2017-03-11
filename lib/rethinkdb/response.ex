@@ -51,10 +51,7 @@ defmodule RethinkDB.Response do
     {code, resp} = case d["t"] do
       1  -> {:ok, %RethinkDB.Record{data: hd(data)}}
       2  -> {:ok, %RethinkDB.Collection{data: data}}
-      3  -> case d["n"] do
-          [2] -> {:ok, %RethinkDB.Feed{token: token, data: hd(data), pid: pid, note: d["n"]}}
-           _  -> {:ok, %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}}
-        end
+      3  -> {:ok, %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}}
       4  ->  {:ok, %RethinkDB.Response{token: token, data: d}}
       16  -> {:error, %RethinkDB.Response{token: token, data: d}}
       17  -> {:error, %RethinkDB.Response{token: token, data: d}}
@@ -63,4 +60,3 @@ defmodule RethinkDB.Response do
     {code, %{resp | :profile => d["p"]}}
   end
 end
-

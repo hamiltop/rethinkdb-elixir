@@ -57,4 +57,18 @@ defmodule ChangesTest do
     data = Task.await(t) 
     5 = Enum.count(data)
   end
+
+  test "point_changes" do
+    q = table(@table_name) |> get("0") |> changes
+    {:ok, changes} = {:ok, %Feed{}} = run(q)
+    t = Task.async fn ->
+      changes |> Enum.take(1)
+    end
+    data = %{"id" => "0"}
+    q = table(@table_name) |> insert(data)
+    {:ok, res} = run(q)
+    expected = res.data["id"]
+    [h|[]] = Task.await(t)
+    assert %{"new_val" => %{"id" => "0"}} = h
+  end
 end
