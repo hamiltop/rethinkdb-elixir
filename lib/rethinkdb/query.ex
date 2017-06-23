@@ -30,12 +30,12 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Takes a stream and partitions it into multiple groups based on the fields or 
+  Takes a stream and partitions it into multiple groups based on the fields or
   functions provided.
 
-  With the multi flag single documents can be assigned to multiple groups, 
-  similar to the behavior of multi-indexes. When multi is True and the grouping 
-  value is an array, documents will be placed in each group that corresponds to 
+  With the multi flag single documents can be assigned to multiple groups,
+  similar to the behavior of multi-indexes. When multi is True and the grouping
+  value is an array, documents will be placed in each group that corresponds to
   the elements of the array. If the array is empty the row will be ignored.
   """
   @spec group(Q.reql_array, Q.reql_func1 | Q.reql_string | [Q.reql_func1 | Q.reql_string] ) :: Q.t
@@ -43,12 +43,12 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:group, 144, opts: true)
 
   @doc """
-  Takes a grouped stream or grouped data and turns it into an array of objects 
-  representing the groups. Any commands chained after ungroup will operate on 
-  this array, rather than operating on each group individually. This is useful if 
+  Takes a grouped stream or grouped data and turns it into an array of objects
+  representing the groups. Any commands chained after ungroup will operate on
+  this array, rather than operating on each group individually. This is useful if
   you want to e.g. order the groups by the value of their reduction.
 
-  The format of the array returned by ungroup is the same as the default native 
+  The format of the array returned by ungroup is the same as the default native
   format of grouped data in the JavaScript driver and data explorer.
   end
   """
@@ -56,7 +56,7 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:ungroup, 150)
 
   @doc """
-  Produce a single value from a sequence through repeated application of a 
+  Produce a single value from a sequence through repeated application of a
   reduction function.
 
   The reduction function can be called on:
@@ -65,33 +65,33 @@ defmodule RethinkDB.Query do
   * one element of the sequence and one result of a previous reduction
   * two results of previous reductions
 
-  The reduction function can be called on the results of two previous 
-  reductions because the reduce command is distributed and parallelized across 
-  shards and CPU cores. A common mistaken when using the reduce command is to 
+  The reduction function can be called on the results of two previous
+  reductions because the reduce command is distributed and parallelized across
+  shards and CPU cores. A common mistaken when using the reduce command is to
   suppose that the reduction is executed from left to right.
   """
   @spec reduce(Q.reql_array, Q.reql_func2) :: Q.t
   operate_on_two_args(:reduce, 37)
 
   @doc """
-  Counts the number of elements in a sequence. If called with a value, counts 
-  the number of times that value occurs in the sequence. If called with a 
-  predicate function, counts the number of elements in the sequence where that 
+  Counts the number of elements in a sequence. If called with a value, counts
+  the number of times that value occurs in the sequence. If called with a
+  predicate function, counts the number of elements in the sequence where that
   function returns `true`.
 
-  If count is called on a binary object, it will return the size of the object 
+  If count is called on a binary object, it will return the size of the object
   in bytes.
   """
   @spec count(Q.reql_array) :: Q.t
   operate_on_single_arg(:count, 43)
   @spec count(Q.reql_array, Q.reql_string | Q.reql_func1) :: Q.t
   operate_on_two_args(:count, 43)
- 
+
   @doc """
-  Sums all the elements of a sequence. If called with a field name, sums all 
-  the values of that field in the sequence, skipping elements of the sequence 
-  that lack that field. If called with a function, calls that function on every 
-  element of the sequence and sums the results, skipping elements of the sequence 
+  Sums all the elements of a sequence. If called with a field name, sums all
+  the values of that field in the sequence, skipping elements of the sequence
+  that lack that field. If called with a function, calls that function on every
+  element of the sequence and sums the results, skipping elements of the sequence
   where that function returns `nil` or a non-existence error.
 
   Returns 0 when called on an empty sequence.
@@ -102,13 +102,13 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:sum, 145)
 
   @doc """
-  Averages all the elements of a sequence. If called with a field name, 
-  averages all the values of that field in the sequence, skipping elements of the 
-  sequence that lack that field. If called with a function, calls that function 
-  on every element of the sequence and averages the results, skipping elements of 
+  Averages all the elements of a sequence. If called with a field name,
+  averages all the values of that field in the sequence, skipping elements of the
+  sequence that lack that field. If called with a function, calls that function
+  on every element of the sequence and averages the results, skipping elements of
   the sequence where that function returns None or a non-existence error.
 
-  Produces a non-existence error when called on an empty sequence. You can 
+  Produces a non-existence error when called on an empty sequence. You can
   handle this case with `default`.
   """
   @spec avg(Q.reql_array) :: Q.t
@@ -119,15 +119,15 @@ defmodule RethinkDB.Query do
   @doc """
   Finds the minimum element of a sequence. The min command can be called with:
 
-  * a field name, to return the element of the sequence with the smallest value in 
+  * a field name, to return the element of the sequence with the smallest value in
   that field;
-  * an index option, to return the element of the sequence with the smallest value in that 
+  * an index option, to return the element of the sequence with the smallest value in that
   index;
-  * a function, to apply the function to every element within the sequence and 
-  return the element which returns the smallest value from the function, ignoring 
+  * a function, to apply the function to every element within the sequence and
+  return the element which returns the smallest value from the function, ignoring
   any elements where the function returns None or produces a non-existence error.
 
-  Calling min on an empty sequence will throw a non-existence error; this can be 
+  Calling min on an empty sequence will throw a non-existence error; this can be
   handled using the `default` command.
   """
   @spec min(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
@@ -137,15 +137,15 @@ defmodule RethinkDB.Query do
   @doc """
   Finds the maximum element of a sequence. The max command can be called with:
 
-  * a field name, to return the element of the sequence with the smallest value in 
+  * a field name, to return the element of the sequence with the smallest value in
   that field;
-  * an index, to return the element of the sequence with the smallest value in that 
+  * an index, to return the element of the sequence with the smallest value in that
   index;
-  * a function, to apply the function to every element within the sequence and 
-  return the element which returns the smallest value from the function, ignoring 
+  * a function, to apply the function to every element within the sequence and
+  return the element which returns the smallest value from the function, ignoring
   any elements where the function returns None or produces a non-existence error.
 
-  Calling max on an empty sequence will throw a non-existence error; this can be 
+  Calling max on an empty sequence will throw a non-existence error; this can be
   handled using the `default` command.
   """
   @spec max(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
@@ -155,16 +155,16 @@ defmodule RethinkDB.Query do
   @doc """
   Removes duplicates from elements in a sequence.
 
-  The distinct command can be called on any sequence, a table, or called on a 
+  The distinct command can be called on any sequence, a table, or called on a
   table with an index.
   """
   @spec distinct(Q.reql_array, Q.reql_opts) :: Q.t
   operate_on_single_arg(:distinct, 42, opts: true)
 
   @doc """
-  When called with values, returns `true` if a sequence contains all the specified 
-  values. When called with predicate functions, returns `true` if for each 
-  predicate there exists at least one element of the stream where that predicate 
+  When called with values, returns `true` if a sequence contains all the specified
+  values. When called with predicate functions, returns `true` if for each
+  predicate there exists at least one element of the stream where that predicate
   returns `true`.
   """
   @spec contains(Q.reql_array, Q.reql_array | Q.reql_func1 | Q.t) :: Q.t
@@ -176,8 +176,8 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  `args` is a special term that’s used to splice an array of arguments into 
-  another term. This is useful when you want to call a variadic term such as 
+  `args` is a special term that’s used to splice an array of arguments into
+  another term. This is useful when you want to call a variadic term such as
   `get_all` with a set of arguments produced at runtime.
 
   This is analogous to Elixir's `apply`.
@@ -192,7 +192,7 @@ defmodule RethinkDB.Query do
 
   * coerce_to can coerce binary objects to string types
   * count will return the number of bytes in the object
-  * slice will treat bytes like array indexes (i.e., slice(10,20) will return bytes 
+  * slice will treat bytes like array indexes (i.e., slice(10,20) will return bytes
   * 10–19)
   * type_of returns PTYPE<BINARY>
   * info will return information on a binary object.
@@ -203,21 +203,21 @@ defmodule RethinkDB.Query do
   def do_binary(data), do: %Q{query: [155, [data]]}
 
   @doc """
-  Call an anonymous function using return values from other ReQL commands or 
+  Call an anonymous function using return values from other ReQL commands or
   queries as arguments.
 
-  The last argument to do (or, in some forms, the only argument) is an expression 
-  or an anonymous function which receives values from either the previous 
-  arguments or from prefixed commands chained before do. The do command is 
-  essentially a single-element map, letting you map a function over just one 
-  document. This allows you to bind a query result to a local variable within the 
-  scope of do, letting you compute the result just once and reuse it in a complex 
+  The last argument to do (or, in some forms, the only argument) is an expression
+  or an anonymous function which receives values from either the previous
+  arguments or from prefixed commands chained before do. The do command is
+  essentially a single-element map, letting you map a function over just one
+  document. This allows you to bind a query result to a local variable within the
+  scope of do, letting you compute the result just once and reuse it in a complex
   expression or in a series of ReQL commands.
 
-  Arguments passed to the do function must be basic data types, and cannot be 
-  streams or selections. (Read about ReQL data types.) While the arguments will 
-  all be evaluated before the function is executed, they may be evaluated in any 
-  order, so their values should not be dependent on one another. The type of do’s 
+  Arguments passed to the do function must be basic data types, and cannot be
+  streams or selections. (Read about ReQL data types.) While the arguments will
+  all be evaluated before the function is executed, they may be evaluated in any
+  order, so their values should not be dependent on one another. The type of do’s
   result is the type of the value returned from the function or last expression.
   """
   @spec do_r(Q.reql_datum | Q.reql_func0, Q.reql_func1) :: Q.t
@@ -227,7 +227,7 @@ defmodule RethinkDB.Query do
   def do_r(data, f) when is_function(f), do: %Q{query: [64, [wrap(f), wrap(data)]]}
 
   @doc """
-  If the `test` expression returns False or None, the false_branch will be 
+  If the `test` expression returns False or None, the false_branch will be
   evaluated. Otherwise, the true_branch will be evaluated.
 
   The branch command is effectively an if renamed due to language constraints.
@@ -265,10 +265,10 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:error, 12)
 
   @doc """
-  Handle non-existence errors. Tries to evaluate and return its first argument. 
-  If an error related to the absence of a value is thrown in the process, or if 
-  its first argument returns nil, returns its second argument. (Alternatively, 
-  the second argument may be a function which will be called with either the text 
+  Handle non-existence errors. Tries to evaluate and return its first argument.
+  If an error related to the absence of a value is thrown in the process, or if
+  its first argument returns nil, returns its second argument. (Alternatively,
+  the second argument may be a function which will be called with either the text
   of the non-existence error or nil.)
   """
   @spec default(Q.t, Q.t) :: Q.t
@@ -279,7 +279,7 @@ defmodule RethinkDB.Query do
 
   The only opt allowed is `timeout`.
 
-  `timeout` is the number of seconds before `js` times out. The default value 
+  `timeout` is the number of seconds before `js` times out. The default value
   is 5 seconds.
   """
   @spec js(Q.reql_string, Q.opts) :: Q.t
@@ -322,8 +322,8 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:to_json, 172)
 
   @doc """
-  Retrieve data from the specified URL over HTTP. The return type depends on 
-  the result_format option, which checks the Content-Type of the response by 
+  Retrieve data from the specified URL over HTTP. The return type depends on
+  the result_format option, which checks the Content-Type of the response by
   default.
   """
   @spec http(Q.reql_string, Q.reql_opts) :: Q.t
@@ -343,21 +343,21 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Create a database. A RethinkDB database is a collection of tables, similar to 
+  Create a database. A RethinkDB database is a collection of tables, similar to
   relational databases.
 
   If successful, the command returns an object with two fields:
 
   * dbs_created: always 1.
-  * config_changes: a list containing one object with two fields, old_val and 
+  * config_changes: a list containing one object with two fields, old_val and
     new_val:
     * old_val: always null.
     * new_val: the database’s new config value.
 
-  If a database with the same name already exists, the command throws 
+  If a database with the same name already exists, the command throws
   RqlRuntimeError.
 
-  Note: Only alphanumeric characters and underscores are valid for the database 
+  Note: Only alphanumeric characters and underscores are valid for the database
   name.
   """
   @spec db_create(Q.reql_string) :: Q.t
@@ -390,58 +390,58 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Construct a circular line or polygon. A circle in RethinkDB is a polygon or 
-  line approximating a circle of a given radius around a given center, consisting 
+  Construct a circular line or polygon. A circle in RethinkDB is a polygon or
+  line approximating a circle of a given radius around a given center, consisting
   of a specified number of vertices (default 32).
 
-  The center may be specified either by two floating point numbers, the latitude 
-  (−90 to 90) and longitude (−180 to 180) of the point on a perfect sphere (see 
-  Geospatial support for more information on ReQL’s coordinate system), or by a 
-  point object. The radius is a floating point number whose units are meters by 
+  The center may be specified either by two floating point numbers, the latitude
+  (−90 to 90) and longitude (−180 to 180) of the point on a perfect sphere (see
+  Geospatial support for more information on ReQL’s coordinate system), or by a
+  point object. The radius is a floating point number whose units are meters by
   default, although that may be changed with the unit argument.
 
   Optional arguments available with circle are:
 
   - num_vertices: the number of vertices in the polygon or line. Defaults to 32.
-  - geo_system: the reference ellipsoid to use for geographic coordinates. Possible 
-  values are WGS84 (the default), a common standard for Earth’s geometry, or 
+  - geo_system: the reference ellipsoid to use for geographic coordinates. Possible
+  values are WGS84 (the default), a common standard for Earth’s geometry, or
   unit_sphere, a perfect sphere of 1 meter radius.
-  - unit: Unit for the radius distance. Possible values are m (meter, the default), 
-  km (kilometer), mi (international mile), nm (nautical mile), ft (international 
+  - unit: Unit for the radius distance. Possible values are m (meter, the default),
+  km (kilometer), mi (international mile), nm (nautical mile), ft (international
   foot).
-  - fill: if `true` (the default) the circle is filled, creating a polygon; if `false` 
+  - fill: if `true` (the default) the circle is filled, creating a polygon; if `false`
   the circle is unfilled (creating a line).
   """
   @spec circle(Q.reql_geo, Q.reql_number, Q.reql_opts) :: Q.t
   operate_on_two_args(:circle, 165, opts: true)
 
   @doc """
-  Compute the distance between a point and another geometry object. At least one 
+  Compute the distance between a point and another geometry object. At least one
   of the geometry objects specified must be a point.
 
   Optional arguments available with distance are:
 
-  - geo_system: the reference ellipsoid to use for geographic coordinates. Possible 
-  values are WGS84 (the default), a common standard for Earth’s geometry, or 
+  - geo_system: the reference ellipsoid to use for geographic coordinates. Possible
+  values are WGS84 (the default), a common standard for Earth’s geometry, or
   unit_sphere, a perfect sphere of 1 meter radius.
-  - unit: Unit to return the distance in. Possible values are m (meter, the 
-  default), km (kilometer), mi (international mile), nm (nautical mile), ft 
+  - unit: Unit to return the distance in. Possible values are m (meter, the
+  default), km (kilometer), mi (international mile), nm (nautical mile), ft
   (international foot).
 
-  If one of the objects is a polygon or a line, the point will be projected onto 
-  the line or polygon assuming a perfect sphere model before the distance is 
-  computed (using the model specified with geo_system). As a consequence, if the 
-  polygon or line is extremely large compared to Earth’s radius and the distance 
-  is being computed with the default WGS84 model, the results of distance should 
-  be considered approximate due to the deviation between the ellipsoid and 
+  If one of the objects is a polygon or a line, the point will be projected onto
+  the line or polygon assuming a perfect sphere model before the distance is
+  computed (using the model specified with geo_system). As a consequence, if the
+  polygon or line is extremely large compared to Earth’s radius and the distance
+  is being computed with the default WGS84 model, the results of distance should
+  be considered approximate due to the deviation between the ellipsoid and
   spherical models.
   """
   @spec distance(Q.reql_geo, Q.reql_geo, Q.reql_opts) :: Q.t
   operate_on_two_args(:distance, 162, opts: true)
 
   @doc """
-  Convert a Line object into a Polygon object. If the last point does not 
-  specify the same coordinates as the first point, polygon will close the polygon 
+  Convert a Line object into a Polygon object. If the last point does not
+  specify the same coordinates as the first point, polygon will close the polygon
   by connecting them.
   """
   @spec fill(Q.reql_line) :: Q.t
@@ -450,13 +450,13 @@ defmodule RethinkDB.Query do
   @doc """
   Convert a GeoJSON object to a ReQL geometry object.
 
-  RethinkDB only allows conversion of GeoJSON objects which have ReQL 
-  equivalents: Point, LineString, and Polygon. MultiPoint, MultiLineString, and 
-  MultiPolygon are not supported. (You could, however, store multiple points, 
+  RethinkDB only allows conversion of GeoJSON objects which have ReQL
+  equivalents: Point, LineString, and Polygon. MultiPoint, MultiLineString, and
+  MultiPolygon are not supported. (You could, however, store multiple points,
   lines and polygons in an array and use a geospatial multi index with them.)
 
-  Only longitude/latitude coordinates are supported. GeoJSON objects that use 
-  Cartesian coordinates, specify an altitude, or specify their own coordinate 
+  Only longitude/latitude coordinates are supported. GeoJSON objects that use
+  Cartesian coordinates, specify an altitude, or specify their own coordinate
   reference system will be rejected.
   """
   @spec geojson(Q.reql_obj) :: Q.t
@@ -469,36 +469,36 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:to_geojson, 158)
 
   @doc """
-  Get all documents where the given geometry object intersects the geometry 
+  Get all documents where the given geometry object intersects the geometry
   object of the requested geospatial index.
 
-  The index argument is mandatory. This command returns the same results as 
-  `filter(r.row('index')) |> intersects(geometry)`. The total number of results 
-  is limited to the array size limit which defaults to 100,000, but can be 
+  The index argument is mandatory. This command returns the same results as
+  `filter(r.row('index')) |> intersects(geometry)`. The total number of results
+  is limited to the array size limit which defaults to 100,000, but can be
   changed with the `array_limit` option to run.
   """
   @spec get_intersecting(Q.reql_array, Q.reql_geo, Q.reql_opts) :: Q.t
   operate_on_two_args(:get_intersecting, 166, opts: true)
 
   @doc """
-  Get all documents where the specified geospatial index is within a certain 
+  Get all documents where the specified geospatial index is within a certain
   distance of the specified point (default 100 kilometers).
 
   The index argument is mandatory. Optional arguments are:
 
   * max_results: the maximum number of results to return (default 100).
-  * unit: Unit for the distance. Possible values are m (meter, the default), km 
-  (kilometer), mi (international mile), nm (nautical mile), ft (international 
+  * unit: Unit for the distance. Possible values are m (meter, the default), km
+  (kilometer), mi (international mile), nm (nautical mile), ft (international
   foot).
-  * max_dist: the maximum distance from an object to the specified point (default 
+  * max_dist: the maximum distance from an object to the specified point (default
   100 km).
-  * geo_system: the reference ellipsoid to use for geographic coordinates. Possible 
-  values are WGS84 (the default), a common standard for Earth’s geometry, or 
+  * geo_system: the reference ellipsoid to use for geographic coordinates. Possible
+  values are WGS84 (the default), a common standard for Earth’s geometry, or
   unit_sphere, a perfect sphere of 1 meter radius.
 
-  The return value will be an array of two-item objects with the keys dist and 
-  doc, set to the distance between the specified point and the document (in the 
-  units specified with unit, defaulting to meters) and the document itself, 
+  The return value will be an array of two-item objects with the keys dist and
+  doc, set to the distance between the specified point and the document (in the
+  units specified with unit, defaulting to meters) and the document itself,
   respectively.
 
   """
@@ -506,26 +506,26 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:get_nearest, 168, opts: true)
 
   @doc """
-  Tests whether a geometry object is completely contained within another. When 
-  applied to a sequence of geometry objects, includes acts as a filter, returning 
+  Tests whether a geometry object is completely contained within another. When
+  applied to a sequence of geometry objects, includes acts as a filter, returning
   a sequence of objects from the sequence that include the argument.
   """
   @spec includes(Q.reql_geo, Q.reql_geo) :: Q.t
   operate_on_two_args(:includes, 164)
 
   @doc """
-  Tests whether two geometry objects intersect with one another. When applied to 
-  a sequence of geometry objects, intersects acts as a filter, returning a 
+  Tests whether two geometry objects intersect with one another. When applied to
+  a sequence of geometry objects, intersects acts as a filter, returning a
   sequence of objects from the sequence that intersect with the argument.
   """
   @spec intersects(Q.reql_geo, Q.reql_geo) :: Q.t
   operate_on_two_args(:intersects, 163)
 
   @doc """
-  Construct a geometry object of type Line. The line can be specified in one of 
+  Construct a geometry object of type Line. The line can be specified in one of
   two ways:
 
-  - Two or more two-item arrays, specifying latitude and longitude numbers of the 
+  - Two or more two-item arrays, specifying latitude and longitude numbers of the
   line’s vertices;
   - Two or more Point objects specifying the line’s vertices.
   """
@@ -533,8 +533,8 @@ defmodule RethinkDB.Query do
   operate_on_list(:line, 160)
 
   @doc """
-  Construct a geometry object of type Point. The point is specified by two 
-  floating point numbers, the longitude (−180 to 180) and latitude (−90 to 90) of 
+  Construct a geometry object of type Point. The point is specified by two
+  floating point numbers, the longitude (−180 to 180) and latitude (−90 to 90) of
   the point on a perfect sphere.
   """
   @spec point(Q.reql_geo) :: Q.t
@@ -542,27 +542,27 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:point, 159)
 
   @doc """
-  Construct a geometry object of type Polygon. The Polygon can be specified in 
+  Construct a geometry object of type Polygon. The Polygon can be specified in
   one of two ways:
 
-  Three or more two-item arrays, specifying latitude and longitude numbers of the 
+  Three or more two-item arrays, specifying latitude and longitude numbers of the
   polygon’s vertices;
   * Three or more Point objects specifying the polygon’s vertices.
-  * Longitude (−180 to 180) and latitude (−90 to 90) of vertices are plotted on a 
-  perfect sphere. See Geospatial support for more information on ReQL’s 
+  * Longitude (−180 to 180) and latitude (−90 to 90) of vertices are plotted on a
+  perfect sphere. See Geospatial support for more information on ReQL’s
   coordinate system.
 
-  If the last point does not specify the same coordinates as the first point, 
-  polygon will close the polygon by connecting them. You cannot directly 
-  construct a polygon with holes in it using polygon, but you can use polygon_sub 
+  If the last point does not specify the same coordinates as the first point,
+  polygon will close the polygon by connecting them. You cannot directly
+  construct a polygon with holes in it using polygon, but you can use polygon_sub
   to use a second polygon within the interior of the first to define a hole.
   """
   @spec polygon([Q.reql_geo]) :: Q.t
   operate_on_list(:polygon, 161)
 
   @doc """
-  Use polygon2 to “punch out” a hole in polygon1. polygon2 must be completely 
-  contained within polygon1 and must have no holes itself (it must not be the 
+  Use polygon2 to “punch out” a hole in polygon1. polygon2 must be completely
+  contained within polygon1 and must have no holes itself (it must not be the
   output of polygon_sub itself).
   """
   @spec polygon_sub(Q.reql_geo, Q.reql_geo) :: Q.t
@@ -747,7 +747,7 @@ defmodule RethinkDB.Query do
   @spec mod(Q.reql_number, Q.reql_number) :: Q.t
   operate_on_two_args(:mod, 28)
 
-  @doc """ 
+  @doc """
   Compute the logical “and” of two values.
 
       iex> and(true, true) |> run conn
@@ -758,7 +758,7 @@ defmodule RethinkDB.Query do
   """
   @spec and_r(Q.reql_bool, Q.reql_bool) :: Q.t
   operate_on_two_args(:and_r, 67)
-  @doc """ 
+  @doc """
   Compute the logical “and” of all values in a list.
 
       iex> and_r([true, true, true]) |> run conn
@@ -817,7 +817,7 @@ defmodule RethinkDB.Query do
   """
   @spec eq([Q.reql_datum]) :: Q.t
   operate_on_list(:eq, 17)
-    
+
   @doc """
   Test if two values are not equal.
 
@@ -1015,17 +1015,17 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:db, 14)
 
   @doc """
-  Return all documents in a table. Other commands may be chained after table to 
-  return a subset of documents (such as get and filter) or perform further 
+  Return all documents in a table. Other commands may be chained after table to
+  return a subset of documents (such as get and filter) or perform further
   processing.
 
   There are two optional arguments.
 
-  * useOutdated: if true, this allows potentially out-of-date data to be returned, 
-    with potentially faster reads. It also allows you to perform reads from a 
+  * useOutdated: if true, this allows potentially out-of-date data to be returned,
+    with potentially faster reads. It also allows you to perform reads from a
     secondary replica if a primary has failed. Default false.
-  * identifierFormat: possible values are name and uuid, with a default of name. If 
-    set to uuid, then system tables will refer to servers, databases and tables by 
+  * identifierFormat: possible values are name and uuid, with a default of name. If
+    set to uuid, then system tables will refer to servers, databases and tables by
     UUID rather than name. (This only has an effect when used with system tables.)
   """
   @spec table(Q.reql_string, Q.reql_opts) :: Q.t
@@ -1049,11 +1049,11 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:get_all, 78, opts: true)
 
   @doc """
-  Get all documents between two keys. Accepts three optional arguments: index, 
-  left_bound, and right_bound. If index is set to the name of a secondary index, 
-  between will return all documents where that index’s value is in the specified 
-  range (it uses the primary key by default). left_bound or right_bound may be 
-  set to open or closed to indicate whether or not to include that endpoint of 
+  Get all documents between two keys. Accepts three optional arguments: index,
+  left_bound, and right_bound. If index is set to the name of a secondary index,
+  between will return all documents where that index’s value is in the specified
+  range (it uses the primary key by default). left_bound or right_bound may be
+  set to open or closed to indicate whether or not to include that endpoint of
   the range (by default, left_bound is closed and right_bound is open).
   """
   @spec between(Q.reql_array, Q.t, Q.t) :: Q.t
@@ -1062,15 +1062,15 @@ defmodule RethinkDB.Query do
   @doc """
   Get all the documents for which the given predicate is true.
 
-  filter can be called on a sequence, selection, or a field containing an array 
-  of elements. The return type is the same as the type on which the function was 
+  filter can be called on a sequence, selection, or a field containing an array
+  of elements. The return type is the same as the type on which the function was
   called on.
 
-  The body of every filter is wrapped in an implicit .default(False), which means 
-  that if a non-existence errors is thrown (when you try to access a field that 
-  does not exist in a document), RethinkDB will just ignore the document. The 
-  default value can be changed by passing the named argument default. Setting 
-  this optional argument to r.error() will cause any non-existence errors to 
+  The body of every filter is wrapped in an implicit .default(False), which means
+  that if a non-existence errors is thrown (when you try to access a field that
+  does not exist in a document), RethinkDB will just ignore the document. The
+  default value can be changed by passing the named argument default. Setting
+  this optional argument to r.error() will cause any non-existence errors to
   return a RqlRuntimeError.
   """
   @spec filter(Q.reql_array, Q.t) :: Q.t
@@ -1081,7 +1081,7 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Checks a string for matches. 
+  Checks a string for matches.
 
   Example:
 
@@ -1113,10 +1113,10 @@ defmodule RethinkDB.Query do
 
   @doc """
   Split a `string` with a given `separator` into `max_result` segments.
-  
+
       iex> "a-bra-ca-da-bra" |> split("-", 2) |> run conn
       %RethinkDB.Record{data: ["a", "bra", "ca-da-bra"]}
-  
+
   """
   @spec split(Q.reql_string, (Q.reql_string|nil), integer) :: Q.t
   operate_on_three_args(:split, 149)
@@ -1155,7 +1155,7 @@ defmodule RethinkDB.Query do
     * old_val: always nil.
     * new_val: the table’s new config value.
 
-  If a table with the same name already exists, the command throws 
+  If a table with the same name already exists, the command throws
   RqlRuntimeError.
 
   Note: Only alphanumeric characters and underscores are valid for the table name.
@@ -1163,21 +1163,21 @@ defmodule RethinkDB.Query do
   When creating a table you can specify the following options:
 
   * primary_key: the name of the primary key. The default primary key is id.
-  * durability: if set to soft, writes will be acknowledged by the server 
-    immediately and flushed to disk in the background. The default is hard: 
+  * durability: if set to soft, writes will be acknowledged by the server
+    immediately and flushed to disk in the background. The default is hard:
     acknowledgment of writes happens after data has been written to disk.
   * shards: the number of shards, an integer from 1-32. Defaults to 1.
   * replicas: either an integer or a mapping object. Defaults to 1.
-    If replicas is an integer, it specifies the number of replicas per shard. 
+    If replicas is an integer, it specifies the number of replicas per shard.
     Specifying more replicas than there are servers will return an error.
-    If replicas is an object, it specifies key-value pairs of server tags and the 
-    number of replicas to assign to those servers: {:tag1 => 2, :tag2 => 4, :tag3 
+    If replicas is an object, it specifies key-value pairs of server tags and the
+    number of replicas to assign to those servers: {:tag1 => 2, :tag2 => 4, :tag3
     => 2, ...}.
-  * primary_replica_tag: the primary server specified by its server tag. Required 
-    if replicas is an object; the tag must be in the object. This must not be 
+  * primary_replica_tag: the primary server specified by its server tag. Required
+    if replicas is an object; the tag must be in the object. This must not be
     specified if replicas is an integer.
-    The data type of a primary key is usually a string (like a UUID) or a number, 
-    but it can also be a time, binary object, boolean or an array. It cannot be an 
+    The data type of a primary key is usually a string (like a UUID) or a number,
+    but it can also be a time, binary object, boolean or an array. It cannot be an
     object.
   """
   @spec table_create(Q.t, Q.reql_string, Q.reql_opts) :: Q.t
@@ -1208,9 +1208,9 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:table_list, 62)
 
   @doc """
-  Create a new secondary index on a table. Secondary indexes improve the speed of 
-  many read queries at the slight cost of increased storage space and decreased 
-  write performance. For more information about secondary indexes, read the 
+  Create a new secondary index on a table. Secondary indexes improve the speed of
+  many read queries at the slight cost of increased storage space and decreased
+  write performance. For more information about secondary indexes, read the
   article “Using secondary indexes in RethinkDB.”
 
   RethinkDB supports different types of secondary indexes:
@@ -1218,15 +1218,15 @@ defmodule RethinkDB.Query do
   * Simple indexes based on the value of a single field.
   * Compound indexes based on multiple fields.
   * Multi indexes based on arrays of values.
-  * Geospatial indexes based on indexes of geometry objects, created when the geo 
+  * Geospatial indexes based on indexes of geometry objects, created when the geo
     optional argument is true.
   * Indexes based on arbitrary expressions.
 
-  The index_function can be an anonymous function or a binary representation 
+  The index_function can be an anonymous function or a binary representation
   obtained from the function field of index_status.
 
-  If successful, create_index will return an object of the form {:created => 1}. 
-  If an index by that name already exists on the table, a RqlRuntimeError will be 
+  If successful, create_index will return an object of the form {:created => 1}.
+  If an index by that name already exists on the table, a RqlRuntimeError will be
   thrown.
   """
   @spec index_create(Q.t, Q.reql_string, Q.reql_func1, Q.reql_opts) :: Q.t
@@ -1246,23 +1246,23 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:index_list, 77)
 
   @doc """
-  Rename an existing secondary index on a table. If the optional argument 
-  overwrite is specified as true, a previously existing index with the new name 
-  will be deleted and the index will be renamed. If overwrite is false (the 
+  Rename an existing secondary index on a table. If the optional argument
+  overwrite is specified as true, a previously existing index with the new name
+  will be deleted and the index will be renamed. If overwrite is false (the
   default) an error will be raised if the new index name already exists.
 
-  The return value on success will be an object of the format {:renamed => 1}, or 
+  The return value on success will be an object of the format {:renamed => 1}, or
   {:renamed => 0} if the old and new names are the same.
 
-  An error will be raised if the old index name does not exist, if the new index 
-  name is already in use and overwrite is false, or if either the old or new 
+  An error will be raised if the old index name does not exist, if the new index
+  name is already in use and overwrite is false, or if either the old or new
   index name are the same as the primary key field name.
   """
   @spec index_rename(Q.t, Q.reql_string, Q.reql_string, Q.reql_opts) :: Q.t
   operate_on_three_args(:index_rename, 156, opts: true)
 
   @doc """
-  Get the status of the specified indexes on this table, or the status of all 
+  Get the status of the specified indexes on this table, or the status of all
   indexes on this table if no indexes are specified.
   """
   @spec index_status(Q.t, Q.reql_string|Q.reql_array) :: Q.t
@@ -1271,7 +1271,7 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:index_status, 139)
 
   @doc """
-  Wait for the specified indexes on this table to be ready, or for all indexes on 
+  Wait for the specified indexes on this table to be ready, or for all indexes on
   this table to be ready if no indexes are specified.
   """
   @spec index_wait(Q.t, Q.reql_string|Q.reql_array) :: Q.t
@@ -1284,20 +1284,20 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Insert documents into a table. Accepts a single document or an array of 
+  Insert documents into a table. Accepts a single document or an array of
   documents.
 
   The optional arguments are:
 
-  * durability: possible values are hard and soft. This option will override the 
-    table or query’s durability setting (set in run). In soft durability mode 
-    Rethink_dB will acknowledge the write immediately after receiving and caching 
+  * durability: possible values are hard and soft. This option will override the
+    table or query’s durability setting (set in run). In soft durability mode
+    Rethink_dB will acknowledge the write immediately after receiving and caching
     it, but before the write has been committed to disk.
-  * return_changes: if set to True, return a changes array consisting of 
+  * return_changes: if set to True, return a changes array consisting of
     old_val/new_val objects describing the changes made.
-  * conflict: Determine handling of inserting documents with the same primary key 
+  * conflict: Determine handling of inserting documents with the same primary key
     as existing entries. Possible values are "error", "replace" or "update".
-    * "error": Do not insert the new document and record the conflict as an error. 
+    * "error": Do not insert the new document and record the conflict as an error.
       This is the default.
     * "replace": Replace the old document in its entirety with the new one.
     * "update": Update fields of the old document with fields from the new one.
@@ -1307,95 +1307,95 @@ defmodule RethinkDB.Query do
   Insert returns an object that contains the following attributes:
 
   * inserted: the number of documents successfully inserted.
-  * replaced: the number of documents updated when conflict is set to "replace" or 
+  * replaced: the number of documents updated when conflict is set to "replace" or
     "update".
-  * unchanged: the number of documents whose fields are identical to existing 
-    documents with the same primary key when conflict is set to "replace" or 
+  * unchanged: the number of documents whose fields are identical to existing
+    documents with the same primary key when conflict is set to "replace" or
     "update".
   * errors: the number of errors encountered while performing the insert.
   * first_error: If errors were encountered, contains the text of the first error.
   * deleted and skipped: 0 for an insert operation.
-  * generated_keys: a list of generated primary keys for inserted documents whose 
+  * generated_keys: a list of generated primary keys for inserted documents whose
     primary keys were not specified (capped to 100,000).
-  * warnings: if the field generated_keys is truncated, you will get the warning 
+  * warnings: if the field generated_keys is truncated, you will get the warning
     “Too many generated keys (<X>), array truncated to 100000.”.
-  * changes: if return_changes is set to True, this will be an array of objects, 
-    one for each objected affected by the insert operation. Each object will have 
+  * changes: if return_changes is set to True, this will be an array of objects,
+    one for each objected affected by the insert operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": None}.
   """
-  @spec insert(Q.t, Q.reql_obj | Q.reql_array, %{}) :: Q.t
+  @spec insert(Q.t, Q.reql_obj | Q.reql_array, Keyword.t) :: Q.t
   operate_on_two_args(:insert, 56, opts: true)
 
   @doc """
-  Update JSON documents in a table. Accepts a JSON document, a ReQL expression, 
+  Update JSON documents in a table. Accepts a JSON document, a ReQL expression,
   or a combination of the two.
 
   The optional arguments are:
 
-  * durability: possible values are hard and soft. This option will override the 
-    table or query’s durability setting (set in run). In soft durability mode 
-    RethinkDB will acknowledge the write immediately after receiving it, but before 
+  * durability: possible values are hard and soft. This option will override the
+    table or query’s durability setting (set in run). In soft durability mode
+    RethinkDB will acknowledge the write immediately after receiving it, but before
     the write has been committed to disk.
-  * return_changes: if set to True, return a changes array consisting of 
+  * return_changes: if set to True, return a changes array consisting of
     old_val/new_val objects describing the changes made.
-  * non_atomic: if set to True, executes the update and distributes the result to 
-    replicas in a non-atomic fashion. This flag is required to perform 
-    non-deterministic updates, such as those that require reading data from another 
+  * non_atomic: if set to True, executes the update and distributes the result to
+    replicas in a non-atomic fashion. This flag is required to perform
+    non-deterministic updates, such as those that require reading data from another
     table.
 
   Update returns an object that contains the following attributes:
 
   * replaced: the number of documents that were updated.
-  * unchanged: the number of documents that would have been modified except the new 
+  * unchanged: the number of documents that would have been modified except the new
     value was the same as the old value.
-  * skipped: the number of documents that were skipped because the document didn’t 
+  * skipped: the number of documents that were skipped because the document didn’t
     exist.
   * errors: the number of errors encountered while performing the update.
   * first_error: If errors were encountered, contains the text of the first error.
   * deleted and inserted: 0 for an update operation.
-  * changes: if return_changes is set to True, this will be an array of objects, 
-    one for each objected affected by the update operation. Each object will have 
+  * changes: if return_changes is set to True, this will be an array of objects,
+    one for each objected affected by the update operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": <old value>}.
   """
-  @spec update(Q.t, Q.reql_obj, %{}) :: Q.t
+  @spec update(Q.t, Q.reql_obj, Keyword.t) :: Q.t
   operate_on_two_args(:update, 53, opts: true)
 
   @doc """
-  Replace documents in a table. Accepts a JSON document or a ReQL expression, and 
-  replaces the original document with the new one. The new document must have the 
+  Replace documents in a table. Accepts a JSON document or a ReQL expression, and
+  replaces the original document with the new one. The new document must have the
   same primary key as the original document.
 
   The optional arguments are:
 
-  * durability: possible values are hard and soft. This option will override the 
+  * durability: possible values are hard and soft. This option will override the
     table or query’s durability setting (set in run).
-    In soft durability mode RethinkDB will acknowledge the write immediately after 
+    In soft durability mode RethinkDB will acknowledge the write immediately after
     receiving it, but before the write has been committed to disk.
-  * return_changes: if set to True, return a changes array consisting of 
+  * return_changes: if set to True, return a changes array consisting of
     old_val/new_val objects describing the changes made.
-  * non_atomic: if set to True, executes the replacement and distributes the result 
-    to replicas in a non-atomic fashion. This flag is required to perform 
-    non-deterministic updates, such as those that require reading data from another 
+  * non_atomic: if set to True, executes the replacement and distributes the result
+    to replicas in a non-atomic fashion. This flag is required to perform
+    non-deterministic updates, such as those that require reading data from another
     table.
 
   Replace returns an object that contains the following attributes:
 
   * replaced: the number of documents that were replaced
-  * unchanged: the number of documents that would have been modified, except that 
+  * unchanged: the number of documents that would have been modified, except that
     the new value was the same as the old value
-  * inserted: the number of new documents added. You can have new documents 
-    inserted if you do a point-replace on a key that isn’t in the table or you do a 
-    replace on a selection and one of the documents you are replacing has been 
+  * inserted: the number of new documents added. You can have new documents
+    inserted if you do a point-replace on a key that isn’t in the table or you do a
+    replace on a selection and one of the documents you are replacing has been
     deleted
   * deleted: the number of deleted documents when doing a replace with None
   * errors: the number of errors encountered while performing the replace.
   * first_error: If errors were encountered, contains the text of the first error.
   * skipped: 0 for a replace operation
-  * changes: if return_changes is set to True, this will be an array of objects, 
-    one for each objected affected by the replace operation. Each object will have 
+  * changes: if return_changes is set to True, this will be an array of objects,
+    one for each objected affected by the replace operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": <old value>}.
   """
-  @spec replace(Q.t, Q.reql_obj, %{}) :: Q.t
+  @spec replace(Q.t, Q.reql_obj, Keyword.t) :: Q.t
   operate_on_two_args(:replace, 55, opts: true)
 
   @doc """
@@ -1403,34 +1403,34 @@ defmodule RethinkDB.Query do
 
   The optional arguments are:
 
-  * durability: possible values are hard and soft. This option will override the 
+  * durability: possible values are hard and soft. This option will override the
     table or query’s durability setting (set in run).
-    In soft durability mode RethinkDB will acknowledge the write immediately after 
+    In soft durability mode RethinkDB will acknowledge the write immediately after
     receiving it, but before the write has been committed to disk.
-  * return_changes: if set to True, return a changes array consisting of 
+  * return_changes: if set to True, return a changes array consisting of
     old_val/new_val objects describing the changes made.
 
   Delete returns an object that contains the following attributes:
 
   * deleted: the number of documents that were deleted.
   * skipped: the number of documents that were skipped.
-    For example, if you attempt to delete a batch of documents, and another 
-    concurrent query deletes some of those documents first, they will be counted as 
+    For example, if you attempt to delete a batch of documents, and another
+    concurrent query deletes some of those documents first, they will be counted as
     skipped.
   * errors: the number of errors encountered while performing the delete.
   * first_error: If errors were encountered, contains the text of the first error.
     inserted, replaced, and unchanged: all 0 for a delete operation.
-  * changes: if return_changes is set to True, this will be an array of objects, 
-    one for each objected affected by the delete operation. Each object will have 
+  * changes: if return_changes is set to True, this will be an array of objects,
+    one for each objected affected by the delete operation. Each object will have
   * two keys: {"new_val": None, "old_val": <old value>}.
   """
   @spec delete(Q.t) :: Q.t
   operate_on_single_arg(:delete, 54, opts: true)
 
   @doc """
-  sync ensures that writes on a given table are written to permanent storage. 
-  Queries that specify soft durability (durability='soft') do not give such 
-  guarantees, so sync can be used to ensure the state of these queries. A call to 
+  sync ensures that writes on a given table are written to permanent storage.
+  Queries that specify soft durability (durability='soft') do not give such
+  guarantees, so sync can be used to ensure the state of these queries. A call to
   sync does not return until all previous writes to the table are persisted.
 
   If successful, the operation returns an object: {"synced": 1}.
@@ -1444,8 +1444,8 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Return a time object representing the current time in UTC. The command now() is 
-  computed once when the server receives the query, so multiple instances of 
+  Return a time object representing the current time in UTC. The command now() is
+  computed once when the server receives the query, so multiple instances of
   r.now() will always return the same time inside a query.
   """
   @spec now() :: Q.t
@@ -1461,7 +1461,7 @@ defmodule RethinkDB.Query do
   * day is an integer between 1 and 31.
   * hour is an integer.
   * minutes is an integer.
-  * seconds is a double. Its value will be rounded to three decimal places 
+  * seconds is a double. Its value will be rounded to three decimal places
     (millisecond-precision).
   * timezone can be 'Z' (for UTC) or a string with the format ±[hh]:[mm].
   """
@@ -1473,25 +1473,25 @@ defmodule RethinkDB.Query do
   end
 
   @doc """
-  Create a time object based on seconds since epoch. The first argument is a 
+  Create a time object based on seconds since epoch. The first argument is a
   double and will be rounded to three decimal places (millisecond-precision).
   """
   @spec epoch_time(reql_number) :: Q.t
-  operate_on_single_arg(:epoch_time, 101) 
+  operate_on_single_arg(:epoch_time, 101)
 
   @doc """
-  Create a time object based on an ISO 8601 date-time string (e.g. 
-  ‘2013-01-01T01:01:01+00:00’). We support all valid ISO 8601 formats except for 
-  week dates. If you pass an ISO 8601 date-time without a time zone, you must 
+  Create a time object based on an ISO 8601 date-time string (e.g.
+  ‘2013-01-01T01:01:01+00:00’). We support all valid ISO 8601 formats except for
+  week dates. If you pass an ISO 8601 date-time without a time zone, you must
   specify the time zone with the default_timezone argument.
   """
   @spec iso8601(reql_string) :: Q.t
   operate_on_single_arg(:iso8601, 99, opts: true)
 
   @doc """
-  Return a new time object with a different timezone. While the time stays the 
-  same, the results returned by methods such as hours() will change since they 
-  take the timezone into account. The timezone argument has to be of the ISO 8601 
+  Return a new time object with a different timezone. While the time stays the
+  same, the results returned by methods such as hours() will change since they
+  take the timezone into account. The timezone argument has to be of the ISO 8601
   format.
   """
   @spec in_timezone(Q.reql_time, Q.reql_string) :: Q.t
@@ -1504,21 +1504,21 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:timezone, 127)
 
   @doc """
-  Return if a time is between two other times (by default, inclusive for the 
+  Return if a time is between two other times (by default, inclusive for the
   start, exclusive for the end).
   """
   @spec during(Q.reql_time, Q.reql_time, Q.reql_time) :: Q.t
   operate_on_three_args(:during, 105, opts: true)
 
   @doc """
-  Return a new time object only based on the day, month and year (ie. the same 
+  Return a new time object only based on the day, month and year (ie. the same
   day at 00:00).
   """
   @spec date(Q.reql_time) :: Q.t
   operate_on_single_arg(:date, 106)
 
   @doc """
-  Return the number of seconds elapsed since the beginning of the day stored in 
+  Return the number of seconds elapsed since the beginning of the day stored in
   the time object.
   """
   @spec time_of_day(Q.reql_time) :: Q.t
@@ -1543,14 +1543,14 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:day, 130)
 
   @doc """
-  Return the day of week of a time object as a number between 1 and 7 (following 
+  Return the day of week of a time object as a number between 1 and 7 (following
   ISO 8601 standard).
   """
   @spec day_of_week(Q.reql_time) :: Q.t
   operate_on_single_arg(:day_of_week, 131)
 
   @doc """
-  Return the day of the year of a time object as a number between 1 and 366 
+  Return the day of the year of a time object as a number between 1 and 366
   (following ISO 8601 standard).
   """
   @spec day_of_year(Q.reql_time) :: Q.t
@@ -1591,20 +1591,20 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Transform each element of one or more sequences by applying a mapping function 
-  to them. If map is run with two or more sequences, it will iterate for as many 
+  Transform each element of one or more sequences by applying a mapping function
+  to them. If map is run with two or more sequences, it will iterate for as many
   items as there are in the shortest sequence.
 
-  Note that map can only be applied to sequences, not single values. If you wish 
-  to apply a function to a single value/selection (including an array), use the 
+  Note that map can only be applied to sequences, not single values. If you wish
+  to apply a function to a single value/selection (including an array), use the
   do command.
   """
   @spec map(Q.reql_array, Q.reql_func1) :: Q.t
   operate_on_two_args(:map, 38)
 
   @doc """
-  Plucks one or more attributes from a sequence of objects, filtering out any 
-  objects in the sequence that do not have the specified fields. Functionally, 
+  Plucks one or more attributes from a sequence of objects, filtering out any
+  objects in the sequence that do not have the specified fields. Functionally,
   this is identical to has_fields followed by pluck on a sequence.
   """
   @spec with_fields(Q.reql_array, Q.reql_array) :: Q.t
@@ -1616,15 +1616,15 @@ defmodule RethinkDB.Query do
   @spec flat_map(Q.reql_array, Q.reql_func1) :: Q.t
   operate_on_two_args(:flat_map, 40)
   operate_on_two_args(:concat_map, 40)
- 
+
   @doc """
-  Sort the sequence by document values of the given key(s). To specify the 
-  ordering, wrap the attribute with either r.asc or r.desc (defaults to 
+  Sort the sequence by document values of the given key(s). To specify the
+  ordering, wrap the attribute with either r.asc or r.desc (defaults to
   ascending).
 
-  Sorting without an index requires the server to hold the sequence in memory, 
-  and is limited to 100,000 documents (or the setting of the array_limit option 
-  for run). Sorting with an index can be done on arbitrarily large tables, or 
+  Sorting without an index requires the server to hold the sequence in memory,
+  and is limited to 100,000 documents (or the setting of the array_limit option
+  for run). Sorting with an index can be done on arbitrarily large tables, or
   after a between command using the same index.
   """
   @spec order_by(Q.reql_array, Q.reql_datum) :: Q.t
@@ -1650,14 +1650,14 @@ defmodule RethinkDB.Query do
   operate_on_three_args(:slice, 30, opts: true)
 
   @doc """
-  Get the nth element of a sequence, counting from zero. If the argument is 
+  Get the nth element of a sequence, counting from zero. If the argument is
   negative, count from the last element.
   """
   @spec nth(Q.reql_array, Q.reql_number) :: Q.t
   operate_on_two_args(:nth, 45)
 
   @doc """
-  Get the indexes of an element in a sequence. If the argument is a predicate, 
+  Get the indexes of an element in a sequence. If the argument is a predicate,
   get the indexes of all elements matching it.
   """
   @spec offsets_of(Q.reql_array, Q.reql_datum) :: Q.t
@@ -1676,11 +1676,11 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:union, 44)
 
   @doc """
-  Select a given number of elements from a sequence with uniform random 
+  Select a given number of elements from a sequence with uniform random
   distribution. Selection is done without replacement.
 
-  If the sequence has less than the requested number of elements (i.e., calling 
-  sample(10) on a sequence with only five elements), sample will return the 
+  If the sequence has less than the requested number of elements (i.e., calling
+  sample(10) on a sequence with only five elements), sample will return the
   entire sequence in a random order.
   """
   @spec sample(Q.reql_array, Q.reql_number) :: Q.t
@@ -1691,22 +1691,22 @@ defmodule RethinkDB.Query do
   #
 
   @doc """
-  Plucks out one or more attributes from either an object or a sequence of 
+  Plucks out one or more attributes from either an object or a sequence of
   objects (projection).
   """
   @spec pluck(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
   operate_on_two_args(:pluck, 33)
 
   @doc """
-  The opposite of pluck; takes an object or a sequence of objects, and returns 
+  The opposite of pluck; takes an object or a sequence of objects, and returns
   them with the specified paths removed.
   """
   @spec without(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
   operate_on_two_args(:without, 34)
 
   @doc """
-  Merge two or more objects together to construct a new object with properties 
-  from all. When there is a conflict between field names, preference is given to 
+  Merge two or more objects together to construct a new object with properties
+  from all. When there is a conflict between field names, preference is given to
   fields in the rightmost object in the argument list.
   """
   @spec merge(Q.reql_array, Q.reql_object|Q.reql_func1) :: Q.t
@@ -1739,36 +1739,36 @@ defmodule RethinkDB.Query do
   operate_on_two_args(:set_insert, 88)
 
   @doc """
-  Intersect two arrays returning values that occur in both of them as a set (an 
+  Intersect two arrays returning values that occur in both of them as a set (an
   array with distinct values).
   """
   @spec set_intersection(Q.reql_array, Q.reql_datum) :: Q.t
   operate_on_two_args(:set_intersection, 89)
 
   @doc """
-  Add a several values to an array and return it as a set (an array with distinct 
+  Add a several values to an array and return it as a set (an array with distinct
   values).
   """
   @spec set_union(Q.reql_array, Q.reql_datum) :: Q.t
   operate_on_two_args(:set_union, 90)
 
   @doc """
-  Remove the elements of one array from another and return them as a set (an 
+  Remove the elements of one array from another and return them as a set (an
   array with distinct values).
   """
   @spec set_difference(Q.reql_array, Q.reql_datum) :: Q.t
   operate_on_two_args(:set_difference, 91)
 
   @doc """
-  Get a single field from an object. If called on a sequence, gets that field 
+  Get a single field from an object. If called on a sequence, gets that field
   from every object in the sequence, skipping objects that lack it.
   """
   @spec get_field(Q.reql_obj|Q.reql_array, Q.reql_string) :: Q.t
   operate_on_two_args(:get_field, 31)
 
   @doc """
-  Test if an object has one or more fields. An object has a field if it has 
-  that key and the key has a non-null value. For instance, the object {'a': 
+  Test if an object has one or more fields. An object has a field if it has
+  that key and the key has a non-null value. For instance, the object {'a':
   1,'b': 2,'c': null} has the fields a and b.
   """
   @spec has_fields(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
@@ -1812,15 +1812,15 @@ defmodule RethinkDB.Query do
   operate_on_single_arg(:values, 186)
 
   @doc """
-  Replace an object in a field instead of merging it with an existing object in a 
+  Replace an object in a field instead of merging it with an existing object in a
   merge or update operation.
   """
   @spec literal(Q.reql_object) :: Q.t
   operate_on_single_arg(:literal, 137)
 
   @doc """
-  Creates an object from a list of key-value pairs, where the keys must be 
-  strings. r.object(A, B, C, D) is equivalent to r.expr([[A, B], [C, 
+  Creates an object from a list of key-value pairs, where the keys must be
+  strings. r.object(A, B, C, D) is equivalent to r.expr([[A, B], [C,
   D]]).coerce_to('OBJECT').
   """
   @spec object(Q.reql_array) :: Q.t
@@ -1877,4 +1877,3 @@ defmodule RethinkDB.Query do
   operate_on_zero_args(:minval, 180)
   operate_on_zero_args(:maxval, 181)
 end
-
