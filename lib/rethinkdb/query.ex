@@ -628,7 +628,7 @@ defmodule RethinkDB.Query do
         ) |> run
 
   """
-  @spec eq_join(Q.reql_array, Q.reql_string, Q.reql_array, []) :: Q.t
+  @spec eq_join(Q.reql_array, Q.reql_string, Q.reql_array, Keyword.t) :: Q.t
   operate_on_three_args(:eq_join, 50, opts: true)
 
   @doc """
