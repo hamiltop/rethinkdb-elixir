@@ -55,7 +55,7 @@ import RethinkDB.Query
 table("people") |> FooDatabase.run
 ```
 
-####Connection Pooling
+#### Connection Pooling
 To use a connection pool, add Poolboy to your dependencies:
 
 ```elixir
