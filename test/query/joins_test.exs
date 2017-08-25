@@ -11,10 +11,10 @@ defmodule JoinsTest do
 
   @table_name "joins_test_table_1"
   setup_all do
-    start_link
+    start_link()
     table_create(@table_name) |> run
     on_exit fn ->
-      start_link
+      start_link()
       table_drop(@table_name) |> run
     end
     :ok

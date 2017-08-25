@@ -6,10 +6,10 @@ defmodule TableDBTest do
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
-  
+
   @db_name "table_db_test_db_1"
   @table_name "table_db_test_table_1"
 

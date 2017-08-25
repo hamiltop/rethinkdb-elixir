@@ -5,8 +5,8 @@ defmodule RethinkDB.Mixfile do use Mix.Project
      version: "0.4.0",
      elixir: "~> 1.0",
      description: "RethinkDB driver for Elixir",
-     package: package,
-     deps: deps,
+     package: package(),
+     deps: deps(),
      test_coverage: [tool: ExCoveralls]]
   end
 

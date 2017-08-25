@@ -4,7 +4,7 @@ defmodule AdministrationQueryTest do
   import RethinkDB.Query
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
@@ -16,7 +16,7 @@ defmodule AdministrationQueryTest do
     end
     :ok
   end
-  
+
   test "config" do
     {:ok, r} = table(@table_name) |> config |> run
     assert %RethinkDB.Record{data: %{"db" => "test"}} = r
