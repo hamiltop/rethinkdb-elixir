@@ -68,7 +68,7 @@ defmodule RethinkDB.Pseudotypes do
           end
           epoch_time * 1000
             |> trunc()
-            |> DateTime.from_unix!(:millisecond)
+            |> DateTime.from_unix!(:milliseconds)
             |> struct(utc_offset: seconds, zone_abbr: zone_abbr, time_zone: time_zone)
       end
     end
