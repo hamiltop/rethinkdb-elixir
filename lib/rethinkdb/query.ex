@@ -188,6 +188,13 @@ defmodule RethinkDB.Query do
   @doc """
   Encapsulate binary data within a query.
 
+  The type of data binary accepts depends on the client language. In
+  Elixir, it expects a Binary. Using a Buffer object within a query implies the use of binary and the ReQL driver will automatically perform the coercion.
+
+  Binary objects returned to the client in JavaScript will also be Node.js
+  Buffer objects. This can be changed with the binaryFormat option provided
+  to run to return “raw” objects.
+
   Only a limited subset of ReQL commands may be chained after binary:
 
   * coerce_to can coerce binary objects to string types
@@ -198,9 +205,9 @@ defmodule RethinkDB.Query do
   * info will return information on a binary object.
   """
   @spec binary(Q.reql_binary) :: Q.t
-  def binary(%RethinkDB.Pseudotypes.Binary{data: data}), do: binary(data)
-  def binary(data), do: do_binary(%{"$reql_type$" => "BINARY", "data" => :base64.encode(data)})
-  def do_binary(data), do: %Q{query: [155, [data]]}
+  def binary(%RethinkDB.Pseudotypes.Binary{data: data}), do: do_binary(data)
+  def binary(data), do: do_binary(:base64.encode(data))
+  def do_binary(data), do: %Q{query: [155, [%{"$reql_type$" => "BINARY", "data" => data}]]}
 
   @doc """
   Call an anonymous function using return values from other ReQL commands or 

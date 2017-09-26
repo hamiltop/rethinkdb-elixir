@@ -17,13 +17,23 @@ defmodule ControlStructuresTest do
     assert data == [%{"a" => 5}, %{"a" => 4, "c" => 7}]
   end
 
-  test "binary" do
+  test "binary raw" do
+    d = << 220, 2, 3, 4, 5, 192 >>
+    q = binary d
+    {:ok, %Record{data: data}} = run q, [binary_format: :raw]
+    assert data == %RethinkDB.Pseudotypes.Binary{data: :base64.encode(d)}
+    q = binary data
+    {:ok, %Record{data: result}} = run q, [binary_format: :raw]
+    assert data == result
+  end
+
+  test "binary native" do
     d = << 220, 2, 3, 4, 5, 192 >>
     q = binary d
     {:ok, %Record{data: data}} = run q
-    assert data == %RethinkDB.Pseudotypes.Binary{data: d}
+    assert data == d
     q = binary data
-    {:ok, %Record{data: result}} = run q
+    {:ok, %Record{data: result}} = run q, [binary_format: :native]
     assert data == result
   end
 
@@ -39,10 +49,10 @@ defmodule ControlStructuresTest do
   test "branch" do
     q = branch(true, 1, 2)
     {:ok, %Record{data: data}} = run q
-    assert data == 1 
+    assert data == 1
     q = branch(false, 1, 2)
     {:ok, %Record{data: data}} = run q
-    assert data == 2 
+    assert data == 2
   end
 
   test "error" do
@@ -105,7 +115,7 @@ defmodule ControlStructuresTest do
   end
 
   test "uuid" do
-    q = uuid  
+    q = uuid
     {:ok, %Record{data: data}} = run q
     assert String.length(String.replace(data, "-", ""))  == 32
   end
