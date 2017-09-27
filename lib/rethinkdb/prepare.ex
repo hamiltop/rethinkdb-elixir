@@ -39,6 +39,10 @@ defmodule RethinkDB.Prepare do
     {[k,v], state}
   end
   defp prepare(el, state) do
-    {el, state}
+    if is_binary(el) and not String.valid?(el) do
+      {RethinkDB.Query.binary(el), state}
+    else
+      {el, state}
+    end
   end
 end

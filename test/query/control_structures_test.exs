@@ -37,6 +37,16 @@ defmodule ControlStructuresTest do
     assert data == result
   end
 
+  test "binary native no wrapper" do
+    d = << 220, 2, 3, 4, 5, 192 >>
+    q = d
+    {:ok, %Record{data: data}} = run q
+    assert data == d
+    q = data
+    {:ok, %Record{data: result}} = run q, [binary_format: :native]
+    assert data == result
+  end
+
   test "do_r" do
     q = do_r fn -> 5 end
     {:ok, %Record{data: data}} = run q

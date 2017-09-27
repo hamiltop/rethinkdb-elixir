@@ -189,10 +189,11 @@ defmodule RethinkDB.Query do
   Encapsulate binary data within a query.
 
   The type of data binary accepts depends on the client language. In
-  Elixir, it expects a Binary. Using a Buffer object within a query implies the use of binary and the ReQL driver will automatically perform the coercion.
+  Elixir, it expects a Binary. Using a Binary object within a query implies
+  the use of binary and the ReQL driver will automatically perform the coercion.
 
-  Binary objects returned to the client in JavaScript will also be Node.js
-  Buffer objects. This can be changed with the binaryFormat option provided
+  Binary objects returned to the client in Elixir will also be
+  Binary objects. This can be changed with the binary_format option :raw
   to run to return “raw” objects.
 
   Only a limited subset of ReQL commands may be chained after binary:
