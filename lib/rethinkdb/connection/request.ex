@@ -6,7 +6,7 @@ defmodule RethinkDB.Connection.Request do
   def make_request(query, token, from, state = %{pending: pending, socket: socket}) do
     new_pending = case from do
       :noreply -> pending
-      _ -> Dict.put_new(pending, token, from)
+      _ -> Map.put_new(pending, token, from)
     end
     bsize = :erlang.size(query)
     payload = token <> << bsize :: little-size(32) >> <> query
@@ -41,7 +41,7 @@ defmodule RethinkDB.Connection.Request do
     case leftover <> data do
       << response :: binary-size(length), leftover :: binary >> ->
         Connection.reply(pending[token], {response, token})
-        handle_recv("", %{state | current: {:start, leftover}, pending: Dict.delete(pending, token)})
+        handle_recv("", %{state | current: {:start, leftover}, pending: Map.delete(pending, token)})
       new_data ->
         {:noreply, %{state | current: {:length, length, token, new_data}}}
     end
