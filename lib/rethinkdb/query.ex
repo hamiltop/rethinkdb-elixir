@@ -1868,7 +1868,7 @@ defmodule RethinkDB.Query do
 
     args = case arity do
       0 -> []
-      _ -> Enum.map(1..arity, fn _ -> make_ref end)
+      _ -> Enum.map(1..arity, fn _ -> make_ref() end)
     end
     params = Enum.map(args, &var/1)
 
