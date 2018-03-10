@@ -1,5 +1,5 @@
 defmodule JoinsTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
@@ -11,17 +11,25 @@ defmodule JoinsTest do
 
   @table_name "joins_test_table_1"
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
     table_create(@table_name) |> run
+
     on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
+      start_link()
+
+      db_drop("test") |> run
     end
+
     :ok
   end
 
   setup do
-    table(@table_name) |> delete |> run
+    on_exit fn ->
+      table(@table_name) |> delete |> run
+    end
+
     :ok
   end
 

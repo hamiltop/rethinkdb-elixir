@@ -1,5 +1,5 @@
 defmodule GeospatialTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
@@ -9,7 +9,10 @@ defmodule GeospatialTest do
   alias RethinkDB.Pseudotypes.Geometry.Polygon
 
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
+
     :ok
   end
 
@@ -24,7 +27,8 @@ defmodule GeospatialTest do
   end
   test "distance" do
     {:ok, %Record{data: data}} = distance(point({1,1}), point({2,2})) |> run
-    assert data == 156876.14940188665
+
+    assert_in_delta data, 156876.14940188665, 0.0000000001
   end
 
   test "fill" do

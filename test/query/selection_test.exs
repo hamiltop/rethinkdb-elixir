@@ -1,5 +1,5 @@
 defmodule SelectionTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
@@ -9,18 +9,28 @@ defmodule SelectionTest do
   import RethinkDB.Lambda
 
   @table_name "selection_test_table_1"
+
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
     table_create(@table_name) |> run
+
     on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
+      start_link()
+
+      db_drop("test") |> run
     end
+
     :ok
   end
 
   setup do
-    table(@table_name) |> delete |> run
+
+    on_exit fn ->
+      table(@table_name) |> delete |> run
+    end
+
     :ok
   end
 
@@ -63,7 +73,7 @@ defmodule SelectionTest do
     table(@table_name) |> insert(%{id: "c", a: 5}) |> run
     {:ok, %RethinkDB.Collection{data: data}} = table(@table_name) |> between("b", "d") |> run
     assert Enum.count(data) == 2
-    {:ok, %RethinkDB.Collection{data: data}} = table(@table_name) |> between(minval, maxval) |> run
+    {:ok, %RethinkDB.Collection{data: data}} = table(@table_name) |> between(minval(), maxval()) |> run
     assert Enum.count(data) == 3
   end
 

@@ -1,14 +1,23 @@
 defmodule TableIndexTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
+
+    on_exit fn ->
+      start_link()
+
+      db_drop("test") |> run
+    end
+
     :ok
   end
-  
+
   @table_name "table_index_test_table_1"
   setup do
     table_create(@table_name) |> run

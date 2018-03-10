@@ -1,5 +1,5 @@
 defmodule ConnectionTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Supervisor.Spec
   use RethinkDB.Connection
   import RethinkDB.Query
@@ -29,9 +29,15 @@ defmodule ConnectionTest do
   test "reconnects if initial connect fails" do
     {:ok, c} = start_link(port: 28014)
     Process.unlink(c)
-    %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
+    %RethinkDB.Exception.ConnectionClosed{} = table_list() |> run
     conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
     :timer.sleep(1000)
+
+    RethinkDB.Query.db_create("test") |> run
+    on_exit fn ->
+      RethinkDB.Query.db_drop("test") |> run
+    end
+
     {:ok, %RethinkDB.Record{}} = RethinkDB.Query.table_list |> run
     ref = Process.monitor(c)
     FlakyConnection.stop(conn)
@@ -45,14 +51,19 @@ defmodule ConnectionTest do
     {:ok, c} = start_link(port: conn.port)
     Process.unlink(c)
     table = "foo_flaky_test"
-    RethinkDB.Query.table_create(table)|> run
+
+    RethinkDB.Query.db_create("test") |> run
+    RethinkDB.Query.table_create(table) |> run
+
     on_exit fn ->
-      start_link
+      start_link()
       :timer.sleep(100)
-      RethinkDB.Query.table_drop(table) |> run
+      RethinkDB.Query.db_drop("test") |> run
       GenServer.cast(__MODULE__, :stop)
     end
+
     table(table) |> index_wait |> run
+
     {:ok, change_feed} = table(table) |> changes |> run
     task = Task.async fn ->
       RethinkDB.Connection.next change_feed
@@ -84,15 +95,16 @@ defmodule ConnectionTest do
     {:ok, c} = RethinkDB.Connection.start_link(db: "new_test")
     db_create("new_test") |> RethinkDB.run(c)
     db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
-    {:ok, %{data: data}} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: data}} = table_list() |> RethinkDB.run(c)
     assert data == ["new_test_table"]
+    db_drop("new_test") |> RethinkDB.run(c)
   end
 
   test "connection accepts max_pending" do
     {:ok, c} = RethinkDB.Connection.start_link(max_pending: 1)
     res = Enum.map(1..100, fn (_) ->
       Task.async fn ->
-        now |> RethinkDB.run(c)
+        now() |> RethinkDB.run(c)
       end
     end) |> Enum.map(&Task.await/1)
     assert Enum.any?(res, &(&1 == %RethinkDB.Exception.TooManyRequests{}))
@@ -109,17 +121,18 @@ defmodule ConnectionTest do
   test "ssl connection" do
     conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
     {:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.pem"]], sync_connect: true)
-    {:ok, %{data: _}} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: _}} = table_list() |> RethinkDB.run(c)
   end
 end
 
 defmodule ConnectionRunTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
   setup_all do
-    start_link
+    start_link()
+
     :ok
   end
 
@@ -127,7 +140,7 @@ defmodule ConnectionRunTest do
     db_create("db_option_test") |> run
     table_create("db_option_test_table") |> run(db: "db_option_test")
 
-    {:ok, %{data: data}} = db("db_option_test") |> table_list |> run
+    {:ok, %{data: data}} = db("db_option_test") |> table_list() |> run
 
     db_drop("db_option_test") |> run
 
@@ -135,6 +148,11 @@ defmodule ConnectionRunTest do
   end
 
   test "run(conn, opts) with :durability option" do
+    db_create("test") |> run
+    on_exit fn ->
+      db_drop("test") |> run
+    end
+
     table_drop("durability_test_table") |> run
     {:ok, response} = table_create("durability_test_table") |> run(durability: "soft")
     durability = response.data["config_changes"]
@@ -149,7 +167,7 @@ defmodule ConnectionRunTest do
 
   test "run with :noreply option" do
     :ok = make_array([1,2,3]) |> run(noreply: true)
-    noreply_wait 
+    noreply_wait()
   end
 
   test "run with :profile options" do

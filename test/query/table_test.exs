@@ -1,14 +1,23 @@
 defmodule TableTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
+
+    on_exit fn ->
+      start_link()
+
+      db_drop("test") |> run
+    end
+
     :ok
   end
-  
+
   @table_name "table_test_table_1"
 
   test "tables" do
@@ -19,14 +28,14 @@ defmodule TableTest do
     q = table_create(@table_name)
     {:ok, %Record{data: %{"tables_created" => 1}}} = run q
 
-    q = table_list
+    q = table_list()
     {:ok, %Record{data: tables}} = run q
     assert Enum.member?(tables, @table_name)
 
     q = table_drop(@table_name)
     {:ok, %Record{data: %{"tables_dropped" => 1}}} = run q
 
-    q = table_list
+    q = table_list()
     {:ok, %Record{data: tables}} = run q
     assert !Enum.member?(tables, @table_name)
 

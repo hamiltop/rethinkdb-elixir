@@ -1,19 +1,25 @@
 defmodule GeospatialAdvTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
   alias RethinkDB.Record
 
   @table_name "geo_test_table_1"
+
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
+
     table_create(@table_name) |> run
     table(@table_name) |> index_create("location", geo: true) |> run
     table(@table_name) |> index_wait("location") |> run
+
     on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
+      start_link()
+
+      db_drop("test") |> run
     end
     :ok
   end

@@ -6,7 +6,8 @@ defmodule DocumentManipulationTest do
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
+
     :ok
   end
 
@@ -113,7 +114,7 @@ defmodule DocumentManipulationTest do
     {:ok, %Record{data: data}} = [1,2,3,4] |> change_at(1,7) |> run
     assert data == [1,7,3,4]
   end
-  
+
   test "keys" do
     {:ok, %Record{data: data}} = %{a: 5, b: 6} |> keys |> run
     assert data == ["a", "b"]

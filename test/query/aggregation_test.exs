@@ -10,7 +10,8 @@ defmodule AggregationTest do
   import RethinkDB.Lambda
 
   setup_all do
-    start_link
+    start_link()
+
     :ok
   end
 
@@ -224,7 +225,7 @@ defmodule AggregationTest do
       end
     end)
     {:ok, %Record{data: data}} = run query
-    assert data == 2  
+    assert data == 2
   end
 
   test "max" do

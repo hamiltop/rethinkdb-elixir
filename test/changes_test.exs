@@ -1,16 +1,21 @@
 defmodule ChangesTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   alias RethinkDB.Feed
   use RethinkDB.Connection
   import RethinkDB.Query
 
   @table_name "changes_test_table_1"
+
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
     table_create(@table_name) |> run
+
     on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
+      start_link()
+
+      db_drop("test") |> run
     end
     :ok
   end
@@ -43,18 +48,18 @@ defmodule ChangesTest do
     q = table(@table_name) |> insert(data)
     {:ok, res} = run(q)
     expected = res.data["id"]
-    {:ok, changes} = Task.await(t) 
+    {:ok, changes} = Task.await(t)
     ^expected = changes.data |> hd |> Map.get("id")
 
     # test Enumerable
     t = Task.async fn ->
-      changes |> Enum.take(5)  
+      changes |> Enum.take(5)
     end
     1..6 |> Enum.each(fn _ ->
       q = table(@table_name) |> insert(data)
       run(q)
     end)
-    data = Task.await(t) 
+    data = Task.await(t)
     5 = Enum.count(data)
   end
 
@@ -67,7 +72,10 @@ defmodule ChangesTest do
     data = %{"id" => "0"}
     q = table(@table_name) |> insert(data)
     {:ok, res} = run(q)
-    expected = res.data["id"]
+
+    # Unused?
+    _expected = res.data["id"]
+
     [h|[]] = Task.await(t)
     assert %{"new_val" => %{"id" => "0"}} = h
   end
