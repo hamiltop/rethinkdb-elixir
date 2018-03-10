@@ -14,6 +14,7 @@ defmodule RethinkDB.Collection do
 
     def count(%{data: data}), do: Enumerable.count(data)
     def member?(%{data: data}, el), do: Enumerable.member?(data, el)
+    def slice(%{data: data}), do: Enumerable.slice(data)
   end
 end
 
@@ -36,8 +37,9 @@ defmodule RethinkDB.Feed do
       end)
       stream.(acc, fun)
     end
-    def count(_changes), do: raise "count/1 not supported for changes"
-    def member?(_changes, _values), do: raise "member/2 not supported for changes"
+    def count(_changes), do: raise "count/1 is not supported for changes"
+    def member?(_changes, _values), do: raise "member/2 is not supported for changes"
+    def slice(_changes), do: raise "slice/1 is not supported for changes"
   end
 end
 
