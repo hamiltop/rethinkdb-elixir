@@ -8,6 +8,9 @@ defmodule RethinkDB.Mixfile do use Mix.Project
      package: package(),
      deps: deps(),
      test_coverage: [tool: ExCoveralls],
+     dialyzer: [
+       plt_add_apps: [:ssl]
+     ]]
   end
 
   def package do
@@ -40,13 +43,13 @@ defmodule RethinkDB.Mixfile do use Mix.Project
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:poison, "~> 3.0"},
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.7", only: :dev},
+      {:poison, "~> 3.1"},
+      {:ex_doc, "~> 0.18", only: :dev},
       {:flaky_connection, github: "hamiltop/flaky_connection", only: :test},
-      {:connection, "~> 1.0.1"},
-      {:excoveralls, "~> 0.3.11", only: :test},
-      {:dialyze, "~> 0.2.0", only: :test}
+      {:connection, "~> 1.0"},
+      {:excoveralls, "~> 0.8", only: :test},
+
+      {:dialyxir, "~> 0.4", only: :dev},
     ]
   end
 end
