@@ -71,4 +71,32 @@ defmodule ChangesTest do
     [h|[]] = Task.await(t)
     assert %{"new_val" => %{"id" => "0"}} = h
   end
+
+  test "changes opts binary native" do
+    q = table(@table_name) |> get("0") |> changes
+    {:ok, changes} = {:ok, %Feed{}} = run(q)
+    t = Task.async fn ->
+      changes |> Enum.take(1)
+    end
+    data = %{"id" => "0", "binary" => binary(<<1>>)}
+    q = table(@table_name) |> insert(data)
+    {:ok, res} = run(q)
+    expected = res.data["id"]
+    [h|[]] = Task.await(t)
+    assert %{"new_val" => %{"id" => "0", "binary" => <<1>>}} = h
+  end
+
+  test "changes opts binary raw" do
+    q = table(@table_name) |> get("0") |> changes
+    {:ok, changes} = {:ok, %Feed{}} = run(q, [binary_format: :raw])
+    t = Task.async fn ->
+      changes |> Enum.take(1)
+    end
+    data = %{"id" => "0", "binary" => binary(<<1>>)}
+    q = table(@table_name) |> insert(data)
+    {:ok, res} = run(q)
+    expected = res.data["id"]
+    [h|[]] = Task.await(t)
+    assert %{"new_val" => %{"id" => "0", "binary" => %RethinkDB.Pseudotypes.Binary{data: "AQ=="}}} = h
+  end
 end

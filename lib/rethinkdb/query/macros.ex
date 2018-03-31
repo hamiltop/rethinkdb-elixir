@@ -106,6 +106,22 @@ defmodule RethinkDB.Query.Macros do
     m = Map.from_struct(t) |> Map.put_new("$reql_type$", "TIME")
     wrap(m)
   end
+  def wrap(t = %DateTime{utc_offset: utc_offset, std_offset: std_offset}) do
+    offset = utc_offset + std_offset
+    offset_negative = offset < 0
+    offset_hour = div(abs(offset), 3600)
+    offset_minute = rem(abs(offset), 3600)
+    time_zone =
+        if offset_negative do "-" else "+" end <>
+        String.pad_leading(Integer.to_string(offset_hour), 2, "0") <>
+        ":" <>
+        String.pad_leading(Integer.to_string(offset_minute), 2, "0")
+    wrap(%{
+      "$reql_type$" => "TIME",
+       "epoch_time" => DateTime.to_unix(t, :milliseconds) / 1000,
+       "timezone" => time_zone
+    })
+  end
   def wrap(map) when is_map(map) do
     Enum.map(map, fn {k,v} ->
       {k, wrap(v)}

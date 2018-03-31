@@ -19,7 +19,7 @@ end
 
 defmodule RethinkDB.Feed do
   @moduledoc false
-  defstruct token: nil, data: nil, pid: nil, note: nil, profile: nil
+  defstruct token: nil, data: nil, pid: nil, note: nil, profile: nil, opts: nil
 
   defimpl Enumerable, for: __MODULE__ do
     def reduce(changes, acc, fun) do
@@ -45,13 +45,13 @@ defmodule RethinkDB.Response do
   @moduledoc false
   defstruct token: nil, data: "", profile: nil
 
-  def parse(raw_data, token, pid) do
+  def parse(raw_data, token, pid, opts) do
     d = Poison.decode!(raw_data)
-    data = RethinkDB.Pseudotypes.convert_reql_pseudotypes(d["r"])
+    data = RethinkDB.Pseudotypes.convert_reql_pseudotypes(d["r"], opts)
     {code, resp} = case d["t"] do
       1  -> {:ok, %RethinkDB.Record{data: hd(data)}}
       2  -> {:ok, %RethinkDB.Collection{data: data}}
-      3  -> {:ok, %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"]}}
+      3  -> {:ok, %RethinkDB.Feed{token: token, data: data, pid: pid, note: d["n"], opts: opts}}
       4  ->  {:ok, %RethinkDB.Response{token: token, data: d}}
       16  -> {:error, %RethinkDB.Response{token: token, data: d}}
       17  -> {:error, %RethinkDB.Response{token: token, data: d}}

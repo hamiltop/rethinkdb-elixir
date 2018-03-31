@@ -96,6 +96,8 @@ defmodule RethinkDB.Connection do
   * `durability` - possible values are 'hard' and 'soft'. In soft durability mode RethinkDB will acknowledge the write immediately after receiving it, but before the write has been committed to disk.
   * `noreply` - set to true to not receive the result object or cursor and return immediately.
   * `profile` - whether or not to return a profile of the query’s execution (default: false).
+  * `time_format` - what format to return times in (default: :native). Set this to :raw if you want times returned as JSON objects for exporting.
+  * `binary_format` - what format to return binary data in (default: :native). Set this to :raw if you want the raw pseudotype.
   """
   def run(query, conn, opts \\ []) do
     timeout = Dict.get(opts, :timeout, 5000)
@@ -110,7 +112,7 @@ defmodule RethinkDB.Connection do
       false -> {:query, query}
     end
     case Connection.call(conn, msg, timeout) do
-      {response, token} -> RethinkDB.Response.parse(response, token, conn)
+      {response, token} -> RethinkDB.Response.parse(response, token, conn, opts)
       :noreply -> :ok
       result -> result
     end
@@ -122,9 +124,9 @@ defmodule RethinkDB.Connection do
   Since a feed is tied to a particular connection, no connection is needed when calling
   `next`.
   """
-  def next(%{token: token, pid: pid}) do
+  def next(%{token: token, pid: pid, opts: opts}) do
     case Connection.call(pid, {:continue, token}, :infinity) do
-      {response, token} -> RethinkDB.Response.parse(response, token, pid)
+      {response, token} -> RethinkDB.Response.parse(response, token, pid, opts)
       x -> x
     end
   end
@@ -137,7 +139,7 @@ defmodule RethinkDB.Connection do
   """
   def close(%{token: token, pid: pid}) do
     {response, token} = Connection.call(pid, {:stop, token}, :infinity)
-    RethinkDB.Response.parse(response, token, pid)
+    RethinkDB.Response.parse(response, token, pid, [])
   end
 
   @doc """
@@ -145,7 +147,7 @@ defmodule RethinkDB.Connection do
   """
   def noreply_wait(conn, timeout \\ 5000) do
     {response, token} = Connection.call(conn, :noreply_wait, timeout)
-    case RethinkDB.Response.parse(response, token, conn) do
+    case RethinkDB.Response.parse(response, token, conn, []) do
       %RethinkDB.Response{data: %{"t" => 4}} -> :ok
       r -> r
     end
