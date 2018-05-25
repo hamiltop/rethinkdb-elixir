@@ -17,11 +17,13 @@ defmodule DatabaseTest do
     run(q)
     q = table_create(@table_name)
     run(q)
-    on_exit fn ->
+
+    on_exit(fn ->
       q = table_drop(@table_name)
       run(q)
       db_drop(@db_name) |> run
-    end
+    end)
+
     :ok
   end
 

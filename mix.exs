@@ -1,13 +1,16 @@
-defmodule RethinkDB.Mixfile do use Mix.Project
+defmodule RethinkDB.Mixfile do
+  use Mix.Project
 
   def project do
-    [app: :rethinkdb,
-     version: "0.4.0",
-     elixir: "~> 1.0",
-     description: "RethinkDB driver for Elixir",
-     package: package,
-     deps: deps,
-     test_coverage: [tool: ExCoveralls]]
+    [
+      app: :rethinkdb,
+      version: "0.4.0",
+      elixir: "~> 1.0",
+      description: "RethinkDB driver for Elixir",
+      package: package,
+      deps: deps,
+      test_coverage: [tool: ExCoveralls]
+    ]
   end
 
   def package do
@@ -22,10 +25,12 @@ defmodule RethinkDB.Mixfile do use Mix.Project
   #
   # Type `mix help compile.app` for more information
   def application do
-    env_apps = case Mix.env do
-      :test -> [:flaky_connection]
-      _ -> []
-    end
+    env_apps =
+      case Mix.env() do
+        :test -> [:flaky_connection]
+        _ -> []
+      end
+
     [applications: [:logger, :poison, :connection | env_apps]]
   end
 

@@ -8,12 +8,12 @@ defmodule PrepareTest do
   end
 
   test "list" do
-    assert prepare([1,2,3]) == [1,2,3]
-    assert prepare([1,2,make_ref,make_ref]) == [1,2,1,2]
+    assert prepare([1, 2, 3]) == [1, 2, 3]
+    assert prepare([1, 2, make_ref, make_ref]) == [1, 2, 1, 2]
   end
 
   test "nested list" do
-    list = [1, [1,2], [1, [1, 2]]]
+    list = [1, [1, 2], [1, [1, 2]]]
     assert prepare(list) == list
     list = [1, [make_ref, make_ref], make_ref, [1, 2]]
     assert prepare(list) == [1, [1, 2], 3, [1, 2]]

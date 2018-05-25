@@ -30,11 +30,12 @@ defmodule ConnectionTest do
     {:ok, c} = start_link(port: 28014)
     Process.unlink(c)
     %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
-    conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
+    conn = FlakyConnection.start('localhost', 28015, local_port: 28014)
     :timer.sleep(1000)
-    {:ok, %RethinkDB.Record{}} = RethinkDB.Query.table_list |> run
+    {:ok, %RethinkDB.Record{}} = RethinkDB.Query.table_list() |> run
     ref = Process.monitor(c)
     FlakyConnection.stop(conn)
+
     receive do
       {:DOWN, ^ref, _, _, _} -> :ok
     end
@@ -45,22 +46,28 @@ defmodule ConnectionTest do
     {:ok, c} = start_link(port: conn.port)
     Process.unlink(c)
     table = "foo_flaky_test"
-    RethinkDB.Query.table_create(table)|> run
-    on_exit fn ->
+    RethinkDB.Query.table_create(table) |> run
+
+    on_exit(fn ->
       start_link
       :timer.sleep(100)
       RethinkDB.Query.table_drop(table) |> run
       GenServer.cast(__MODULE__, :stop)
-    end
+    end)
+
     table(table) |> index_wait |> run
     {:ok, change_feed} = table(table) |> changes |> run
-    task = Task.async fn ->
-      RethinkDB.Connection.next change_feed
-    end
+
+    task =
+      Task.async(fn ->
+        RethinkDB.Connection.next(change_feed)
+      end)
+
     :timer.sleep(100)
     ref = Process.monitor(c)
     FlakyConnection.stop(conn)
     %RethinkDB.Exception.ConnectionClosed{} = Task.await(task)
+
     receive do
       {:DOWN, ^ref, _, _, _} -> :ok
     end
@@ -73,7 +80,8 @@ defmodule ConnectionTest do
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
 
     FlakyConnection.stop(conn)
-    :timer.sleep(100) # this is a band-aid for a race condition in this test
+    # this is a band-aid for a race condition in this test
+    :timer.sleep(100)
 
     assert Supervisor.count_children(sup) == %{active: 1, specs: 1, supervisors: 0, workers: 1}
 
@@ -90,25 +98,43 @@ defmodule ConnectionTest do
 
   test "connection accepts max_pending" do
     {:ok, c} = RethinkDB.Connection.start_link(max_pending: 1)
-    res = Enum.map(1..100, fn (_) ->
-      Task.async fn ->
-        now |> RethinkDB.run(c)
-      end
-    end) |> Enum.map(&Task.await/1)
+
+    res =
+      Enum.map(1..100, fn _ ->
+        Task.async(fn ->
+          now |> RethinkDB.run(c)
+        end)
+      end)
+      |> Enum.map(&Task.await/1)
+
     assert Enum.any?(res, &(&1 == %RethinkDB.Exception.TooManyRequests{}))
   end
 
   test "sync connection" do
-    {:error, :econnrefused} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
-    conn = FlakyConnection.start('localhost', 28015, [local_port: 28014])
-    {:ok, pid} = Connection.start(RethinkDB.Connection, [port: 28014, sync_connect: true])
+    {:error, :econnrefused} =
+      Connection.start(RethinkDB.Connection, port: 28014, sync_connect: true)
+
+    conn = FlakyConnection.start('localhost', 28015, local_port: 28014)
+    {:ok, pid} = Connection.start(RethinkDB.Connection, port: 28014, sync_connect: true)
     FlakyConnection.stop(conn)
     Process.exit(pid, :shutdown)
   end
 
   test "ssl connection" do
-    conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
-    {:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.pem"]], sync_connect: true)
+    conn =
+      FlakyConnection.start(
+        'localhost',
+        28015,
+        ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]
+      )
+
+    {:ok, c} =
+      RethinkDB.Connection.start_link(
+        port: conn.port,
+        ssl: [ca_certs: ["./test/cert/rootCA.pem"]],
+        sync_connect: true
+      )
+
     {:ok, %{data: _}} = table_list |> RethinkDB.run(c)
   end
 end
@@ -137,10 +163,12 @@ defmodule ConnectionRunTest do
   test "run(conn, opts) with :durability option" do
     table_drop("durability_test_table") |> run
     {:ok, response} = table_create("durability_test_table") |> run(durability: "soft")
-    durability = response.data["config_changes"]
-                 |> List.first
-                 |> Map.fetch!("new_val")
-                 |> Map.fetch!("durability")
+
+    durability =
+      response.data["config_changes"]
+      |> List.first()
+      |> Map.fetch!("new_val")
+      |> Map.fetch!("durability")
 
     table_drop("durability_test_table") |> run
 
@@ -148,13 +176,12 @@ defmodule ConnectionRunTest do
   end
 
   test "run with :noreply option" do
-    :ok = make_array([1,2,3]) |> run(noreply: true)
-    noreply_wait 
+    :ok = make_array([1, 2, 3]) |> run(noreply: true)
+    noreply_wait
   end
 
   test "run with :profile options" do
-    {:ok, resp} = make_array([1,2,3]) |> run(profile: true)
-    assert [%{"description" => _, "duration(ms)" => _,
-             "sub_tasks" => _}] = resp.profile
+    {:ok, resp} = make_array([1, 2, 3]) |> run(profile: true)
+    assert [%{"description" => _, "duration(ms)" => _, "sub_tasks" => _}] = resp.profile
   end
 end
