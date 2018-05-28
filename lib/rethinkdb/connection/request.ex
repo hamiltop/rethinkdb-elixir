@@ -7,7 +7,7 @@ defmodule RethinkDB.Connection.Request do
     new_pending =
       case from do
         :noreply -> pending
-        _ -> Dict.put_new(pending, token, from)
+        _ -> Map.put_new(pending, token, from)
       end
 
     bsize = :erlang.size(query)
@@ -54,7 +54,7 @@ defmodule RethinkDB.Connection.Request do
         handle_recv("", %{
           state
           | current: {:start, leftover},
-            pending: Dict.delete(pending, token)
+            pending: Map.delete(pending, token)
         })
 
       new_data ->

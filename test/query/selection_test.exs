@@ -10,11 +10,11 @@ defmodule SelectionTest do
 
   @table_name "selection_test_table_1"
   setup_all do
-    start_link
+    start_link()
     table_create(@table_name) |> run
 
     on_exit(fn ->
-      start_link
+      start_link()
       table_drop(@table_name) |> run
     end)
 
@@ -69,7 +69,7 @@ defmodule SelectionTest do
     assert Enum.count(data) == 2
 
     {:ok, %RethinkDB.Collection{data: data}} =
-      table(@table_name) |> between(minval, maxval) |> run
+      table(@table_name) |> between(minval(), maxval()) |> run
 
     assert Enum.count(data) == 3
   end

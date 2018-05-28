@@ -7,17 +7,17 @@ defmodule DateTimeTest do
   alias RethinkDB.Pseudotypes.Time
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
   test "now native" do
-    {:ok, %Record{data: data}} = now |> run
+    {:ok, %Record{data: data}} = now() |> run
     assert %DateTime{} = data
   end
 
   test "now raw" do
-    {:ok, %Record{data: data}} = now |> run(time_format: :raw)
+    {:ok, %Record{data: data}} = now() |> run(time_format: :raw)
     assert %Time{} = data
   end
 

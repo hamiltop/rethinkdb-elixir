@@ -29,7 +29,7 @@ defmodule ConnectionTest do
   test "reconnects if initial connect fails" do
     {:ok, c} = start_link(port: 28014)
     Process.unlink(c)
-    %RethinkDB.Exception.ConnectionClosed{} = table_list |> run
+    %RethinkDB.Exception.ConnectionClosed{} = table_list() |> run
     conn = FlakyConnection.start('localhost', 28015, local_port: 28014)
     :timer.sleep(1000)
     {:ok, %RethinkDB.Record{}} = RethinkDB.Query.table_list() |> run
@@ -49,7 +49,7 @@ defmodule ConnectionTest do
     RethinkDB.Query.table_create(table) |> run
 
     on_exit(fn ->
-      start_link
+      start_link()
       :timer.sleep(100)
       RethinkDB.Query.table_drop(table) |> run
       GenServer.cast(__MODULE__, :stop)
@@ -92,7 +92,7 @@ defmodule ConnectionTest do
     {:ok, c} = RethinkDB.Connection.start_link(db: "new_test")
     db_create("new_test") |> RethinkDB.run(c)
     db("new_test") |> table_create("new_test_table") |> RethinkDB.run(c)
-    {:ok, %{data: data}} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: data}} = table_list() |> RethinkDB.run(c)
     assert data == ["new_test_table"]
   end
 
@@ -102,7 +102,7 @@ defmodule ConnectionTest do
     res =
       Enum.map(1..100, fn _ ->
         Task.async(fn ->
-          now |> RethinkDB.run(c)
+          now() |> RethinkDB.run(c)
         end)
       end)
       |> Enum.map(&Task.await/1)
@@ -135,7 +135,7 @@ defmodule ConnectionTest do
         sync_connect: true
       )
 
-    {:ok, %{data: _}} = table_list |> RethinkDB.run(c)
+    {:ok, %{data: _}} = table_list() |> RethinkDB.run(c)
   end
 end
 
@@ -145,7 +145,7 @@ defmodule ConnectionRunTest do
   import RethinkDB.Query
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
@@ -177,7 +177,7 @@ defmodule ConnectionRunTest do
 
   test "run with :noreply option" do
     :ok = make_array([1, 2, 3]) |> run(noreply: true)
-    noreply_wait
+    noreply_wait()
   end
 
   test "run with :profile options" do

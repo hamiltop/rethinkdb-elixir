@@ -5,7 +5,7 @@ defmodule RethinkDB.Pseudotypes do
     defstruct data: nil
 
     def parse(%{"$reql_type$" => "BINARY", "data" => data}, opts) do
-      case Dict.get(opts, :binary_format) do
+      case Keyword.get(opts, :binary_format) do
         :raw ->
           %__MODULE__{data: data}
 
@@ -53,7 +53,7 @@ defmodule RethinkDB.Pseudotypes do
           %{"$reql_type$" => "TIME", "epoch_time" => epoch_time, "timezone" => timezone},
           opts
         ) do
-      case Dict.get(opts, :time_format) do
+      case Keyword.get(opts, :time_format) do
         :raw ->
           %__MODULE__{epoch_time: epoch_time, timezone: timezone}
 
@@ -101,17 +101,17 @@ defmodule RethinkDB.Pseudotypes do
     end
   end
 
-  def convert_reql_pseudotypes(nil, opts), do: nil
+  def convert_reql_pseudotypes(nil, _opts), do: nil
 
   def convert_reql_pseudotypes(%{"$reql_type$" => "BINARY"} = data, opts) do
     Binary.parse(data, opts)
   end
 
-  def convert_reql_pseudotypes(%{"$reql_type$" => "GEOMETRY"} = data, opts) do
+  def convert_reql_pseudotypes(%{"$reql_type$" => "GEOMETRY"} = data, _opts) do
     Geometry.parse(data)
   end
 
-  def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data, opts) do
+  def convert_reql_pseudotypes(%{"$reql_type$" => "GROUPED_DATA"} = data, _opts) do
     parse_grouped_data(data)
   end
 
@@ -130,7 +130,7 @@ defmodule RethinkDB.Pseudotypes do
     |> Enum.into(%{})
   end
 
-  def convert_reql_pseudotypes(string, opts), do: string
+  def convert_reql_pseudotypes(string, _opts), do: string
 
   def parse_grouped_data(%{"$reql_type$" => "GROUPED_DATA", "data" => data}) do
     Enum.map(data, fn [k, data] ->

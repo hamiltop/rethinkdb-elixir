@@ -6,11 +6,11 @@ defmodule ChangesTest do
 
   @table_name "changes_test_table_1"
   setup_all do
-    start_link
+    start_link()
     table_create(@table_name) |> run
 
     on_exit(fn ->
-      start_link
+      start_link()
       table_drop(@table_name) |> run
     end)
 
@@ -80,8 +80,7 @@ defmodule ChangesTest do
 
     data = %{"id" => "0"}
     q = table(@table_name) |> insert(data)
-    {:ok, res} = run(q)
-    expected = res.data["id"]
+    {:ok, _res} = run(q)
     [h | []] = Task.await(t)
     assert %{"new_val" => %{"id" => "0"}} = h
   end
@@ -97,8 +96,7 @@ defmodule ChangesTest do
 
     data = %{"id" => "0", "binary" => binary(<<1>>)}
     q = table(@table_name) |> insert(data)
-    {:ok, res} = run(q)
-    expected = res.data["id"]
+    {:ok, _res} = run(q)
     [h | []] = Task.await(t)
     assert %{"new_val" => %{"id" => "0", "binary" => <<1>>}} = h
   end
@@ -114,8 +112,7 @@ defmodule ChangesTest do
 
     data = %{"id" => "0", "binary" => binary(<<1>>)}
     q = table(@table_name) |> insert(data)
-    {:ok, res} = run(q)
-    expected = res.data["id"]
+    {:ok, _res} = run(q)
     [h | []] = Task.await(t)
 
     assert %{"new_val" => %{"id" => "0", "binary" => %RethinkDB.Pseudotypes.Binary{data: "AQ=="}}} =

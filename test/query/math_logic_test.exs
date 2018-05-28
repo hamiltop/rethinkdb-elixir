@@ -6,7 +6,7 @@ defmodule MathLogicTest do
   alias RethinkDB.Record
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
@@ -190,7 +190,7 @@ defmodule MathLogicTest do
   end
 
   test "random operator" do
-    {:ok, %Record{data: data}} = random |> run
+    {:ok, %Record{data: data}} = random() |> run
     assert data >= 0.0 && data <= 1.0
     {:ok, %Record{data: data}} = random(100) |> run
     assert is_integer(data) && data >= 0 && data <= 100

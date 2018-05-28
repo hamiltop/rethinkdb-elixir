@@ -36,8 +36,8 @@ defmodule RethinkDB.Prepare do
   end
 
   defp prepare(ref, state = {max, map}) when is_reference(ref) do
-    case Dict.get(map, ref) do
-      nil -> {max + 1, {max + 1, Dict.put_new(map, ref, max + 1)}}
+    case Map.get(map, ref) do
+      nil -> {max + 1, {max + 1, Map.put_new(map, ref, max + 1)}}
       x -> {x, state}
     end
   end
