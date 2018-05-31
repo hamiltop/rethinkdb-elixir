@@ -1,5 +1,5 @@
 defmodule QueryTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   alias RethinkDB.Query
   alias RethinkDB.Record
   alias RethinkDB.Collection

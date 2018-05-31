@@ -1,5 +1,5 @@
 defmodule ChangesTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   alias RethinkDB.Feed
   use RethinkDB.Connection
   import RethinkDB.Query

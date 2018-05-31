@@ -1,5 +1,5 @@
 defmodule ConnectionTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Supervisor.Spec
   use RethinkDB.Connection
   import RethinkDB.Query
@@ -122,7 +122,7 @@ defmodule ConnectionTest do
 end
 
 defmodule ConnectionRunTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 

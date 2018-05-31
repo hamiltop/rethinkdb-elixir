@@ -1,5 +1,5 @@
 defmodule DocumentManipulationTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
