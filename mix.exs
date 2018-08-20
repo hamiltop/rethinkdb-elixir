@@ -47,7 +47,7 @@ defmodule RethinkDB.Mixfile do
     [
       {:poison, "~> 3.1"},
       {:ex_doc, "~> 0.18", only: :dev},
-      {:flaky_connection, github: "hamiltop/flaky_connection", only: :test},
+      {:flaky_connection, github: "norpan/flaky_connection", only: :test},
       {:connection, "~> 1.0"},
       {:excoveralls, "~> 0.8", only: :test},
       {:dialyxir, "~> 0.5", only: :dev}
