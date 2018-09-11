@@ -1,6 +1,6 @@
 defmodule RethinkDB.Connection.Transport do
-  defmodule SSL, do: defstruct [:socket]
-  defmodule TCP, do: defstruct [:socket]
+  defmodule(SSL, do: defstruct([:socket]))
+  defmodule(TCP, do: defstruct([:socket]))
 
   def connect(%SSL{}, host, port, opts) do
     case :ssl.connect(host, port, opts) do

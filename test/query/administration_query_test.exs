@@ -1,22 +1,24 @@
 defmodule AdministrationQueryTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
   setup_all do
-    start_link
+    start_link()
     :ok
   end
 
   @table_name "administration_table_1"
   setup do
     table_create(@table_name) |> run
-    on_exit fn ->
+
+    on_exit(fn ->
       table_drop(@table_name) |> run
-    end
+    end)
+
     :ok
   end
-  
+
   test "config" do
     {:ok, r} = table(@table_name) |> config |> run
     assert %RethinkDB.Record{data: %{"db" => "test"}} = r

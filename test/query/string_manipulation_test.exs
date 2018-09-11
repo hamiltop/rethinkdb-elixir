@@ -1,12 +1,12 @@
 defmodule StringManipulationTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import RethinkDB.Connection
   import RethinkDB.Query
 
   alias RethinkDB.Record
-  
+
   setup_all do
-    {:ok, pid} = RethinkDB.Connection.start_link
+    {:ok, pid} = RethinkDB.Connection.start_link()
     {:ok, %{conn: pid}}
   end
 
@@ -33,6 +33,7 @@ defmodule StringManipulationTest do
     {:ok, %Record{data: data}} = "hi" |> upcase |> run(context.conn)
     assert data == "HI"
   end
+
   test "downcase", context do
     {:ok, %Record{data: data}} = "Hi" |> downcase |> run(context.conn)
     assert data == "hi"

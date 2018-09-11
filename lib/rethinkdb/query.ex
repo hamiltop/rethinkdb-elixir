@@ -8,25 +8,25 @@ defmodule RethinkDB.Query do
   import RethinkDB.Query.Macros
 
   @type t :: %Q{}
-  @type reql_string :: String.t|t
-  @type reql_number :: integer|float|t
-  @type reql_array  :: [term]|t
-  @type reql_bool   :: boolean|t
-  @type reql_obj    :: %{}|t
-  @type reql_datum  :: term
-  @type reql_func0  :: (() -> term)|t
-  @type reql_func1  :: (term -> term)|t
-  @type reql_func2  :: (term, term -> term)|t
-  @type reql_opts   :: %{}
-  @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
-  @type reql_geo_point    :: %RethinkDB.Pseudotypes.Geometry.Point{}|{reql_number,reql_number}|t
-  @type reql_geo_line     :: %RethinkDB.Pseudotypes.Geometry.Line{}|t
-  @type reql_geo_polygon  :: %RethinkDB.Pseudotypes.Geometry.Polygon{}|t
-  @type reql_geo    :: reql_geo_point|reql_geo_line|reql_geo_polygon
-  @type reql_time   :: %RethinkDB.Pseudotypes.Time{}|t
+  @type reql_string :: String.t() | t
+  @type reql_number :: integer | float | t
+  @type reql_array :: [term] | t
+  @type reql_bool :: boolean | t
+  @type reql_obj :: map | t
+  @type reql_datum :: term
+  @type reql_func0 :: (() -> term) | t
+  @type reql_func1 :: (term -> term) | t
+  @type reql_func2 :: (term, term -> term) | t
+  @type reql_opts :: map
+  @type reql_binary :: %RethinkDB.Pseudotypes.Binary{} | binary | t
+  @type reql_geo_point :: %RethinkDB.Pseudotypes.Geometry.Point{} | {reql_number, reql_number} | t
+  @type reql_geo_line :: %RethinkDB.Pseudotypes.Geometry.Line{} | t
+  @type reql_geo_polygon :: %RethinkDB.Pseudotypes.Geometry.Polygon{} | t
+  @type reql_geo :: reql_geo_point | reql_geo_line | reql_geo_polygon
+  @type reql_time :: %RethinkDB.Pseudotypes.Time{} | t
 
   #
-  #Aggregation Functions
+  # Aggregation Functions
   #
 
   @doc """
@@ -38,7 +38,10 @@ defmodule RethinkDB.Query do
   value is an array, documents will be placed in each group that corresponds to
   the elements of the array. If the array is empty the row will be ignored.
   """
-  @spec group(Q.reql_array, Q.reql_func1 | Q.reql_string | [Q.reql_func1 | Q.reql_string] ) :: Q.t
+  @spec group(
+          Q.reql_array(),
+          Q.reql_func1() | Q.reql_string() | [Q.reql_func1() | Q.reql_string()]
+        ) :: Q.t()
   operate_on_seq_and_list(:group, 144, opts: true)
   operate_on_two_args(:group, 144, opts: true)
 
@@ -52,7 +55,7 @@ defmodule RethinkDB.Query do
   format of grouped data in the JavaScript driver and data explorer.
   end
   """
-  @spec ungroup(Q.t) :: Q.t
+  @spec ungroup(Q.t()) :: Q.t()
   operate_on_single_arg(:ungroup, 150)
 
   @doc """
@@ -70,7 +73,7 @@ defmodule RethinkDB.Query do
   shards and CPU cores. A common mistaken when using the reduce command is to
   suppose that the reduction is executed from left to right.
   """
-  @spec reduce(Q.reql_array, Q.reql_func2) :: Q.t
+  @spec reduce(Q.reql_array(), Q.reql_func2()) :: Q.t()
   operate_on_two_args(:reduce, 37)
 
   @doc """
@@ -82,9 +85,9 @@ defmodule RethinkDB.Query do
   If count is called on a binary object, it will return the size of the object
   in bytes.
   """
-  @spec count(Q.reql_array) :: Q.t
+  @spec count(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:count, 43)
-  @spec count(Q.reql_array, Q.reql_string | Q.reql_func1) :: Q.t
+  @spec count(Q.reql_array(), Q.reql_string() | Q.reql_func1()) :: Q.t()
   operate_on_two_args(:count, 43)
 
   @doc """
@@ -96,9 +99,9 @@ defmodule RethinkDB.Query do
 
   Returns 0 when called on an empty sequence.
   """
-  @spec sum(Q.reql_array) :: Q.t
+  @spec sum(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:sum, 145)
-  @spec sum(Q.reql_array, Q.reql_string|Q.reql_func1) :: Q.t
+  @spec sum(Q.reql_array(), Q.reql_string() | Q.reql_func1()) :: Q.t()
   operate_on_two_args(:sum, 145)
 
   @doc """
@@ -111,9 +114,9 @@ defmodule RethinkDB.Query do
   Produces a non-existence error when called on an empty sequence. You can
   handle this case with `default`.
   """
-  @spec avg(Q.reql_array) :: Q.t
+  @spec avg(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:avg, 146)
-  @spec avg(Q.reql_array, Q.reql_string|Q.reql_func1) :: Q.t
+  @spec avg(Q.reql_array(), Q.reql_string() | Q.reql_func1()) :: Q.t()
   operate_on_two_args(:avg, 146)
 
   @doc """
@@ -130,7 +133,7 @@ defmodule RethinkDB.Query do
   Calling min on an empty sequence will throw a non-existence error; this can be
   handled using the `default` command.
   """
-  @spec min(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
+  @spec min(Q.reql_array(), Q.reql_opts() | Q.reql_string() | Q.reql_func1()) :: Q.t()
   operate_on_single_arg(:min, 147)
   operate_on_two_args(:min, 147)
 
@@ -148,7 +151,7 @@ defmodule RethinkDB.Query do
   Calling max on an empty sequence will throw a non-existence error; this can be
   handled using the `default` command.
   """
-  @spec max(Q.reql_array, Q.reql_opts | Q.reql_string | Q.reql_func1) :: Q.t
+  @spec max(Q.reql_array(), Q.reql_opts() | Q.reql_string() | Q.reql_func1()) :: Q.t()
   operate_on_single_arg(:max, 148)
   operate_on_two_args(:max, 148)
 
@@ -158,7 +161,7 @@ defmodule RethinkDB.Query do
   The distinct command can be called on any sequence, a table, or called on a
   table with an index.
   """
-  @spec distinct(Q.reql_array, Q.reql_opts) :: Q.t
+  @spec distinct(Q.reql_array(), Q.reql_opts()) :: Q.t()
   operate_on_single_arg(:distinct, 42, opts: true)
 
   @doc """
@@ -167,12 +170,12 @@ defmodule RethinkDB.Query do
   predicate there exists at least one element of the stream where that predicate
   returns `true`.
   """
-  @spec contains(Q.reql_array, Q.reql_array | Q.reql_func1 | Q.t) :: Q.t
+  @spec contains(Q.reql_array(), Q.reql_array() | Q.reql_func1() | Q.t()) :: Q.t()
   operate_on_seq_and_list(:contains, 93)
   operate_on_two_args(:contains, 93)
 
   #
-  #Control Strucutres
+  # Control Strucutres
   #
 
   @doc """
@@ -182,7 +185,7 @@ defmodule RethinkDB.Query do
 
   This is analogous to Elixir's `apply`.
   """
-  @spec args(Q.reql_array) :: Q.t
+  @spec args(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:args, 154)
 
   @doc """
@@ -205,7 +208,7 @@ defmodule RethinkDB.Query do
   * type_of returns PTYPE<BINARY>
   * info will return information on a binary object.
   """
-  @spec binary(Q.reql_binary) :: Q.t
+  @spec binary(Q.reql_binary()) :: Q.t()
   def binary(%RethinkDB.Pseudotypes.Binary{data: data}), do: do_binary(data)
   def binary(data), do: do_binary(:base64.encode(data))
   def do_binary(data), do: %Q{query: [155, [%{"$reql_type$" => "BINARY", "data" => data}]]}
@@ -228,7 +231,7 @@ defmodule RethinkDB.Query do
   order, so their values should not be dependent on one another. The type of do’s
   result is the type of the value returned from the function or last expression.
   """
-  @spec do_r(Q.reql_datum | Q.reql_func0, Q.reql_func1) :: Q.t
+  @spec do_r(Q.reql_datum() | Q.reql_func0(), Q.reql_func1()) :: Q.t()
   operate_on_single_arg(:do_r, 64)
   # Can't do `operate_on_two_args` because we swap the order of args to make it
   # Elixir's idiomatic subject first order.
@@ -240,13 +243,13 @@ defmodule RethinkDB.Query do
 
   The branch command is effectively an if renamed due to language constraints.
   """
-  @spec branch(Q.reql_datum, Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec branch(Q.reql_datum(), Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_three_args(:branch, 65)
 
   @doc """
   Loop over a sequence, evaluating the given write query for each element.
   """
-  @spec for_each(Q.reql_array, Q.reql_func1) :: Q.t
+  @spec for_each(Q.reql_array(), Q.reql_func1()) :: Q.t()
   operate_on_two_args(:for_each, 68)
 
   @doc """
@@ -261,7 +264,7 @@ defmodule RethinkDB.Query do
   * With two arguments, range returns a stream from the start value up to
     but not including the end value.
   """
-  @spec range(Q.reql_number, Q.req_number) :: Q.t
+  @spec range(Q.reql_number(), Q.req_number()) :: Q.t()
   operate_on_zero_args(:range, 173)
   operate_on_single_arg(:range, 173)
   operate_on_two_args(:range, 173)
@@ -269,7 +272,7 @@ defmodule RethinkDB.Query do
   @doc """
   Throw a runtime error.
   """
-  @spec error(Q.reql_string) :: Q.t
+  @spec error(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:error, 12)
 
   @doc """
@@ -279,7 +282,7 @@ defmodule RethinkDB.Query do
   the second argument may be a function which will be called with either the text
   of the non-existence error or nil.)
   """
-  @spec default(Q.t, Q.t) :: Q.t
+  @spec default(Q.t(), Q.t()) :: Q.t()
   operate_on_two_args(:default, 92)
 
   @doc """
@@ -290,7 +293,7 @@ defmodule RethinkDB.Query do
   `timeout` is the number of seconds before `js` times out. The default value
   is 5 seconds.
   """
-  @spec js(Q.reql_string, Q.opts) :: Q.t
+  @spec js(Q.reql_string(), Q.opts()) :: Q.t()
   operate_on_single_arg(:js, 11, opts: true)
 
   @doc """
@@ -302,31 +305,31 @@ defmodule RethinkDB.Query do
   * any datum (single value) can be coerced to a string
   * a binary object can be coerced to a string and vice-versa
   """
-  @spec coerce_to(Q.reql_datum, Q.reql_string) :: Q.t
+  @spec coerce_to(Q.reql_datum(), Q.reql_string()) :: Q.t()
   operate_on_two_args(:coerce_to, 51)
 
   @doc """
   Gets the type of a value.
   """
-  @spec type_of(Q.reql_datum) :: Q.t
+  @spec type_of(Q.reql_datum()) :: Q.t()
   operate_on_single_arg(:type_of, 52)
 
   @doc """
   Get information about a ReQL value.
   """
-  @spec info(Q.t) :: Q.t
+  @spec info(Q.t()) :: Q.t()
   operate_on_single_arg(:info, 79)
 
   @doc """
   Parse a JSON string on the server.
   """
-  @spec json(Q.reql_string) :: Q.t
+  @spec json(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:json, 98)
 
   @doc """
   Serialize to JSON string on the server.
   """
-  @spec to_json(Q.reql_term) :: Q.t
+  @spec to_json(Q.reql_term()) :: Q.t()
   operate_on_single_arg(:to_json, 172)
 
   @doc """
@@ -334,7 +337,7 @@ defmodule RethinkDB.Query do
   the result_format option, which checks the Content-Type of the response by
   default.
   """
-  @spec http(Q.reql_string, Q.reql_opts) :: Q.t
+  @spec http(Q.reql_string(), Q.reql_opts()) :: Q.t()
   operate_on_single_arg(:http, 153, opts: true)
 
   @doc """
@@ -342,12 +345,12 @@ defmodule RethinkDB.Query do
 
   Accepts optionally a string. If given, UUID will be derived from the strings SHA-1 hash.
   """
-  @spec uuid(Q.reql_string) :: Q.t
+  @spec uuid(Q.reql_string()) :: Q.t()
   operate_on_zero_args(:uuid, 169)
   operate_on_single_arg(:uuid, 169)
 
   #
-  #Database Operations
+  # Database Operations
   #
 
   @doc """
@@ -368,7 +371,7 @@ defmodule RethinkDB.Query do
   Note: Only alphanumeric characters and underscores are valid for the database
   name.
   """
-  @spec db_create(Q.reql_string) :: Q.t
+  @spec db_create(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:db_create, 57)
 
   @doc """
@@ -384,17 +387,17 @@ defmodule RethinkDB.Query do
 
   If the given database does not exist, the command throws RqlRuntimeError.
   """
-  @spec db_drop(Q.reql_string) :: Q.t
+  @spec db_drop(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:db_drop, 58)
 
   @doc """
   List all database names in the system. The result is a list of strings.
   """
-  @spec db_list :: Q.t
+  @spec db_list :: Q.t()
   operate_on_zero_args(:db_list, 59)
 
   #
-  #Geospatial Queries
+  # Geospatial Queries
   #
 
   @doc """
@@ -420,7 +423,7 @@ defmodule RethinkDB.Query do
   - fill: if `true` (the default) the circle is filled, creating a polygon; if `false`
   the circle is unfilled (creating a line).
   """
-  @spec circle(Q.reql_geo, Q.reql_number, Q.reql_opts) :: Q.t
+  @spec circle(Q.reql_geo(), Q.reql_number(), Q.reql_opts()) :: Q.t()
   operate_on_two_args(:circle, 165, opts: true)
 
   @doc """
@@ -444,7 +447,7 @@ defmodule RethinkDB.Query do
   be considered approximate due to the deviation between the ellipsoid and
   spherical models.
   """
-  @spec distance(Q.reql_geo, Q.reql_geo, Q.reql_opts) :: Q.t
+  @spec distance(Q.reql_geo(), Q.reql_geo(), Q.reql_opts()) :: Q.t()
   operate_on_two_args(:distance, 162, opts: true)
 
   @doc """
@@ -452,7 +455,7 @@ defmodule RethinkDB.Query do
   specify the same coordinates as the first point, polygon will close the polygon
   by connecting them.
   """
-  @spec fill(Q.reql_line) :: Q.t
+  @spec fill(Q.reql_line()) :: Q.t()
   operate_on_single_arg(:fill, 167)
 
   @doc """
@@ -467,13 +470,13 @@ defmodule RethinkDB.Query do
   Cartesian coordinates, specify an altitude, or specify their own coordinate
   reference system will be rejected.
   """
-  @spec geojson(Q.reql_obj) :: Q.t
+  @spec geojson(Q.reql_obj()) :: Q.t()
   operate_on_single_arg(:geojson, 157)
 
   @doc """
   Convert a ReQL geometry object to a GeoJSON object.
   """
-  @spec to_geojson(Q.reql_obj) :: Q.t
+  @spec to_geojson(Q.reql_obj()) :: Q.t()
   operate_on_single_arg(:to_geojson, 158)
 
   @doc """
@@ -485,7 +488,7 @@ defmodule RethinkDB.Query do
   is limited to the array size limit which defaults to 100,000, but can be
   changed with the `array_limit` option to run.
   """
-  @spec get_intersecting(Q.reql_array, Q.reql_geo, Q.reql_opts) :: Q.t
+  @spec get_intersecting(Q.reql_array(), Q.reql_geo(), Q.reql_opts()) :: Q.t()
   operate_on_two_args(:get_intersecting, 166, opts: true)
 
   @doc """
@@ -510,7 +513,7 @@ defmodule RethinkDB.Query do
   respectively.
 
   """
-  @spec get_nearest(Q.reql_array, Q.reql_geo, Q.reql_opts) :: Q.t
+  @spec get_nearest(Q.reql_array(), Q.reql_geo(), Q.reql_opts()) :: Q.t()
   operate_on_two_args(:get_nearest, 168, opts: true)
 
   @doc """
@@ -518,7 +521,7 @@ defmodule RethinkDB.Query do
   applied to a sequence of geometry objects, includes acts as a filter, returning
   a sequence of objects from the sequence that include the argument.
   """
-  @spec includes(Q.reql_geo, Q.reql_geo) :: Q.t
+  @spec includes(Q.reql_geo(), Q.reql_geo()) :: Q.t()
   operate_on_two_args(:includes, 164)
 
   @doc """
@@ -526,7 +529,7 @@ defmodule RethinkDB.Query do
   a sequence of geometry objects, intersects acts as a filter, returning a
   sequence of objects from the sequence that intersect with the argument.
   """
-  @spec intersects(Q.reql_geo, Q.reql_geo) :: Q.t
+  @spec intersects(Q.reql_geo(), Q.reql_geo()) :: Q.t()
   operate_on_two_args(:intersects, 163)
 
   @doc """
@@ -537,7 +540,7 @@ defmodule RethinkDB.Query do
   line’s vertices;
   - Two or more Point objects specifying the line’s vertices.
   """
-  @spec line([Q.reql_geo]) :: Q.t
+  @spec line([Q.reql_geo()]) :: Q.t()
   operate_on_list(:line, 160)
 
   @doc """
@@ -545,8 +548,8 @@ defmodule RethinkDB.Query do
   floating point numbers, the longitude (−180 to 180) and latitude (−90 to 90) of
   the point on a perfect sphere.
   """
-  @spec point(Q.reql_geo) :: Q.t
-  def point({la,lo}), do: point(la, lo)
+  @spec point(Q.reql_geo()) :: Q.t()
+  def point({la, lo}), do: point(la, lo)
   operate_on_two_args(:point, 159)
 
   @doc """
@@ -565,7 +568,7 @@ defmodule RethinkDB.Query do
   construct a polygon with holes in it using polygon, but you can use polygon_sub
   to use a second polygon within the interior of the first to define a hole.
   """
-  @spec polygon([Q.reql_geo]) :: Q.t
+  @spec polygon([Q.reql_geo()]) :: Q.t()
   operate_on_list(:polygon, 161)
 
   @doc """
@@ -573,11 +576,11 @@ defmodule RethinkDB.Query do
   contained within polygon1 and must have no holes itself (it must not be the
   output of polygon_sub itself).
   """
-  @spec polygon_sub(Q.reql_geo, Q.reql_geo) :: Q.t
+  @spec polygon_sub(Q.reql_geo(), Q.reql_geo()) :: Q.t()
   operate_on_two_args(:polygon_sub, 171)
 
   #
-  #Joins Queries
+  # Joins Queries
   #
 
   @doc """
@@ -597,7 +600,7 @@ defmodule RethinkDB.Query do
         ) |> run
 
   """
-  @spec inner_join(Q.reql_array, Q.reql_array, Q.reql_func2) :: Q.t
+  @spec inner_join(Q.reql_array(), Q.reql_array(), Q.reql_func2()) :: Q.t()
   operate_on_three_args(:inner_join, 48)
 
   @doc """
@@ -615,7 +618,7 @@ defmodule RethinkDB.Query do
         ) |> run
 
   """
-  @spec outer_join(Q.reql_array, Q.reql_array, Q.reql_func2) :: Q.t
+  @spec outer_join(Q.reql_array(), Q.reql_array(), Q.reql_func2()) :: Q.t()
   operate_on_three_args(:outer_join, 49)
 
   @doc """
@@ -636,7 +639,7 @@ defmodule RethinkDB.Query do
         ) |> run
 
   """
-  @spec eq_join(Q.reql_array, Q.reql_string, Q.reql_array, Keyword.t) :: Q.t
+  @spec eq_join(Q.reql_array(), Q.reql_string(), Q.reql_array(), Keyword.t()) :: Q.t()
   operate_on_three_args(:eq_join, 50, opts: true)
 
   @doc """
@@ -648,11 +651,11 @@ defmodule RethinkDB.Query do
         ) |> zip |> run
 
   """
-  @spec zip(Q.reql_array) :: Q.t
+  @spec zip(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:zip, 72)
 
   #
-  #Math and Logic Queries
+  # Math and Logic Queries
   #
 
   @doc """
@@ -668,7 +671,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: [1,2,3,4]}
 
   """
-  @spec add((Q.reql_number | Q.reql_string), (Q.reql_number | Q.reql_string)) :: Q.t
+  @spec add(Q.reql_number() | Q.reql_string(), Q.reql_number() | Q.reql_string()) :: Q.t()
   operate_on_two_args(:add, 24)
 
   @doc """
@@ -681,7 +684,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: "hello world"}
 
   """
-  @spec add([(Q.reql_number | Q.reql_string | Q.reql_array)]) :: Q.t
+  @spec add([Q.reql_number() | Q.reql_string() | Q.reql_array()]) :: Q.t()
   operate_on_list(:add, 24)
 
   @doc """
@@ -691,7 +694,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: -1}
 
   """
-  @spec sub(Q.reql_number, Q.reql_number) :: Q.t
+  @spec sub(Q.reql_number(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:sub, 25)
 
   @doc """
@@ -701,7 +704,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 6}
 
   """
-  @spec sub([Q.reql_number]) :: Q.t
+  @spec sub([Q.reql_number()]) :: Q.t()
   operate_on_list(:sub, 25)
 
   @doc """
@@ -714,8 +717,9 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: [1,2,1,2]}
 
   """
-  @spec mul((Q.reql_number | Q.reql_array), (Q.reql_number | Q.reql_array)) :: Q.t
+  @spec mul(Q.reql_number() | Q.reql_array(), Q.reql_number() | Q.reql_array()) :: Q.t()
   operate_on_two_args(:mul, 26)
+
   @doc """
   Multiply multiple values.
 
@@ -723,7 +727,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 24}
 
   """
-  @spec mul([(Q.reql_number | Q.reql_array)]) :: Q.t
+  @spec mul([Q.reql_number() | Q.reql_array()]) :: Q.t()
   operate_on_list(:mul, 26)
 
   @doc """
@@ -733,8 +737,9 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 3}
 
   """
-  @spec divide(Q.reql_number, Q.reql_number) :: Q.t
+  @spec divide(Q.reql_number(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:divide, 27)
+
   @doc """
   Divide a list of numbers. Left associative.
 
@@ -742,7 +747,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 2}
 
   """
-  @spec divide([Q.reql_number]) :: Q.t
+  @spec divide([Q.reql_number()]) :: Q.t()
   operate_on_list(:divide, 27)
 
   @doc """
@@ -752,7 +757,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 3}
 
   """
-  @spec mod(Q.reql_number, Q.reql_number) :: Q.t
+  @spec mod(Q.reql_number(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:mod, 28)
 
   @doc """
@@ -764,8 +769,9 @@ defmodule RethinkDB.Query do
       iex> and(false, true) |> run conn
       %RethinkDB.Record{data: false}
   """
-  @spec and_r(Q.reql_bool, Q.reql_bool) :: Q.t
+  @spec and_r(Q.reql_bool(), Q.reql_bool()) :: Q.t()
   operate_on_two_args(:and_r, 67)
+
   @doc """
   Compute the logical “and” of all values in a list.
 
@@ -775,7 +781,7 @@ defmodule RethinkDB.Query do
       iex> and_r([false, true, true]) |> run conn
       %RethinkDB.Record{data: false}
   """
-  @spec and_r([Q.reql_bool]) :: Q.t
+  @spec and_r([Q.reql_bool()]) :: Q.t()
   operate_on_list(:and_r, 67)
 
   @doc """
@@ -788,8 +794,9 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
 
   """
-  @spec or_r(Q.reql_bool, Q.reql_bool) :: Q.t
+  @spec or_r(Q.reql_bool(), Q.reql_bool()) :: Q.t()
   operate_on_two_args(:or_r, 66)
+
   @doc """
   Compute the logical “or” of all values in a list.
 
@@ -800,7 +807,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
 
   """
-  @spec or_r([Q.reql_bool]) :: Q.t
+  @spec or_r([Q.reql_bool()]) :: Q.t()
   operate_on_list(:or_r, 66)
 
   @doc """
@@ -812,8 +819,9 @@ defmodule RethinkDB.Query do
       iex> eq(1, 2) |> run conn
       %RethinkDB.Record{data: false}
   """
-  @spec eq(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec eq(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:eq, 17)
+
   @doc """
   Test if all values in a list are equal.
 
@@ -823,7 +831,7 @@ defmodule RethinkDB.Query do
       iex> eq([2, 1, 2]) |> run conn
       %RethinkDB.Record{data: false}
   """
-  @spec eq([Q.reql_datum]) :: Q.t
+  @spec eq([Q.reql_datum()]) :: Q.t()
   operate_on_list(:eq, 17)
 
   @doc """
@@ -835,8 +843,9 @@ defmodule RethinkDB.Query do
       iex> ne(1, 2) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec ne(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec ne(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:ne, 18)
+
   @doc """
   Test if all values in a list are not equal.
 
@@ -846,7 +855,7 @@ defmodule RethinkDB.Query do
       iex> ne([2, 1, 2]) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec ne([Q.reql_datum]) :: Q.t
+  @spec ne([Q.reql_datum()]) :: Q.t()
   operate_on_list(:ne, 18)
 
   @doc """
@@ -858,8 +867,9 @@ defmodule RethinkDB.Query do
       iex> lt(1, 2) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec lt(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec lt(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:lt, 19)
+
   @doc """
   Test if all values in a list are less than the next. Left associative.
 
@@ -869,7 +879,7 @@ defmodule RethinkDB.Query do
       iex> lt([1, 4, 5]) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec lt([Q.reql_datum]) :: Q.t
+  @spec lt([Q.reql_datum()]) :: Q.t()
   operate_on_list(:lt, 19)
 
   @doc """
@@ -881,8 +891,9 @@ defmodule RethinkDB.Query do
       iex> le(1, 2) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec le(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec le(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:le, 20)
+
   @doc """
   Test if all values in a list are less than or equal to the next. Left associative.
 
@@ -892,7 +903,7 @@ defmodule RethinkDB.Query do
       iex> le([1, 4, 4]) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec le([Q.reql_datum]) :: Q.t
+  @spec le([Q.reql_datum()]) :: Q.t()
   operate_on_list(:le, 20)
 
   @doc """
@@ -904,8 +915,9 @@ defmodule RethinkDB.Query do
       iex> gt(2,1) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec gt(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec gt(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:gt, 21)
+
   @doc """
   Test if all values in a list are greater than the next. Left associative.
 
@@ -915,7 +927,7 @@ defmodule RethinkDB.Query do
       iex> gt([10, 4, 2]) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec gt([Q.reql_datum]) :: Q.t
+  @spec gt([Q.reql_datum()]) :: Q.t()
   operate_on_list(:gt, 21)
 
   @doc """
@@ -927,8 +939,9 @@ defmodule RethinkDB.Query do
       iex> ge(2, 1) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec ge(Q.reql_datum, Q.reql_datum) :: Q.t
+  @spec ge(Q.reql_datum(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:ge, 22)
+
   @doc """
   Test if all values in a list are greater than or equal to the next. Left associative.
 
@@ -938,7 +951,7 @@ defmodule RethinkDB.Query do
       iex> le([10, 4, 4]) |> run conn
       %RethinkDB.Record{data: true}
   """
-  @spec ge([Q.reql_datum]) :: Q.t
+  @spec ge([Q.reql_datum()]) :: Q.t()
   operate_on_list(:ge, 22)
 
   @doc """
@@ -948,7 +961,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: false}
 
   """
-  @spec not_r(Q.reql_bool) :: Q.t
+  @spec not_r(Q.reql_bool()) :: Q.t()
   operate_on_single_arg(:not_r, 23)
 
   @doc """
@@ -958,8 +971,9 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 0.43}
 
   """
-  @spec random :: Q.t
+  @spec random :: Q.t()
   operate_on_zero_args(:random, 151)
+
   @doc """
   Generate a random value in the range [0,upper). If upper is an integer then the
   random value will be an integer. If upper is a float it will be a float.
@@ -971,7 +985,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 3.7}
 
   """
-  @spec random(Q.reql_number) :: Q.t
+  @spec random(Q.reql_number()) :: Q.t()
   def random(upper) when is_float(upper), do: random(upper, float: true)
   operate_on_single_arg(:random, 151, opts: true)
 
@@ -986,10 +1000,11 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: 8.34}
 
   """
-  @spec random(Q.reql_number, Q.reql_number) :: Q.t
+  @spec random(Q.reql_number(), Q.reql_number()) :: Q.t()
   def random(lower, upper) when is_float(lower) or is_float(upper) do
     random(lower, upper, float: true)
   end
+
   operate_on_two_args(:random, 151, opts: true)
 
   @doc """
@@ -997,29 +1012,29 @@ defmodule RethinkDB.Query do
 
   For example, values of 1.0 up to but not including 1.5 will return 1.0, similar to floor; values of 1.5 up to 2.0 will return 2.0, similar to ceil.
   """
-  @spec round_r(Q.reql_number) :: Q.t
+  @spec round_r(Q.reql_number()) :: Q.t()
   operate_on_single_arg(:round_r, 185)
 
   @doc """
   Rounds the given value up, returning the smallest integer value greater than or equal to the given value (the value’s ceiling).
   """
-  @spec ceil(Q.reql_number) :: Q.t
+  @spec ceil(Q.reql_number()) :: Q.t()
   operate_on_single_arg(:ceil, 184)
 
   @doc """
   Rounds the given value down, returning the largest integer value less than or equal to the given value (the value’s floor).
   """
-  @spec floor(Q.reql_number) :: Q.t
+  @spec floor(Q.reql_number()) :: Q.t()
   operate_on_single_arg(:floor, 183)
 
   #
-  #Selection Queries
+  # Selection Queries
   #
 
   @doc """
   Reference a database.
   """
-  @spec db(Q.reql_string) :: Q.t
+  @spec db(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:db, 14)
 
   @doc """
@@ -1036,8 +1051,8 @@ defmodule RethinkDB.Query do
     set to uuid, then system tables will refer to servers, databases and tables by
     UUID rather than name. (This only has an effect when used with system tables.)
   """
-  @spec table(Q.reql_string, Q.reql_opts) :: Q.t
-  @spec table(Q.t, Q.reql_string, Q.reql_opts) :: Q.t
+  @spec table(Q.reql_string(), Q.reql_opts()) :: Q.t()
+  @spec table(Q.t(), Q.reql_string(), Q.reql_opts()) :: Q.t()
   operate_on_single_arg(:table, 15, opts: true)
   operate_on_two_args(:table, 15, opts: true)
 
@@ -1046,13 +1061,13 @@ defmodule RethinkDB.Query do
 
   If no document exists with that primary key, get will return nil.
   """
-  @spec get(Q.t, Q.reql_datum) :: Q.t
+  @spec get(Q.t(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:get, 16)
 
   @doc """
   Get all documents where the given value matches the value of the requested index.
   """
-  @spec get_all(Q.t, Q.reql_array) :: Q.t
+  @spec get_all(Q.t(), Q.reql_array()) :: Q.t()
   operate_on_seq_and_list(:get_all, 78, opts: true)
   operate_on_two_args(:get_all, 78, opts: true)
 
@@ -1064,7 +1079,7 @@ defmodule RethinkDB.Query do
   set to open or closed to indicate whether or not to include that endpoint of
   the range (by default, left_bound is closed and right_bound is open).
   """
-  @spec between(Q.reql_array, Q.t, Q.t) :: Q.t
+  @spec between(Q.reql_array(), Q.t(), Q.t()) :: Q.t()
   operate_on_three_args(:between, 182, opts: true)
 
   @doc """
@@ -1081,11 +1096,11 @@ defmodule RethinkDB.Query do
   this optional argument to r.error() will cause any non-existence errors to
   return a RqlRuntimeError.
   """
-  @spec filter(Q.reql_array, Q.t) :: Q.t
+  @spec filter(Q.reql_array(), Q.t()) :: Q.t()
   operate_on_two_args(:filter, 39, opts: true)
 
   #
-  #String Manipulation Queries
+  # String Manipulation Queries
   #
 
   @doc """
@@ -1097,7 +1112,7 @@ defmodule RethinkDB.Query do
       iex> "hello world" |> match(~r(hello)) |> run conn
 
   """
-  @spec match( (Q.reql_string), (Regex.t|Q.reql_string) ) :: Q.t
+  @spec match(Q.reql_string(), Regex.t() | Q.reql_string()) :: Q.t()
   def match(string, regex = %Regex{}), do: match(string, Regex.source(regex))
   operate_on_two_args(:match, 97)
 
@@ -1107,7 +1122,7 @@ defmodule RethinkDB.Query do
       iex> "abracadabra" |> split |> run conn
       %RethinkDB.Record{data: ["abracadabra"]}
   """
-  @spec split(Q.reql_string) :: Q.t
+  @spec split(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:split, 149)
 
   @doc """
@@ -1116,7 +1131,7 @@ defmodule RethinkDB.Query do
       iex> "abra-cadabra" |> split("-") |> run conn
       %RethinkDB.Record{data: ["abra", "cadabra"]}
   """
-  @spec split(Q.reql_string, Q.reql_string) :: Q.t
+  @spec split(Q.reql_string(), Q.reql_string()) :: Q.t()
   operate_on_two_args(:split, 149)
 
   @doc """
@@ -1126,7 +1141,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: ["a", "bra", "ca-da-bra"]}
 
   """
-  @spec split(Q.reql_string, (Q.reql_string|nil), integer) :: Q.t
+  @spec split(Q.reql_string(), Q.reql_string() | nil, integer) :: Q.t()
   operate_on_three_args(:split, 149)
 
   @doc """
@@ -1136,7 +1151,7 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: "HI"}
 
   """
-  @spec upcase(Q.reql_string) :: Q.t
+  @spec upcase(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:upcase, 141)
 
   @doc """
@@ -1146,11 +1161,11 @@ defmodule RethinkDB.Query do
       %RethinkDB.Record{data: "hi"}
 
   """
-  @spec downcase(Q.reql_string) :: Q.t
+  @spec downcase(Q.reql_string()) :: Q.t()
   operate_on_single_arg(:downcase, 142)
 
   #
-  #Table Functions
+  # Table Functions
   #
 
   @doc """
@@ -1188,7 +1203,7 @@ defmodule RethinkDB.Query do
     but it can also be a time, binary object, boolean or an array. It cannot be an
     object.
   """
-  @spec table_create(Q.t, Q.reql_string, Q.reql_opts) :: Q.t
+  @spec table_create(Q.t(), Q.reql_string(), Q.reql_opts()) :: Q.t()
   operate_on_single_arg(:table_create, 60, opts: true)
   operate_on_two_args(:table_create, 60, opts: true)
 
@@ -1204,14 +1219,14 @@ defmodule RethinkDB.Query do
 
   If the given table does not exist in the database, the command throws RqlRuntimeError.
   """
-  @spec table_drop(Q.t, Q.reql_string) :: Q.t
+  @spec table_drop(Q.t(), Q.reql_string()) :: Q.t()
   operate_on_single_arg(:table_drop, 61)
   operate_on_two_args(:table_drop, 61)
 
   @doc """
   List all table names in a database. The result is a list of strings.
   """
-  @spec table_list(Q.t) :: Q.t
+  @spec table_list(Q.t()) :: Q.t()
   operate_on_zero_args(:table_list, 62)
   operate_on_single_arg(:table_list, 62)
 
@@ -1237,20 +1252,20 @@ defmodule RethinkDB.Query do
   If an index by that name already exists on the table, a RqlRuntimeError will be
   thrown.
   """
-  @spec index_create(Q.t, Q.reql_string, Q.reql_func1, Q.reql_opts) :: Q.t
+  @spec index_create(Q.t(), Q.reql_string(), Q.reql_func1(), Q.reql_opts()) :: Q.t()
   operate_on_two_args(:index_create, 75, opts: true)
   operate_on_three_args(:index_create, 75, opts: true)
 
   @doc """
   Delete a previously created secondary index of this table.
   """
-  @spec index_drop(Q.t, Q.reql_string) :: Q.t
+  @spec index_drop(Q.t(), Q.reql_string()) :: Q.t()
   operate_on_two_args(:index_drop, 76)
 
   @doc """
   List all the secondary indexes of this table.
   """
-  @spec index_list(Q.t) :: Q.t
+  @spec index_list(Q.t()) :: Q.t()
   operate_on_single_arg(:index_list, 77)
 
   @doc """
@@ -1266,14 +1281,14 @@ defmodule RethinkDB.Query do
   name is already in use and overwrite is false, or if either the old or new
   index name are the same as the primary key field name.
   """
-  @spec index_rename(Q.t, Q.reql_string, Q.reql_string, Q.reql_opts) :: Q.t
+  @spec index_rename(Q.t(), Q.reql_string(), Q.reql_string(), Q.reql_opts()) :: Q.t()
   operate_on_three_args(:index_rename, 156, opts: true)
 
   @doc """
   Get the status of the specified indexes on this table, or the status of all
   indexes on this table if no indexes are specified.
   """
-  @spec index_status(Q.t, Q.reql_string|Q.reql_array) :: Q.t
+  @spec index_status(Q.t(), Q.reql_string() | Q.reql_array()) :: Q.t()
   operate_on_single_arg(:index_status, 139)
   operate_on_seq_and_list(:index_status, 139)
   operate_on_two_args(:index_status, 139)
@@ -1282,13 +1297,13 @@ defmodule RethinkDB.Query do
   Wait for the specified indexes on this table to be ready, or for all indexes on
   this table to be ready if no indexes are specified.
   """
-  @spec index_wait(Q.t, Q.reql_string|Q.reql_array) :: Q.t
+  @spec index_wait(Q.t(), Q.reql_string() | Q.reql_array()) :: Q.t()
   operate_on_single_arg(:index_wait, 140)
   operate_on_seq_and_list(:index_wait, 140)
   operate_on_two_args(:index_wait, 140)
 
   #
-  #Writing Data Queries
+  # Writing Data Queries
   #
 
   @doc """
@@ -1331,7 +1346,7 @@ defmodule RethinkDB.Query do
     one for each objected affected by the insert operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": None}.
   """
-  @spec insert(Q.t, Q.reql_obj | Q.reql_array, Keyword.t) :: Q.t
+  @spec insert(Q.t(), Q.reql_obj() | Q.reql_array(), Keyword.t()) :: Q.t()
   operate_on_two_args(:insert, 56, opts: true)
 
   @doc """
@@ -1365,7 +1380,7 @@ defmodule RethinkDB.Query do
     one for each objected affected by the update operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": <old value>}.
   """
-  @spec update(Q.t, Q.reql_obj, Keyword.t) :: Q.t
+  @spec update(Q.t(), Q.reql_obj(), Keyword.t()) :: Q.t()
   operate_on_two_args(:update, 53, opts: true)
 
   @doc """
@@ -1403,7 +1418,7 @@ defmodule RethinkDB.Query do
     one for each objected affected by the replace operation. Each object will have
   * two keys: {"new_val": <new value>, "old_val": <old value>}.
   """
-  @spec replace(Q.t, Q.reql_obj, Keyword.t) :: Q.t
+  @spec replace(Q.t(), Q.reql_obj(), Keyword.t()) :: Q.t()
   operate_on_two_args(:replace, 55, opts: true)
 
   @doc """
@@ -1432,7 +1447,7 @@ defmodule RethinkDB.Query do
     one for each objected affected by the delete operation. Each object will have
   * two keys: {"new_val": None, "old_val": <old value>}.
   """
-  @spec delete(Q.t) :: Q.t
+  @spec delete(Q.t()) :: Q.t()
   operate_on_single_arg(:delete, 54, opts: true)
 
   @doc """
@@ -1444,11 +1459,11 @@ defmodule RethinkDB.Query do
   If successful, the operation returns an object: {"synced": 1}.
 
   """
-  @spec sync(Q.t) :: Q.t
+  @spec sync(Q.t()) :: Q.t()
   operate_on_single_arg(:sync, 138)
 
   #
-  #Date and Time Queries
+  # Date and Time Queries
   #
 
   @doc """
@@ -1456,7 +1471,7 @@ defmodule RethinkDB.Query do
   computed once when the server receives the query, so multiple instances of
   r.now() will always return the same time inside a query.
   """
-  @spec now() :: Q.t
+  @spec now() :: Q.t()
   operate_on_zero_args(:now, 103)
 
   @doc """
@@ -1473,9 +1488,18 @@ defmodule RethinkDB.Query do
     (millisecond-precision).
   * timezone can be 'Z' (for UTC) or a string with the format ±[hh]:[mm].
   """
-  @spec time(reql_number, reql_number, reql_number, reql_string) :: Q.t
+  @spec time(reql_number, reql_number, reql_number, reql_string) :: Q.t()
   def time(year, month, day, timezone), do: %Q{query: [136, [year, month, day, timezone]]}
-  @spec time(reql_number, reql_number, reql_number, reql_number, reql_number, reql_number, reql_string) :: Q.t
+
+  @spec time(
+          reql_number,
+          reql_number,
+          reql_number,
+          reql_number,
+          reql_number,
+          reql_number,
+          reql_string
+        ) :: Q.t()
   def time(year, month, day, hour, minute, second, timezone) do
     %Q{query: [136, [year, month, day, hour, minute, second, timezone]]}
   end
@@ -1484,7 +1508,7 @@ defmodule RethinkDB.Query do
   Create a time object based on seconds since epoch. The first argument is a
   double and will be rounded to three decimal places (millisecond-precision).
   """
-  @spec epoch_time(reql_number) :: Q.t
+  @spec epoch_time(reql_number) :: Q.t()
   operate_on_single_arg(:epoch_time, 101)
 
   @doc """
@@ -1493,7 +1517,7 @@ defmodule RethinkDB.Query do
   week dates. If you pass an ISO 8601 date-time without a time zone, you must
   specify the time zone with the default_timezone argument.
   """
-  @spec iso8601(reql_string) :: Q.t
+  @spec iso8601(reql_string) :: Q.t()
   operate_on_single_arg(:iso8601, 99, opts: true)
 
   @doc """
@@ -1502,100 +1526,100 @@ defmodule RethinkDB.Query do
   take the timezone into account. The timezone argument has to be of the ISO 8601
   format.
   """
-  @spec in_timezone(Q.reql_time, Q.reql_string) :: Q.t
+  @spec in_timezone(Q.reql_time(), Q.reql_string()) :: Q.t()
   operate_on_two_args(:in_timezone, 104)
 
   @doc """
   Return the timezone of the time object.
   """
-  @spec timezone(Q.reql_time) :: Q.t
+  @spec timezone(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:timezone, 127)
 
   @doc """
   Return if a time is between two other times (by default, inclusive for the
   start, exclusive for the end).
   """
-  @spec during(Q.reql_time, Q.reql_time, Q.reql_time) :: Q.t
+  @spec during(Q.reql_time(), Q.reql_time(), Q.reql_time()) :: Q.t()
   operate_on_three_args(:during, 105, opts: true)
 
   @doc """
   Return a new time object only based on the day, month and year (ie. the same
   day at 00:00).
   """
-  @spec date(Q.reql_time) :: Q.t
+  @spec date(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:date, 106)
 
   @doc """
   Return the number of seconds elapsed since the beginning of the day stored in
   the time object.
   """
-  @spec time_of_day(Q.reql_time) :: Q.t
+  @spec time_of_day(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:time_of_day, 126)
 
   @doc """
   Return the year of a time object.
   """
-  @spec year(Q.reql_time) :: Q.t
+  @spec year(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:year, 128)
 
   @doc """
   Return the month of a time object as a number between 1 and 12.
   """
-  @spec month(Q.reql_time) :: Q.t
+  @spec month(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:month, 129)
 
   @doc """
   Return the day of a time object as a number between 1 and 31.
   """
-  @spec day(Q.reql_time) :: Q.t
+  @spec day(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:day, 130)
 
   @doc """
   Return the day of week of a time object as a number between 1 and 7 (following
   ISO 8601 standard).
   """
-  @spec day_of_week(Q.reql_time) :: Q.t
+  @spec day_of_week(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:day_of_week, 131)
 
   @doc """
   Return the day of the year of a time object as a number between 1 and 366
   (following ISO 8601 standard).
   """
-  @spec day_of_year(Q.reql_time) :: Q.t
+  @spec day_of_year(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:day_of_year, 132)
 
   @doc """
   Return the hour in a time object as a number between 0 and 23.
   """
-  @spec hours(Q.reql_time) :: Q.t
+  @spec hours(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:hours, 133)
 
   @doc """
   Return the minute in a time object as a number between 0 and 59.
   """
-  @spec minutes(Q.reql_time) :: Q.t
+  @spec minutes(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:minutes, 134)
 
   @doc """
   Return the seconds in a time object as a number between 0 and 59.999 (double precision).
   """
-  @spec seconds(Q.reql_time) :: Q.t
+  @spec seconds(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:seconds, 135)
 
   @doc """
   Convert a time object to a string in ISO 8601 format.
   """
-  @spec to_iso8601(Q.reql_time) :: Q.t
+  @spec to_iso8601(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:to_iso8601, 100)
 
   @doc """
   Convert a time object to its epoch time.
   """
-  @spec to_epoch_time(Q.reql_time) :: Q.t
+  @spec to_epoch_time(Q.reql_time()) :: Q.t()
   operate_on_single_arg(:to_epoch_time, 102)
 
   #
-  #Transformations Queries
+  # Transformations Queries
   #
 
   @doc """
@@ -1607,7 +1631,7 @@ defmodule RethinkDB.Query do
   to apply a function to a single value/selection (including an array), use the
   do command.
   """
-  @spec map(Q.reql_array, Q.reql_func1) :: Q.t
+  @spec map(Q.reql_array(), Q.reql_func1()) :: Q.t()
   operate_on_two_args(:map, 38)
 
   @doc """
@@ -1615,13 +1639,13 @@ defmodule RethinkDB.Query do
   objects in the sequence that do not have the specified fields. Functionally,
   this is identical to has_fields followed by pluck on a sequence.
   """
-  @spec with_fields(Q.reql_array, Q.reql_array) :: Q.t
+  @spec with_fields(Q.reql_array(), Q.reql_array()) :: Q.t()
   operate_on_seq_and_list(:with_fields, 96)
 
   @doc """
   Concatenate one or more elements into a single sequence using a mapping function.
   """
-  @spec flat_map(Q.reql_array, Q.reql_func1) :: Q.t
+  @spec flat_map(Q.reql_array(), Q.reql_func1()) :: Q.t()
   operate_on_two_args(:flat_map, 40)
   operate_on_two_args(:concat_map, 40)
 
@@ -1635,52 +1659,52 @@ defmodule RethinkDB.Query do
   for run). Sorting with an index can be done on arbitrarily large tables, or
   after a between command using the same index.
   """
-  @spec order_by(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec order_by(Q.reql_array(), Q.reql_datum()) :: Q.t()
   # XXX this is clunky, revisit this sometime
   operate_on_optional_second_arg(:order_by, 41)
 
   @doc """
   Skip a number of elements from the head of the sequence.
   """
-  @spec skip(Q.reql_array, Q.reql_number) :: Q.t
+  @spec skip(Q.reql_array(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:skip, 70)
 
   @doc """
   End the sequence after the given number of elements.
   """
-  @spec limit(Q.reql_array, Q.reql_number) :: Q.t
+  @spec limit(Q.reql_array(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:limit, 71)
 
   @doc """
   Return the elements of a sequence within the specified range.
   """
-  @spec slice(Q.reql_array, Q.reql_number, Q.reql_number) :: Q.t
+  @spec slice(Q.reql_array(), Q.reql_number(), Q.reql_number()) :: Q.t()
   operate_on_three_args(:slice, 30, opts: true)
 
   @doc """
   Get the nth element of a sequence, counting from zero. If the argument is
   negative, count from the last element.
   """
-  @spec nth(Q.reql_array, Q.reql_number) :: Q.t
+  @spec nth(Q.reql_array(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:nth, 45)
 
   @doc """
   Get the indexes of an element in a sequence. If the argument is a predicate,
   get the indexes of all elements matching it.
   """
-  @spec offsets_of(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec offsets_of(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:offsets_of, 87)
 
   @doc """
   Test if a sequence is empty.
   """
-  @spec is_empty(Q.reql_array) :: Q.t
+  @spec is_empty(Q.reql_array()) :: Q.t()
   operate_on_single_arg(:is_empty, 86)
 
   @doc """
   Concatenate two or more sequences.
   """
-  @spec union(Q.reql_array, Q.reql_array) :: Q.t
+  @spec union(Q.reql_array(), Q.reql_array()) :: Q.t()
   operate_on_two_args(:union, 44)
 
   @doc """
@@ -1691,25 +1715,25 @@ defmodule RethinkDB.Query do
   sample(10) on a sequence with only five elements), sample will return the
   entire sequence in a random order.
   """
-  @spec sample(Q.reql_array, Q.reql_number) :: Q.t
+  @spec sample(Q.reql_array(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:sample, 81)
 
   #
-  #Document Manipulation Queries
+  # Document Manipulation Queries
   #
 
   @doc """
   Plucks out one or more attributes from either an object or a sequence of
   objects (projection).
   """
-  @spec pluck(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  @spec pluck(Q.reql_array(), Q.reql_array() | Q.reql_string()) :: Q.t()
   operate_on_two_args(:pluck, 33)
 
   @doc """
   The opposite of pluck; takes an object or a sequence of objects, and returns
   them with the specified paths removed.
   """
-  @spec without(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  @spec without(Q.reql_array(), Q.reql_array() | Q.reql_string()) :: Q.t()
   operate_on_two_args(:without, 34)
 
   @doc """
@@ -1717,7 +1741,7 @@ defmodule RethinkDB.Query do
   from all. When there is a conflict between field names, preference is given to
   fields in the rightmost object in the argument list.
   """
-  @spec merge(Q.reql_array, Q.reql_object|Q.reql_func1) :: Q.t
+  @spec merge(Q.reql_array(), Q.reql_object() | Q.reql_func1()) :: Q.t()
   operate_on_two_args(:merge, 35)
   operate_on_list(:merge, 35)
   operate_on_single_arg(:merge, 35)
@@ -1725,53 +1749,53 @@ defmodule RethinkDB.Query do
   @doc """
   Append a value to an array.
   """
-  @spec append(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec append(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:append, 29)
 
   @doc """
   Prepend a value to an array.
   """
-  @spec prepend(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec prepend(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:prepend, 80)
 
   @doc """
   Remove the elements of one array from another array.
   """
-  @spec difference(Q.reql_array, Q.reql_array) :: Q.t
+  @spec difference(Q.reql_array(), Q.reql_array()) :: Q.t()
   operate_on_two_args(:difference, 95)
 
   @doc """
   Add a value to an array and return it as a set (an array with distinct values).
   """
-  @spec set_insert(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec set_insert(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:set_insert, 88)
 
   @doc """
   Intersect two arrays returning values that occur in both of them as a set (an
   array with distinct values).
   """
-  @spec set_intersection(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec set_intersection(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:set_intersection, 89)
 
   @doc """
   Add a several values to an array and return it as a set (an array with distinct
   values).
   """
-  @spec set_union(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec set_union(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:set_union, 90)
 
   @doc """
   Remove the elements of one array from another and return them as a set (an
   array with distinct values).
   """
-  @spec set_difference(Q.reql_array, Q.reql_datum) :: Q.t
+  @spec set_difference(Q.reql_array(), Q.reql_datum()) :: Q.t()
   operate_on_two_args(:set_difference, 91)
 
   @doc """
   Get a single field from an object. If called on a sequence, gets that field
   from every object in the sequence, skipping objects that lack it.
   """
-  @spec get_field(Q.reql_obj|Q.reql_array, Q.reql_string) :: Q.t
+  @spec get_field(Q.reql_obj() | Q.reql_array(), Q.reql_string()) :: Q.t()
   operate_on_two_args(:get_field, 31)
 
   @doc """
@@ -1779,51 +1803,51 @@ defmodule RethinkDB.Query do
   that key and the key has a non-null value. For instance, the object {'a':
   1,'b': 2,'c': null} has the fields a and b.
   """
-  @spec has_fields(Q.reql_array, Q.reql_array|Q.reql_string) :: Q.t
+  @spec has_fields(Q.reql_array(), Q.reql_array() | Q.reql_string()) :: Q.t()
   operate_on_two_args(:has_fields, 32)
 
   @doc """
   Insert a value in to an array at a given index. Returns the modified array.
   """
-  @spec insert_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  @spec insert_at(Q.reql_array(), Q.reql_number(), Q.reql_datum()) :: Q.t()
   operate_on_three_args(:insert_at, 82)
 
   @doc """
   Insert several values in to an array at a given index. Returns the modified array.
   """
-  @spec splice_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  @spec splice_at(Q.reql_array(), Q.reql_number(), Q.reql_datum()) :: Q.t()
   operate_on_three_args(:splice_at, 85)
 
   @doc """
   Remove one or more elements from an array at a given index. Returns the modified array.
   """
-  @spec delete_at(Q.reql_array, Q.reql_number, Q.reql_number) :: Q.t
+  @spec delete_at(Q.reql_array(), Q.reql_number(), Q.reql_number()) :: Q.t()
   operate_on_two_args(:delete_at, 83)
   operate_on_three_args(:delete_at, 83)
 
   @doc """
   Change a value in an array at a given index. Returns the modified array.
   """
-  @spec change_at(Q.reql_array, Q.reql_number, Q.reql_datum) :: Q.t
+  @spec change_at(Q.reql_array(), Q.reql_number(), Q.reql_datum()) :: Q.t()
   operate_on_three_args(:change_at, 84)
 
   @doc """
   Return an array containing all of the object’s keys.
   """
-  @spec keys(Q.reql_obj) :: Q.t
+  @spec keys(Q.reql_obj()) :: Q.t()
   operate_on_single_arg(:keys, 94)
 
   @doc """
   Return an array containing all of the object’s values.
   """
-  @spec values(Q.reql_obj) :: Q.t
+  @spec values(Q.reql_obj()) :: Q.t()
   operate_on_single_arg(:values, 186)
 
   @doc """
   Replace an object in a field instead of merging it with an existing object in a
   merge or update operation.
   """
-  @spec literal(Q.reql_object) :: Q.t
+  @spec literal(Q.reql_object()) :: Q.t()
   operate_on_single_arg(:literal, 137)
 
   @doc """
@@ -1831,32 +1855,32 @@ defmodule RethinkDB.Query do
   strings. r.object(A, B, C, D) is equivalent to r.expr([[A, B], [C,
   D]]).coerce_to('OBJECT').
   """
-  @spec object(Q.reql_array) :: Q.t
+  @spec object(Q.reql_array()) :: Q.t()
   operate_on_list(:object, 143)
 
   #
   # Administration
   #
-  @spec config(Q.reql_term) :: Q.t
+  @spec config(Q.reql_term()) :: Q.t()
   operate_on_single_arg(:config, 174)
 
-  @spec rebalance(Q.reql_term) :: Q.t
+  @spec rebalance(Q.reql_term()) :: Q.t()
   operate_on_single_arg(:rebalance, 179)
 
-  @spec reconfigure(Q.reql_term, Q.reql_opts) :: Q.t
+  @spec reconfigure(Q.reql_term(), Q.reql_opts()) :: Q.t()
   operate_on_single_arg(:reconfigure, 176, opts: true)
 
-  @spec status(Q.reql_term) :: Q.t
+  @spec status(Q.reql_term()) :: Q.t()
   operate_on_single_arg(:status, 175)
 
-  @spec wait(Q.reql_term) :: Q.t
+  @spec wait(Q.reql_term()) :: Q.t()
   operate_on_single_arg(:wait, 177, opts: true)
 
   #
   # Miscellaneous functions
   #
 
-  def make_array(array), do:  %Q{query: [2, array]}
+  def make_array(array), do: %Q{query: [2, array]}
 
   operate_on_single_arg(:changes, 152, opts: true)
 
@@ -1866,16 +1890,20 @@ defmodule RethinkDB.Query do
   def func(f) when is_function(f) do
     {_, arity} = :erlang.fun_info(f, :arity)
 
-    args = case arity do
-      0 -> []
-      _ -> Enum.map(1..arity, fn _ -> make_ref end)
-    end
+    args =
+      case arity do
+        0 -> []
+        _ -> Enum.map(1..arity, fn _ -> make_ref() end)
+      end
+
     params = Enum.map(args, &var/1)
 
-    res = case apply(f, params) do
-      x when is_list(x) -> make_array(x)
-      x -> x
-    end
+    res =
+      case apply(f, params) do
+        x when is_list(x) -> make_array(x)
+        x -> x
+      end
+
     %Q{query: [69, [[2, args], res]]}
   end
 

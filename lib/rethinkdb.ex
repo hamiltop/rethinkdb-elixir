@@ -1,5 +1,4 @@
 defmodule RethinkDB do
-
   @moduledoc """
   Some convenience functions for interacting with RethinkDB.
   """
@@ -23,5 +22,4 @@ defmodule RethinkDB do
   See `RethinkDB.Connection.close/1`
   """
   defdelegate close(collection), to: RethinkDB.Connection
-
 end

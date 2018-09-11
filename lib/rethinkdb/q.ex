@@ -24,7 +24,9 @@ defimpl Inspect, for: RethinkDB.Q do
     refs
     |> Enum.map_reduce(1, &{{&1, "&#{&2}"}, &2 + 1})
     |> elem(0)
-    |> Enum.reduce("&(#{inspect lambda})", fn {ref, var}, lambda -> String.replace(lambda, "var(#{inspect ref})", var) end)
+    |> Enum.reduce("&(#{inspect(lambda)})", fn {ref, var}, lambda ->
+      String.replace(lambda, "var(#{inspect(ref)})", var)
+    end)
   end
 
   def inspect(%RethinkDB.Q{query: [index, args, opts]}, _) do
