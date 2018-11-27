@@ -1,5 +1,7 @@
 RethinkDB [![Build Status](https://travis-ci.org/hamiltop/rethinkdb-elixir.svg?branch=master)](https://travis-ci.org/hamiltop/rethinkdb-elixir)
 ===========
+UPDATE: I am not actively developing this.
+
 Multiplexed RethinkDB client in pure Elixir.
 
 If you are coming here from elixir-rethinkdb, welcome!
