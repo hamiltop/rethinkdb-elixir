@@ -1,5 +1,5 @@
 defmodule ControlStructuresTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
@@ -7,7 +7,16 @@ defmodule ControlStructuresTest do
   alias RethinkDB.Response
 
   setup_all do
-    start_link
+    start_link()
+
+    db_create("test") |> run
+
+    on_exit fn ->
+      start_link()
+
+      db_drop("test") |> run
+    end
+
     :ok
   end
 
@@ -80,12 +89,6 @@ defmodule ControlStructuresTest do
     assert data == "test"
   end
 
-  test "js" do
-    q = js "[40,100,1,5,25,10].sort()"
-    {:ok, %Record{data: data}} = run q
-    assert data == [1,10,100,25,40,5] # couldn't help myself...
-  end
-
   test "coerce_to" do
     q = "91" |> coerce_to("number")
     {:ok, %Record{data: data}} = run q
@@ -116,16 +119,8 @@ defmodule ControlStructuresTest do
     assert data == %{"a" => 5, "b" => 6}
   end
 
-  test "http" do
-    q = "http://httpbin.org/get" |> http
-    {:ok, %Record{data: data}} = run q
-    %{"args" => %{},
-      "headers" => _,
-      "origin" => _, "url" => "http://httpbin.org/get"} = data
-  end
-
   test "uuid" do
-    q = uuid
+    q = uuid()
     {:ok, %Record{data: data}} = run q
     assert String.length(String.replace(data, "-", ""))  == 32
   end

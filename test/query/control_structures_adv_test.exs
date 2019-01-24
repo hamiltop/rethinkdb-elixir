@@ -1,5 +1,5 @@
 defmodule ControlStructuresAdvTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use RethinkDB.Connection
   import RethinkDB.Query
 
@@ -7,12 +7,15 @@ defmodule ControlStructuresAdvTest do
 
   @table_name "control_test_table_1"
   setup_all do
-    start_link 
-    q = table_create(@table_name)
-    run(q)
+    start_link()
+
+    db_create("test") |> run
+    table_create(@table_name) |> run
+
     on_exit fn ->
-      start_link
-      table_drop(@table_name) |> run
+      start_link()
+
+      db_drop("test") |> run
     end
     :ok
   end

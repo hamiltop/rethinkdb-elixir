@@ -12,12 +12,12 @@ defmodule RethinkDB.Query do
   @type reql_number :: integer|float|t
   @type reql_array  :: [term]|t
   @type reql_bool   :: boolean|t
-  @type reql_obj    :: %{}|t
+  @type reql_obj    :: map|t
   @type reql_datum  :: term
   @type reql_func0  :: (() -> term)|t
   @type reql_func1  :: (term -> term)|t
   @type reql_func2  :: (term, term -> term)|t
-  @type reql_opts   :: %{}
+  @type reql_opts   :: map
   @type reql_binary :: %RethinkDB.Pseudotypes.Binary{}|binary|t
   @type reql_geo_point    :: %RethinkDB.Pseudotypes.Geometry.Point{}|{reql_number,reql_number}|t
   @type reql_geo_line     :: %RethinkDB.Pseudotypes.Geometry.Line{}|t
@@ -1868,7 +1868,7 @@ defmodule RethinkDB.Query do
 
     args = case arity do
       0 -> []
-      _ -> Enum.map(1..arity, fn _ -> make_ref end)
+      _ -> Enum.map(1..arity, fn _ -> make_ref() end)
     end
     params = Enum.map(args, &var/1)
 
