@@ -106,11 +106,11 @@ defmodule ConnectionTest do
     Process.exit(pid, :shutdown)
   end
 
-  test "ssl connection" do
-    conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
-    {:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.pem"]], sync_connect: true)
-    {:ok, %{data: _}} = table_list |> RethinkDB.run(c)
-  end
+  #test "ssl connection" do
+    #conn = FlakyConnection.start('localhost', 28015, [ssl: [keyfile: "./test/cert/host.key", certfile: "./test/cert/host.crt"]])
+    #{:ok, c} = RethinkDB.Connection.start_link(port: conn.port, ssl: [ca_certs: ["./test/cert/rootCA.pem"]], sync_connect: true)
+    #{:ok, %{data: _}} = table_list |> RethinkDB.run(c)
+  #end
 end
 
 defmodule ConnectionRunTest do
