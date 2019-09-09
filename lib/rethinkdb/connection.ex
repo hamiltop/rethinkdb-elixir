@@ -176,7 +176,8 @@ defmodule RethinkDB.Connection do
 
   * `:host` - hostname to use to connect to database. Defaults to `'localhost'`.
   * `:port` - port on which to connect to database. Defaults to `28015`.
-  * `:auth_key` - authorization key to use with database. Defaults to `nil`.
+  * `:user` - user to use for authentication. Defaults to `"admin"`.
+  * `:pass` - password to use for authentication. Defaults to `""`.
   * `:db` - default database to use with queries. Defaults to `nil`.
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
   * `:max_pending` - Hard cap on number of concurrent requests. Defaults to `10000`
@@ -184,7 +185,7 @@ defmodule RethinkDB.Connection do
       * `:ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
+    args = Dict.take(opts, [:host, :port, :user, :pass, :db, :sync_connect, :ssl, :max_pending])
     Connection.start_link(__MODULE__, args, opts)
   end
 
@@ -197,7 +198,8 @@ defmodule RethinkDB.Connection do
     ssl = Dict.get(opts, :ssl)
     opts = Dict.put(opts, :host, host)
       |> Dict.put_new(:port, 28015)
-      |> Dict.put_new(:auth_key, "")
+      |> Dict.put_new(:user, "admin")
+      |> Dict.put_new(:pass, "")
       |> Dict.put_new(:max_pending, 10000)
       |> Dict.drop([:sync_connect])
       |> Enum.into(%{})
@@ -222,10 +224,10 @@ defmodule RethinkDB.Connection do
     end
   end
 
-  def connect(_info, state = %{config: %{host: host, port: port, auth_key: auth_key, transport: {transport, transport_opts}}}) do
+  def connect(_info, state = %{config: %{host: host, port: port, user: user, pass: pass, transport: {transport, transport_opts}}}) do
     case Transport.connect(transport, host, port, [active: false, mode: :binary] ++ transport_opts) do
       {:ok, socket} ->
-        case handshake(socket, auth_key) do
+        case handshake(socket, user, pass) do
           {:error, _} -> {:stop, :bad_handshake, state}
           :ok ->
             :ok = Transport.setopts(socket, [active: :once])
@@ -316,22 +318,91 @@ defmodule RethinkDB.Connection do
     :ok
   end
 
-  defp handshake(socket, auth_key) do
-    :ok = Transport.send(socket, << 0x400c2d20 :: little-size(32) >>)
-    :ok = Transport.send(socket, << :erlang.iolist_size(auth_key) :: little-size(32) >>)
-    :ok = Transport.send(socket, auth_key)
-    :ok = Transport.send(socket, << 0x7e6970c7 :: little-size(32) >>)
-    case recv_until_null(socket, "") do
-      "SUCCESS" -> :ok
-      error = {:error, _} -> error
+  defp handshake(socket, user, pass) do
+    # Sends the “magic number” for the protocol version.
+    case handshake_message(socket, << 0x34c2bdc3:: little-size(32) >>) do
+      {:ok, %{"success" => true}} ->
+        # Generates the client nonce.
+        client_nonce = :crypto.strong_rand_bytes(20)
+        |> Base.encode64
+
+        client_first_message = "n=#{user},r=#{client_nonce}"
+
+        scram = Poison.encode!(%{
+          protocol_version: 0,
+          authentication_method: "SCRAM-SHA-256",
+          authentication: "n,,#{client_first_message}"
+        })
+
+        # Sends the “client-first-message”
+        case handshake_message(socket, scram <> "\0") do
+          {:ok, %{"success" => true, "authentication" => server_first_message}} ->
+            auth = server_first_message
+            |> String.split(",")
+            |> Enum.map(&(String.split(&1, "=", parts: 2)))
+            |> Enum.into(%{}, &List.to_tuple/1)
+
+            # Verify server nonce.
+            server_nonce = auth["r"]
+            if String.starts_with?(server_nonce, client_nonce) do
+              iter = auth["i"]
+              |> String.to_integer
+
+              salt = auth["s"]
+              |> Base.decode64!
+
+              salted_pass = RethinkDB.Connection.PBKDF2.generate(pass, salt, iterations: iter)
+
+              client_final_message = "c=biws,r=#{server_nonce}"
+
+              auth_msg = Enum.join([
+                client_first_message,
+                server_first_message,
+                client_final_message
+              ], ",")
+
+              client_key = :crypto.hmac(:sha256, salted_pass, "Client Key")
+              server_key = :crypto.hmac(:sha256, salted_pass, "Server Key")
+              stored_key = :crypto.hash(:sha256, client_key)
+              client_sig = :crypto.hmac(:sha256, stored_key, auth_msg)
+              server_sig = :crypto.hmac(:sha256, server_key, auth_msg)
+
+              proof = :crypto.exor(client_key, client_sig)
+              |> Base.encode64
+
+              scram = Poison.encode!(%{authentication: "#{client_final_message},p=#{proof}"})
+
+              # Sends the “client-last-message”
+              case handshake_message(socket, scram <> "\0") do
+                {:ok, %{"success" => true, "authentication" => server_final_message}} ->
+                  auth = server_final_message
+                  |> String.split(",")
+                  |> Enum.map(&(String.split(&1, "=", parts: 2)))
+                  |> Enum.into(%{}, &List.to_tuple/1)
+
+                  # Verifies server signature.
+                  if server_sig == Base.decode64!(auth["v"]) do
+                    :ok
+                  else
+                    {:error, "Invalid server signature"}
+                  end
+                {:ok, %{"success" => false, "error" => reason}} ->
+                  {:error, reason}
+              end
+            else
+              {:error, "Invalid server nonce"}
+            end
+          {:ok, %{"success" => false, "error" => reason}} ->
+            {:error, reason}
+        end
     end
   end
 
-  defp recv_until_null(socket, acc) do
-    case Transport.recv(socket, 1) do
-      {:ok, "\0"} -> acc
-      {:ok, a}    -> recv_until_null(socket, acc <> a)
-      x = {:error, _} -> x
-    end
+  defp handshake_message(sock, data) do
+    with :ok 		<- Transport.send(sock, data),
+        {:ok, data} <- Transport.recv(sock, 0),
+    do: data
+		|> String.replace_suffix("\0", "")
+		|> Poison.decode
   end
 end
