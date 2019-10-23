@@ -128,7 +128,6 @@ make_array([1,2,3]) |> map(fn (x) -> add(x, 1) end)
 Use Elixir operators via the lambda macro
 
 ```elixir
-require RethinkDB.Lambda
 import RethinkDB.Lambda
 
 make_array([1,2,3]) |> map(lambda fn (x) -> x + 1 end)
@@ -137,7 +136,6 @@ make_array([1,2,3]) |> map(lambda fn (x) -> x + 1 end)
 #### Map
 
 ```elixir
-require RethinkDB.Lambda
 import Query
 import RethinkDB.Lambda
 
